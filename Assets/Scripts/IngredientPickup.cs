@@ -49,6 +49,7 @@ public class IngredientPickup : MonoBehaviour
         if (isCollected) return;
         if (!other.TryGetComponent(out PlayerAbilityController abilityController)) return;
 
+        // Single-slot behavior is enforced inside PlayerAbilityController.GrantAbility
         abilityController.GrantAbility(ingredientType, abilityDurationSeconds);
         isCollected = true;
 
@@ -56,15 +57,9 @@ public class IngredientPickup : MonoBehaviour
         {
             switch (ingredientType)
             {
-                case IngredientType.Chili:
-                    tutorialManager.OnChiliCollected();
-                    break;
-                case IngredientType.Butter:
-                    tutorialManager.OnButterCollected();
-                    break;
-                case IngredientType.Bread:
-                    tutorialManager.OnBreadCollected();
-                    break;
+                case IngredientType.Chili:  tutorialManager.OnChiliCollected();  break;
+                case IngredientType.Butter: tutorialManager.OnButterCollected(); break;
+                case IngredientType.Bread:  tutorialManager.OnBreadCollected();  break;
             }
         }
         else if (gameManager != null)
@@ -87,11 +82,7 @@ public class IngredientPickup : MonoBehaviour
     private void ApplyVisuals()
     {
         SpriteRenderer sr = GetComponent<SpriteRenderer>();
-        if (sr == null)
-        {
-            sr = GetComponentInChildren<SpriteRenderer>();
-        }
-
+        if (sr == null) sr = GetComponentInChildren<SpriteRenderer>();
         if (sr == null) return;
 
         Sprite sprite = IngredientVisualFactory.GetSprite(ingredientType);

@@ -1,126 +1,49 @@
+
+
 using UnityEngine;
-using System.Collections;
-using System.Collections.Generic;
 
 [RequireComponent(typeof(SpriteRenderer))]
 public class PlayerColorController : MonoBehaviour
 {
-    private SpriteRenderer spriteRenderer;
-    private Color baseColor;
-    private Coroutine activePulse;
+    [Header("Colors per ability")]
+    [SerializeField] private Color noneColor      = new Color(0.063f, 0.714f, 0.173f, 1f);      // white
+    [SerializeField] private Color chiliColor     = new Color(0.95f, 0.25f, 0.15f); // red
+    [SerializeField] private Color butterColor    = new Color(0.98f, 0.92f, 0.50f); // yellow
+    [SerializeField] private Color breadColor     = new Color(0.85f, 0.70f, 0.50f); // tan
+    [SerializeField] private Color garlicColor    = new Color(0.95f, 0.93f, 0.86f); // off-white
+    [SerializeField] private Color chocolateColor = new Color(0.45f, 0.30f, 0.18f); // brown
 
-    private readonly List<Color> activeColors = new();
+    [Header("Transition")]
+    [SerializeField] private float lerpTime = 0.08f;
+
+    private SpriteRenderer _sr;
+    private Color _target;
 
     private void Awake()
     {
-        spriteRenderer = GetComponent<SpriteRenderer>();
-        baseColor = spriteRenderer.color;
+        _sr = GetComponent<SpriteRenderer>();
+        _target = _sr.color;
     }
 
-    public void PlayPowerAnimation(IngredientType type)
+    private void Update()
     {
-        Color powerColor = GetPowerColor(type);
-
-        if (!activeColors.Contains(powerColor))
-        {
-            activeColors.Add(powerColor);
-        }
-
-        if (activePulse != null)
-        {
-            StopCoroutine(activePulse);
-        }
-
-        activePulse = StartCoroutine(CycleColors());
+        // Smoothly interpolate to the new color.
+        if (_sr != null && _sr.color != _target)
+            _sr.color = Color.Lerp(_sr.color, _target, 1f - Mathf.Exp(-Time.deltaTime / Mathf.Max(0.0001f, lerpTime)));
     }
 
-    public void StopPowerAnimation(IngredientType? type = null)
+    // Called automatically by PlayerAbilityController via SendMessage.
+    public void OnAbilityChanged(IngredientType ability)
     {
-        if (type != null)
+        _target = ability switch
         {
-            Color c = GetPowerColor(type.Value);
-            activeColors.Remove(c);
-        }
-
-        if (activeColors.Count == 0)
-        {
-            if (activePulse != null)
-            {
-                StopCoroutine(activePulse);
-                activePulse = null;
-            }
-
-            spriteRenderer.color = baseColor;
-        }
-    }
-    public void StopAllPowerAnimationsInstant()
-    {
-        if (activePulse != null)
-        {
-            StopCoroutine(activePulse);
-            activePulse = null;
-        }
-
-        activeColors.Clear();
-        spriteRenderer.color = baseColor;
-    }
-
-
-    private IEnumerator CycleColors()
-    {
-        int index = 0;
-
-        while (true)
-        {
-            if (activeColors.Count == 0)
-            {
-                spriteRenderer.color = baseColor;
-                yield break;
-            }
-
-            Color currentColor = activeColors[index % activeColors.Count];
-            yield return PulseColor(currentColor);
-
-            index++;
-        }
-    }
-
-    private IEnumerator PulseColor(Color powerColor)
-    {
-        float pulseSpeed = 3f;
-        float minAlpha = 0.6f;
-        float maxAlpha = 1f;
-
-        float cycleTime = 0.5f;
-        float elapsed = 0f;
-
-        while (elapsed < cycleTime)
-        {
-            float t = (Mathf.Sin(Time.time * pulseSpeed) + 1f) / 2f;
-            float brightness = Mathf.Lerp(minAlpha, maxAlpha, t);
-
-            spriteRenderer.color = new Color(
-                powerColor.r * brightness,
-                powerColor.g * brightness,
-                powerColor.b * brightness,
-                1f
-            );
-
-            elapsed += Time.deltaTime;
-            yield return null;
-        }
-    }
-
-    private Color GetPowerColor(IngredientType type)
-    {
-        return type switch
-        {
-            IngredientType.Chili => new Color(1f, 0.35f, 0f, 1f),
-            IngredientType.Butter => new Color(1f, 0.9f, 0.3f, 1f), 
-            IngredientType.Bread => new Color(0.35f, 0.2f, 0.05f, 1f), 
-            IngredientType.Garlic => new Color(0.9f, 0.92f, 0.8f, 1f),
-            IngredientType.Chocolate => new Color(0.5f, 0.32f, 0.2f, 1f),
-            _ => baseColor
+            IngredientType.Chili     => chiliColor,
+            IngredientType.Butter    => butterColor,
+            IngredientType.Bread     => breadColor,
+            IngredientType.Garlic    => garlicColor,
+            IngredientType.Chocolate => chocolateColor,
+            _                        => noneColor
         };
     }
 }
+
