@@ -10,4 +10,6 @@ public class UICanvas : MonoBehaviour
     public UnityEngine.UI.Image[] stars;
     public GameObject gameOverPanel;
     public UnityEngine.UI.Button[] restartButtons;
+    public TextMeshProUGUI loseReasonText;
+
 }
