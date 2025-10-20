@@ -109,6 +109,12 @@ public class MazeBuilder : MonoBehaviour
                         SpawnStickyZone(pos);
                         break;
 
+                    case 'E':
+                        SpawnFloor(pos);
+                        SpawnExit(pos);
+                        break;
+
+
                     case '.':
                     case ' ':
                     default:
@@ -131,6 +137,20 @@ public class MazeBuilder : MonoBehaviour
     {
         if (floorPrefab == null) return;
         Instantiate(floorPrefab, position, Quaternion.identity, transform);
+    }
+
+    void SpawnExit(Vector2 position)
+    {
+        GameObject exit = new GameObject("Exit");
+        exit.transform.position = position;
+        exit.transform.SetParent(transform);
+
+        BoxCollider2D col = exit.AddComponent<BoxCollider2D>();
+        col.isTrigger = true;
+
+        exit.tag = "Exit";
+
+        exit.AddComponent<ExitTrigger>();
     }
 
     void SpawnIngredient(Vector2 position, IngredientType type, float durationSeconds)

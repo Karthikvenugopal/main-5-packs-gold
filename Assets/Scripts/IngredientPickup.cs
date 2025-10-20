@@ -64,7 +64,7 @@ public class IngredientPickup : MonoBehaviour
         }
         else if (gameManager != null)
         {
-            gameManager.OnIngredientEaten();
+            gameManager.OnIngredientEaten(ingredientType);
         }
 
         gameObject.SetActive(false);
