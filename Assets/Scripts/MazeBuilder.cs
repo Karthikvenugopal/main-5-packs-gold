@@ -18,7 +18,7 @@ public class MazeBuilder : MonoBehaviour
     public GameObject waterPatchPrefab;
     [Header("Ability Durations")]
     public float chiliDurationSeconds = 0f;
-    public float butterDurationSeconds = 12f;
+    public float butterDurationSeconds = 6f;
 
     [Header("Dependencies")]
     public GameManager gameManager;
@@ -27,21 +27,25 @@ public class MazeBuilder : MonoBehaviour
     {
         string[] maze =
         {
-            "##########################",
-            "#....................R.###",
-            "#..###.....#.~~~~#..#..###",
-            "#....#..#..#.~~~~#..#.W###",
-            "#...I...#..#.............#",
-            "#C.#.#..#..#..B...#...####",
-            "#..#.#..#..#......#.C.#..#",
-            "#..#.#..#..######I#...#..#",
-            "#..#.#.B.......#....#....#",
-            "#..#..~~~#.....#.C..#..#.#",
-            "#..#..~~~#...###....#..#.#",
-            "#..#.....R.....W.......#.#",
-            "#..######..#...####..###.#",
-            "#S......#..###.......#...#",
-            "##########################"
+            "###################################",
+            "S.....#......#.....#......#.......#",
+            "####..#..##..#..#..###....#....####",
+            "#..#.....#....C.#.........I.......#",
+            "#..##....###..#######....##.R..#.##",
+            "#.....#.......B....#......####...##",
+            "#.#...#....######.....#.......W..##",
+            "#.#...##~~~~~~..#...###...##......#",
+            "#.#.....~~~~~~......#.....#...C.###",
+            "###...#......####...#........##...#",
+            "#.....#...####....#######.....###.#",
+            "#...###...#.......#.B...#.......#.#",
+            "#.......................I.........#",
+            "####...##############..####...#####",
+            "#..#.......#......#......#...##...#",
+            "#..~~~~....#................W.....#",
+            "#..~~~~###.....###...#............#",
+            "#..~~~~....R...#.....#.....##.....E",
+            "###################################"
         };
 
         BuildMaze(maze);
@@ -170,7 +174,8 @@ public class MazeBuilder : MonoBehaviour
         GameObject source = waterPatchPrefab != null ? waterPatchPrefab : wallPrefab;
         if (source == null) return;
 
-        GameObject water = Instantiate(source, position, Quaternion.identity, transform);
+        GameObject water = Instantiate(source, position + Vector2.down * 0.55f, Quaternion.identity, transform);
+
 
         if (water.TryGetComponent(out SpriteRenderer sr))
         {
@@ -232,7 +237,7 @@ public class MazeBuilder : MonoBehaviour
             }
         }
 
-        float pickupScale = Mathf.Max(0.1f, cellSize * 0.6f);
+        float pickupScale = Mathf.Max(0.1f, cellSize * 1.2f);
         Vector3 targetScale = IngredientVisualFactory.GetScale(type, pickupScale);
         ingredient.transform.localScale = targetScale;
 
