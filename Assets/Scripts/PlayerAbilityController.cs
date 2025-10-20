@@ -1,8 +1,9 @@
-using System.Collections.Generic;
+using System.Collections;
 using UnityEngine;
 
 public enum IngredientType
 {
+    None = 0,
     Chili,
     Butter,
     Bread,
@@ -12,179 +13,152 @@ public enum IngredientType
 
 public class PlayerAbilityController : MonoBehaviour
 {
-    private PlayerColorController colorController;
-    private sealed class ActiveAbility
-    {
-        public readonly IngredientType Type;
-        public readonly bool HasUnlimitedDuration;
-        public float RemainingTime;
+    [Header("Movement & Effects")]
+    [SerializeField] private float baseSpeed = 4f;
+    [SerializeField] private float butterSpeedMultiplier = 1.15f;   // feel-good buff when Butter is active
+    [SerializeField] private float stickySlowMultiplier  = 0.60f;   // movement in sticky without Butter
 
-        public ActiveAbility(IngredientType type, float durationSeconds)
-        {
-            Type = type;
-            HasUnlimitedDuration = durationSeconds <= 0f;
-            RemainingTime = Mathf.Max(0f, durationSeconds);
-        }
+    [Header("UI / FX Broadcast")]
+    [Tooltip("If true, will SendMessage(\"OnAbilityChanged\", IngredientType) when ability changes.")]
+    [SerializeField] private bool broadcastAbilityChanged = true;
 
-        public void Tick(float deltaTime)
-        {
-            if (HasUnlimitedDuration) return;
-            RemainingTime = Mathf.Max(0f, RemainingTime - deltaTime);
-        }
+    /// <summary> The single, currently held ability (last ingredient picked). </summary>
+    public IngredientType CurrentAbility { get; private set; } = IngredientType.None;
 
-        public bool IsExpired => !HasUnlimitedDuration && RemainingTime <= 0f;
-    }
+    // State
+    private bool _inStickyZone;
 
-    [Header("Ability Balancing")]
-    [SerializeField] private float butterSpeedMultiplier = 1.4f;
-    [SerializeField] private float stickySlowMultiplier = 0.35f;
-    [SerializeField] private float chocolateSpeedMultiplier = 1.25f;
-
-    private readonly Dictionary<IngredientType, ActiveAbility> activeAbilities = new();
-    private static readonly List<IngredientType> expiredBuffer = new();
-
-    private int stickyZoneDepth;
+    // Optional expiry coroutine (if duration > 0 is used)
+    private Coroutine _expireRoutine;
 
     private void Awake()
     {
-        colorController = GetComponent<PlayerColorController>();
+        // Start clean
+        ApplyVisualsFor(CurrentAbility);
     }
 
-
-    private void Update()
+    // ─────────────────────────────────────────────────────────────────────────────
+    // Back-compat shim for pickups (supports optional duration)
+    // ─────────────────────────────────────────────────────────────────────────────
+    public void GrantAbility(IngredientType newAbility, float durationSeconds)
     {
-        if (activeAbilities.Count == 0) return;
+        SetCurrentAbility(newAbility);
 
-        expiredBuffer.Clear();
-        foreach (KeyValuePair<IngredientType, ActiveAbility> entry in activeAbilities)
+        if (Application.isPlaying && durationSeconds > 0f)
         {
-            entry.Value.Tick(Time.deltaTime);
-            if (entry.Value.IsExpired)
-            {
-                expiredBuffer.Add(entry.Key);
-            }
-        }
-
-        for (int i = 0; i < expiredBuffer.Count; i++)
-        {
-            IngredientType expiredType = expiredBuffer[i];
-            activeAbilities.Remove(expiredType);
-
-            if (expiredType == IngredientType.Butter)
-            {
-                if (!IsInsideStickyZone() && colorController != null)
-                    colorController.StopPowerAnimation(expiredType);
-            }
-            else
-            {
-                if (colorController != null)
-                    colorController.StopPowerAnimation(expiredType);
-            }
-        }
-
-        if (activeAbilities.Count == 0 && colorController != null && !IsInsideStickyZone())
-        {
-            colorController.StopPowerAnimation();
+            if (_expireRoutine != null) StopCoroutine(_expireRoutine);
+            _expireRoutine = StartCoroutine(ExpireAfter(durationSeconds, newAbility));
         }
     }
 
-
-    public void GrantAbility(IngredientType type, float durationSeconds)
+    private IEnumerator ExpireAfter(float seconds, IngredientType abilityGranted)
     {
-        activeAbilities[type] = new ActiveAbility(type, durationSeconds);
-
-        if (colorController != null)
+        yield return new WaitForSeconds(seconds);
+        // Only clear if the same ability is still active
+        if (CurrentAbility == abilityGranted)
         {
-            colorController.PlayPowerAnimation(type);
+            ClearCurrentAbilityEffects();
+            CurrentAbility = IngredientType.None;
+            ApplyVisualsFor(CurrentAbility);
         }
+        _expireRoutine = null;
     }
 
-    public bool ConsumeAbility(IngredientType type)
+    // ─────────────────────────────────────────────────────────────────────────────
+    // Single-slot ability API
+    // ─────────────────────────────────────────────────────────────────────────────
+    public void SetCurrentAbility(IngredientType newAbility)
     {
-        if (!HasAbility(type)) return false;
+        if (newAbility == CurrentAbility) return;
 
-        activeAbilities.Remove(type);
+        if (_expireRoutine != null) { StopCoroutine(_expireRoutine); _expireRoutine = null; }
 
-        if (colorController != null)
-        {
-            colorController.StopPowerAnimation(type);
-        }
+        // Clear old effects, then set & apply new
+        ClearCurrentAbilityEffects();
+        CurrentAbility = newAbility;
+        ApplyCurrentAbilityEffects();
+        ApplyVisualsFor(CurrentAbility);
+    }
 
+    public bool HasAbility(IngredientType t) => CurrentAbility == t;
+
+    public bool ConsumeAbility(IngredientType t)
+    {
+        if (CurrentAbility != t) return false;
+
+        if (_expireRoutine != null) { StopCoroutine(_expireRoutine); _expireRoutine = null; }
+        ClearCurrentAbilityEffects();
+        CurrentAbility = IngredientType.None;
+        ApplyVisualsFor(CurrentAbility);
         return true;
     }
 
-    public bool TryConsumeAnyAbility(out IngredientType consumedType)
+    public bool TryConsumeAnyAbility(out IngredientType consumed)
     {
-        if (activeAbilities.Count == 0)
+        if (CurrentAbility == IngredientType.None)
         {
-            consumedType = default;
+            consumed = IngredientType.None;
             return false;
         }
 
-        using Dictionary<IngredientType, ActiveAbility>.Enumerator enumerator = activeAbilities.GetEnumerator();
-        if (!enumerator.MoveNext())
-        {
-            consumedType = default;
-            return false;
-        }
-
-        consumedType = enumerator.Current.Key;
-        ConsumeAbility(consumedType);
+        consumed = CurrentAbility;
+        if (_expireRoutine != null) { StopCoroutine(_expireRoutine); _expireRoutine = null; }
+        ClearCurrentAbilityEffects();
+        CurrentAbility = IngredientType.None;
+        ApplyVisualsFor(CurrentAbility);
         return true;
     }
 
-    public bool HasAbility(IngredientType type)
-    {
-        return activeAbilities.ContainsKey(type);
-    }
+    // Called by StickyZone
+    public void EnterStickyZone() => _inStickyZone = true;
+    public void ExitStickyZone()  => _inStickyZone = false;
 
-    public void EnterStickyZone()
+    // ─────────────────────────────────────────────────────────────────────────────
+    // Movement helpers (for PlayerController2D)
+    // ─────────────────────────────────────────────────────────────────────────────
+    public float CurrentSpeedMultiplier
     {
-        stickyZoneDepth++;
-         if (HasAbility(IngredientType.Butter) && colorController != null)
+        get
         {
-            colorController.PlayPowerAnimation(IngredientType.Butter);
+            if (_inStickyZone && CurrentAbility != IngredientType.Butter)
+                return stickySlowMultiplier;
+
+            if (CurrentAbility == IngredientType.Butter)
+                return butterSpeedMultiplier;
+
+            return 1f;
         }
     }
 
-    public void ExitStickyZone()
-    {
-        stickyZoneDepth = Mathf.Max(0, stickyZoneDepth - 1);
+    /// <summary> Back-compat for existing PlayerController2D code. </summary>
+    public float GetMoveSpeedMultiplier() => CurrentSpeedMultiplier;
 
-        if (stickyZoneDepth == 0)
-        {
-            if (!HasAbility(IngredientType.Butter) && colorController != null)
-            {
-                colorController.StopAllPowerAnimationsInstant();
-            }
-        }
+    public float GetMoveSpeed(float externalMultiplier = 1f)
+        => baseSpeed * CurrentSpeedMultiplier * Mathf.Max(0.0001f, externalMultiplier);
+
+    // ─────────────────────────────────────────────────────────────────────────────
+    // Effects plumbing (extend if you add ongoing auras, timers, etc.)
+    // ─────────────────────────────────────────────────────────────────────────────
+    private void ApplyCurrentAbilityEffects()
+    {
+        // Example: if (CurrentAbility == IngredientType.Garlic) EnableGarlicAura();
     }
 
-
-    public float GetMoveSpeedMultiplier()
+    private void ClearCurrentAbilityEffects()
     {
-        float multiplier = 1f;
-
-        if (IsInsideStickyZone() && !HasAbility(IngredientType.Butter))
-        {
-            multiplier *= stickySlowMultiplier;
-        }
-
-        if (HasAbility(IngredientType.Butter))
-        {
-            multiplier *= butterSpeedMultiplier;
-        }
-
-        if (HasAbility(IngredientType.Chocolate))
-        {
-            multiplier *= chocolateSpeedMultiplier;
-        }
-
-        return multiplier;
+        // Example: DisableGarlicAura(); reset per-ability flags, etc.
     }
 
-    private bool IsInsideStickyZone()
+    // ─────────────────────────────────────────────────────────────────────────────
+    // UI / Visual feedback (no hard references; optional)
+    // ─────────────────────────────────────────────────────────────────────────────
+    private void ApplyVisualsFor(IngredientType ability)
     {
-        return stickyZoneDepth > 0;
+        if (!broadcastAbilityChanged) return;
+
+        // Notify any component on this GameObject or its parents that implements:
+        //   void OnAbilityChanged(IngredientType ability)
+        // This avoids compile-time dependencies on specific classes/method names.
+        SendMessage("OnAbilityChanged", ability, SendMessageOptions.DontRequireReceiver);
     }
 }
