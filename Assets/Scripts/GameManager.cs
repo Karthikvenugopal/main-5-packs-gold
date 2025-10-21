@@ -16,8 +16,6 @@ public class GameManager : MonoBehaviour
     private float timeLimit = 120f;
     private float currentTime;
     private bool isGameActive = true;
-
-    // Track which ingredients are collected
     private HashSet<IngredientType> collectedIngredients = new HashSet<IngredientType>();
 
     void Awake()
@@ -66,9 +64,6 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    // ───────────────────────────────
-    // Called when player collects an ingredient
-    // ───────────────────────────────
     public void OnIngredientEaten(IngredientType type)
     {
         if (!isGameActive) return;
@@ -76,9 +71,6 @@ public class GameManager : MonoBehaviour
         Debug.Log($"Collected: {type}");
     }
 
-    // ───────────────────────────────
-    // Called when player reaches Exit
-    // ───────────────────────────────
     public void OnExitReached()
     {
         if (!isGameActive) return;
@@ -93,7 +85,6 @@ public class GameManager : MonoBehaviour
         }
         else
         {
-            // Build the missing ingredient reason
             List<string> missing = new List<string>();
             if (!hasChili) missing.Add("Chili");
             if (!hasButter) missing.Add("Butter");
@@ -102,7 +93,7 @@ public class GameManager : MonoBehaviour
             string reason = "Oops! You missed " + string.Join(", ", missing) + "!";
 
             Debug.Log(reason);
-            LoseGame(reason); // ✅ this now works perfectly
+            LoseGame(reason); 
         }
     }
 
@@ -129,7 +120,7 @@ public class GameManager : MonoBehaviour
         isGameActive = false;
         Time.timeScale = 0f;
         uiCanvas.gameOverPanel.SetActive(true);
-            // ✅ Add this here
+
         if (uiCanvas.loseReasonText != null)
         {
             uiCanvas.loseReasonText.text = reason;
