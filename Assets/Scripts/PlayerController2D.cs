@@ -30,6 +30,10 @@ public class PlayerController2D : MonoBehaviour
         moveInput = new Vector2(moveX, moveY).normalized;
     }
 
+
+
+    // In PlayerController2D.cs
+
     void FixedUpdate()
     {
         if (moveInput == Vector2.zero) return;
@@ -46,17 +50,48 @@ public class PlayerController2D : MonoBehaviour
         RaycastHit2D hit = Physics2D.BoxCast(rb.position, col.size * 0.9f, 0f, moveInput, moveAmount.magnitude, wallLayer);
         bool blocked = hit.collider != null;
 
-        if (blocked && abilityController != null)
+        if (blocked) // We check for any block first
         {
-            if (hit.collider.TryGetComponent(out IceWall iceWall))
+            // 1. Check if the object we hit has the "RightWall" tag.
+            if (hit.collider.CompareTag("RightWall"))
             {
-                if (iceWall.TryMelt(abilityController))
-                    blocked = false;
+                // 2. Find the tutorial manager.
+                GameManagerTutorial tutorialManager = FindFirstObjectByType<GameManagerTutorial>();
+                if (tutorialManager != null)
+                {
+                    // 3. Call the new, specific method to report the event.
+                    tutorialManager.OnPlayerHitRightWall();
+                    
+                    // We return here because we don't need to check for other interactions like IceWall on the same frame.
+                    return; 
+                }
             }
-            else if (hit.collider.TryGetComponent(out WaterPatch waterPatch))
+
+            // Your existing logic for interactive objects like IceWall.
+            if (abilityController != null)
             {
-                if (waterPatch.TrySoak(abilityController))
-                    blocked = false;
+                if (hit.collider.TryGetComponent(out IceWall iceWall))
+                {
+                    if (iceWall.TryMelt(abilityController))
+                    {
+                        blocked = false;
+                    }
+                    else
+                    {
+                        GameManagerTutorial tutorialManager = FindFirstObjectByType<GameManagerTutorial>();
+                        if (tutorialManager != null)
+                        {
+                            tutorialManager.OnPlayerHitIceWall();
+                        }
+                    }
+                }
+                else if (hit.collider.TryGetComponent(out WaterPatch waterPatch))
+                {
+                    if (waterPatch.TrySoak(abilityController))
+                    {
+                        blocked = false;
+                    }
+                }
             }
         }
 

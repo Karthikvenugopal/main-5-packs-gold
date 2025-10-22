@@ -1,170 +1,167 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using TMPro;
+using System;
+using UnityEngine.UI;
 using System.Collections;
 
 public class GameManagerTutorial : MonoBehaviour
 {
-    [Header("UI")]
-    public TextMeshProUGUI instructionText;
+    public enum TutorialStep { Intro, TryForButter, HitIceWall, GetChili, MeltIce, FinalPopup, Completed }
+    private TutorialStep currentStep;
+
+    [Header("Dependencies")]
+    public MazeBuilderTutorial mazeBuilder;
+    private UICanvas uiCanvas;
+
+    [Header("UI Panels")]
     public GameObject endPanel;
 
-    private int step = 0;
+    [Header("Animation Settings")]
+    public float animationDuration = 0.3f;
+    public Vector3 startScale = new Vector3(0.7f, 0.7f, 1f);
 
     private bool chiliCollected = false;
     private bool iceMelted = false;
     private bool butterCollected = false;
-    private bool stickyPassed = false;
-    private bool breadCollected = false;
-    private bool waterCleared = false;
-
-    private int totalIngredients = 0;
+    private bool breadCollected = false; // Added for completeness
+    private bool stickyPassed = false; // Added for completeness
+    private bool waterCleared = false; // Added for completeness
     private int collectedIngredients = 0;
-
-    private string[] tutorialSteps = {
-        "Use W, A, S, D or Arrow keys to move!",
-        "Now collect the CHILI to melt ice walls",
-        "Great! Melt the ICE wall to move forward",
-        "Awesome! Collect the BUTTER to glide through sticky floors",
-        "Now glide through the sticky floor to continue!",
-        "Great! Grab the BREAD to absorb water",
-        "Use the BREAD to absorb the water patches",
-        "Perfect! Tutorial Complete — You're ready to play the real game!"
-    };
-
+    private int totalIngredients = 0;
+    
     void Start()
     {
+        // UPDATED: Changed to the new recommended function to fix the warning
+        uiCanvas = FindFirstObjectByType<UICanvas>();
+        if (uiCanvas == null) {
+            Debug.LogError("UICanvas script not found in scene!");
+            return;
+        }
+
+        uiCanvas.tutorialPopupPanel.GetComponent<CanvasGroup>().alpha = 0f;
+        uiCanvas.tutorialPopupPanel.SetActive(false);
+        if (endPanel != null) endPanel.SetActive(false);
         Time.timeScale = 1f;
-        endPanel.SetActive(false);
 
-        totalIngredients = GameObject.FindGameObjectsWithTag("Ingredient").Length;
-        collectedIngredients = 0;
-
-        ShowStep();
-
-        StartCoroutine(AutoAdvanceAfterDelay(2f));
+        GoToStep(TutorialStep.Intro);
     }
 
-    private IEnumerator AutoAdvanceAfterDelay(float delay)
+    void GoToStep(TutorialStep nextStep)
     {
-        yield return new WaitForSeconds(delay);
-        if (step == 0)
+        currentStep = nextStep;
+        switch (currentStep)
         {
-            NextStep();
+            case TutorialStep.Intro:
+                mazeBuilder.BuildTutorialLevel(1);
+                totalIngredients = GameObject.FindGameObjectsWithTag("Ingredient").Length;
+                collectedIngredients = 0;
+                ShowPopup("Use W, A, S, D or Arrow keys to move.\nTry to collect the butter!", () => GoToStep(TutorialStep.TryForButter));
+                break;
+            case TutorialStep.TryForButter:
+                break;
+            case TutorialStep.HitIceWall:
+                ShowPopup("Oops! You can't go through ice.\nMaybe chili can help?", () => GoToStep(TutorialStep.GetChili));
+                break;
+            case TutorialStep.GetChili:
+                mazeBuilder.BuildTutorialLevel(3);
+                totalIngredients = GameObject.FindGameObjectsWithTag("Ingredient").Length;
+                collectedIngredients = 0;
+                GameObject player = GameObject.FindGameObjectWithTag("Player");
+                if (player != null) player.transform.position = mazeBuilder.currentPlayerSpawnPoint;
+                break;
+            case TutorialStep.MeltIce:
+                ShowPopup("Great! You've got the Chili power.\nNow try melting that ice wall!", () => {});
+                break;
+            case TutorialStep.FinalPopup:
+                ShowPopup("Yay, You did it! Now try to beat the maze!", 
+                () => GoToStep(TutorialStep.Completed));
+                break;
+            case TutorialStep.Completed:
+                Time.timeScale = 1f;
+                SceneManager.LoadScene("SampleScene");
+                break;
         }
     }
 
-    private void ShowStep()
+    IEnumerator AnimatePopup(bool showing, string message, Action onContinueCallback)
     {
-        instructionText.text = tutorialSteps[Mathf.Clamp(step, 0, tutorialSteps.Length - 1)];
-    }
+        GameObject panel = uiCanvas.tutorialPopupPanel;
+        CanvasGroup canvasGroup = panel.GetComponent<CanvasGroup>();
+        Transform panelTransform = panel.transform;
+        
+        float startAlpha = showing ? 0f : 1f;
+        float endAlpha = showing ? 1f : 0f;
+        Vector3 startScaleVec = showing ? startScale : Vector3.one;
+        Vector3 endScaleVec = showing ? Vector3.one : startScale;
 
+        if (showing) { uiCanvas.popupText.text = message; panel.SetActive(true); }
 
-    public void OnChiliCollected()
-    {
-        StopAllCoroutines();
-        collectedIngredients++;
-
-        if (!chiliCollected)
+        float time = 0f;
+        while (time < animationDuration)
         {
-            chiliCollected = true;
-            step = Mathf.Max(step, 2);
-            ShowStep();
+            time += Time.unscaledDeltaTime;
+            float progress = Mathf.Clamp01(time / animationDuration);
+            canvasGroup.alpha = Mathf.Lerp(startAlpha, endAlpha, progress);
+            panelTransform.localScale = Vector3.Lerp(startScaleVec, endScaleVec, progress);
+            yield return null;
         }
 
-        CheckForTutorialCompletion();
-    }
+        canvasGroup.alpha = endAlpha;
+        panelTransform.localScale = endScaleVec;
 
-    public void OnIceWallMelted()
-    {
-        if (!iceMelted)
+        if (showing)
         {
-            iceMelted = true;
-            step = Mathf.Max(step, 3);
-            ShowStep();
+            Time.timeScale = 0f;
+            uiCanvas.continueButton.onClick.RemoveAllListeners();
+            uiCanvas.continueButton.onClick.AddListener(() => {
+                StartCoroutine(AnimatePopup(false, "", onContinueCallback));
+            });
+        }
+        else
+        {
+            panel.SetActive(false);
+            Time.timeScale = 1f;
+            onContinueCallback?.Invoke();
         }
     }
-
-    public void OnButterCollected()
+    
+    void ShowPopup(string message, Action onContinueCallback)
     {
-        collectedIngredients++;
-
-        if (!butterCollected)
-        {
-            butterCollected = true;
-            step = Mathf.Max(step, 4);
-            ShowStep();
-        }
-
-        CheckForTutorialCompletion();
+        StartCoroutine(AnimatePopup(true, message, onContinueCallback));
+    }
+    
+    public void OnPlayerHitRightWall()
+    {
+        // When this event is received, go directly to the final popup step.
+        GoToStep(TutorialStep.FinalPopup);
     }
 
-    public void OnStickyZonePassed()
-    {
-        if (!stickyPassed)
-        {
-            stickyPassed = true;
-            step = Mathf.Max(step, 5);
-            ShowStep();
-        }
+
+    // --- Public Event Handlers ---
+
+    public void OnPlayerHitIceWall() { if (currentStep == TutorialStep.TryForButter) GoToStep(TutorialStep.HitIceWall); }
+    public void OnChiliCollected() { if (!chiliCollected) { chiliCollected = true; collectedIngredients++; if (currentStep == TutorialStep.GetChili) GoToStep(TutorialStep.MeltIce); CheckForTutorialCompletion(); } }
+    public void OnIceWallMelted() { if (!iceMelted) { iceMelted = true; CheckForTutorialCompletion(); } }
+    public void OnButterCollected() {
+        if (!butterCollected) {
+            butterCollected = true; 
+            collectedIngredients++; 
+            CheckForTutorialCompletion(); 
+        } 
     }
-
-    public void OnBreadCollected()
-    {
-        collectedIngredients++;
-
-        if (!breadCollected)
-        {
-            breadCollected = true;
-            step = Mathf.Max(step, 6);
-            ShowStep();
-        }
-
-        CheckForTutorialCompletion();
-    }
-
-    public void OnWaterPatchCleared()
-    {
-        if (!waterCleared)
-        {
-            waterCleared = true;
-            step = Mathf.Max(step, 7);
-            ShowStep();
-        }
-    }
+    
+    // --- ADDED MISSING METHODS TO FIX ERRORS ---
+    public void OnBreadCollected() { if (!breadCollected) { breadCollected = true; collectedIngredients++; CheckForTutorialCompletion(); } }
+    public void OnStickyZonePassed() { if (!stickyPassed) { stickyPassed = true; Debug.Log("Player passed a sticky zone."); } }
+    public void OnWaterPatchCleared() { if (!waterCleared) { waterCleared = true; Debug.Log("Player cleared a water patch."); } }
+    // --- END OF ADDED METHODS ---
 
     private void CheckForTutorialCompletion()
     {
-        if (collectedIngredients >= totalIngredients)
+        if (collectedIngredients >= totalIngredients && currentStep >= TutorialStep.MeltIce)
         {
-            EndTutorial();
+            GoToStep(TutorialStep.FinalPopup);
         }
-    }
-
-    private void EndTutorial()
-    {
-        if (endPanel.activeSelf) return; 
-
-        endPanel.SetActive(true);
-        instructionText.text = tutorialSteps[tutorialSteps.Length - 1];
-        Time.timeScale = 0f;
-        Debug.Log("🎉 Tutorial completed — all ingredients collected!");
-    }
-
-    public void RetryTutorial()
-    {
-        SceneManager.LoadScene("DemoTutorialScene");
-    }
-
-    public void PlayGame()
-    {
-        SceneManager.LoadScene("SampleScene");
-    }
-
-    private void NextStep()
-    {
-        step++;
-        if (step < tutorialSteps.Length)
-            ShowStep();
     }
 }
