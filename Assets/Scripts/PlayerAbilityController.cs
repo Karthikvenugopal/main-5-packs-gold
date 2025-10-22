@@ -15,20 +15,19 @@ public class PlayerAbilityController : MonoBehaviour
 {
     [Header("Movement & Effects")]
     [SerializeField] private float baseSpeed = 4f;
-    [SerializeField] private float butterSpeedMultiplier = 1.15f;   // feel-good buff when Butter is active
-    [SerializeField] private float stickySlowMultiplier  = 0.60f;   // movement in sticky without Butter
+    [SerializeField] private float butterSpeedMultiplier = 1.15f;   
+    [SerializeField] private float stickySlowMultiplier  = 0.60f;   // movement is sticky without Butter
 
     [Header("UI / FX Broadcast")]
     [Tooltip("If true, will SendMessage(\"OnAbilityChanged\", IngredientType) when ability changes.")]
     [SerializeField] private bool broadcastAbilityChanged = true;
 
-    /// <summary> The single, currently held ability (last ingredient picked). </summary>
     public IngredientType CurrentAbility { get; private set; } = IngredientType.None;
 
     // State
     private bool _inStickyZone;
 
-    // Optional expiry coroutine (if duration > 0 is used)
+    // (if duration > 0 is used)
     private Coroutine _expireRoutine;
 
     private void Awake()
@@ -37,9 +36,6 @@ public class PlayerAbilityController : MonoBehaviour
         ApplyVisualsFor(CurrentAbility);
     }
 
-    // ─────────────────────────────────────────────────────────────────────────────
-    // Back-compat shim for pickups (supports optional duration)
-    // ─────────────────────────────────────────────────────────────────────────────
     public void GrantAbility(IngredientType newAbility, float durationSeconds)
     {
         SetCurrentAbility(newAbility);
@@ -73,7 +69,7 @@ public class PlayerAbilityController : MonoBehaviour
 
         if (_expireRoutine != null) { StopCoroutine(_expireRoutine); _expireRoutine = null; }
 
-        // Clear old effects, then set & apply new
+        // Clear old effects
         ClearCurrentAbilityEffects();
         CurrentAbility = newAbility;
         ApplyCurrentAbilityEffects();
@@ -130,35 +126,31 @@ public class PlayerAbilityController : MonoBehaviour
         }
     }
 
-    /// <summary> Back-compat for existing PlayerController2D code. </summary>
+    /// Back-compat for existing PlayerController2D code. 
     public float GetMoveSpeedMultiplier() => CurrentSpeedMultiplier;
 
     public float GetMoveSpeed(float externalMultiplier = 1f)
         => baseSpeed * CurrentSpeedMultiplier * Mathf.Max(0.0001f, externalMultiplier);
 
-    // ─────────────────────────────────────────────────────────────────────────────
-    // Effects plumbing (extend if you add ongoing auras, timers, etc.)
-    // ─────────────────────────────────────────────────────────────────────────────
     private void ApplyCurrentAbilityEffects()
     {
-        // Example: if (CurrentAbility == IngredientType.Garlic) EnableGarlicAura();
+        // if (CurrentAbility == IngredientType.Garlic) EnableGarlicAura();
     }
 
     private void ClearCurrentAbilityEffects()
     {
-        // Example: DisableGarlicAura(); reset per-ability flags, etc.
+        // DisableGarlicAura(); reset per-ability flags, etc.
     }
 
     // ─────────────────────────────────────────────────────────────────────────────
-    // UI / Visual feedback (no hard references; optional)
+    // UI / Visuals
     // ─────────────────────────────────────────────────────────────────────────────
     private void ApplyVisualsFor(IngredientType ability)
     {
         if (!broadcastAbilityChanged) return;
 
-        // Notify any component on this GameObject or its parents that implements:
+        // Notify any component on this GameObject that implements:
         //   void OnAbilityChanged(IngredientType ability)
-        // This avoids compile-time dependencies on specific classes/method names.
         SendMessage("OnAbilityChanged", ability, SendMessageOptions.DontRequireReceiver);
     }
 }

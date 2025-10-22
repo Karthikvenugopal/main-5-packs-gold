@@ -24,15 +24,14 @@ public class GameManagerTutorial : MonoBehaviour
     private bool chiliCollected = false;
     private bool iceMelted = false;
     private bool butterCollected = false;
-    private bool breadCollected = false; // Added for completeness
-    private bool stickyPassed = false; // Added for completeness
-    private bool waterCleared = false; // Added for completeness
+    private bool breadCollected = false; 
+    private bool stickyPassed = false; 
+    private bool waterCleared = false; 
     private int collectedIngredients = 0;
     private int totalIngredients = 0;
     
     void Start()
     {
-        // UPDATED: Changed to the new recommended function to fix the warning
         uiCanvas = FindFirstObjectByType<UICanvas>();
         if (uiCanvas == null) {
             Debug.LogError("UICanvas script not found in scene!");
@@ -133,7 +132,6 @@ public class GameManagerTutorial : MonoBehaviour
     
     public void OnPlayerHitRightWall()
     {
-        // When this event is received, go directly to the final popup step.
         GoToStep(TutorialStep.FinalPopup);
     }
 
@@ -151,7 +149,6 @@ public class GameManagerTutorial : MonoBehaviour
         } 
     }
     
-    // --- ADDED MISSING METHODS TO FIX ERRORS ---
     public void OnBreadCollected() { if (!breadCollected) { breadCollected = true; collectedIngredients++; CheckForTutorialCompletion(); } }
     public void OnStickyZonePassed() { if (!stickyPassed) { stickyPassed = true; Debug.Log("Player passed a sticky zone."); } }
     public void OnWaterPatchCleared() { if (!waterCleared) { waterCleared = true; Debug.Log("Player cleared a water patch."); } }
