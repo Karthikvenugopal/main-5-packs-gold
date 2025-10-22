@@ -25,7 +25,7 @@ public class PlayerController2D : MonoBehaviour
         float moveX = Input.GetAxisRaw("Horizontal");
         float moveY = Input.GetAxisRaw("Vertical");
 
-        if (Mathf.Abs(moveX) > 0.01f) moveY = 0f;
+        //if (Mathf.Abs(moveX) > 0.01f) moveY = 0f;
 
         moveInput = new Vector2(moveX, moveY).normalized;
     }
