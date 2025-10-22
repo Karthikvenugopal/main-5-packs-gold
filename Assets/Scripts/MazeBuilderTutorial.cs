@@ -60,25 +60,36 @@ public class MazeBuilderTutorial : MonoBehaviour
         "#S C I B#",
         "#########"
     };
-    
-    private string[] tutorialLayout_Step4 = 
+
+    private string[] tutorialLayout_Step4 =
     {
-        "###############",
-            "#.............#",
-            "#..####.##..#.#",
-            "#..#..#.#.~~#.#",
-            "#.C#..#.#.~~W.#",
-            "#..#..###.##..#",
-            "#..#~~~~~~...I#",
-            "#..#~~~~~~.##I#",
-            "##.#######.##I#",
-            "##.#.......#..#",
-            "#..#.#.###.####",
-            "#..#.#.###..W.#",
-            "#..#.#...#....E",
-            "#S.#.#...####.#",
-            "###############"
+    "################",
+    "#........B.#.#.#",
+    "#.###.######.#R#",
+    "#I#.#...#.......#",
+    "#.#.#~~~#..P....#",
+    "#.#.#~~~#.....###",
+    "#.#...###...#...#",
+    "#.##........#.W.#",
+    "#.C#.^.##...#...#",
+    "#..#...#....#...#",
+    "#.##...###..#...#",
+    "#S#.........#...#",
+    "#################"
     };
+    // "###################",
+    // "#S....#.....#.....#",
+    // "#.##..#..#..#..#..#",
+    // "#.#...#..#..#..#..#",
+    // "#.#...####..####..#",
+    // "#.#.............#.#",
+    // "#.####..#####..#..#",
+    // "#.....#.....#..#..#",
+    // "###.#.#####.#.##..#",
+    // "#...#.......#.....#",
+    // "#...#########..#..#",
+    // "#..............#E.#",
+    // "###################"
 
     // This will keep track of all spawned objects so we can clean them up.
     private GameObject generatedMazeContainer;
@@ -256,7 +267,7 @@ public class MazeBuilderTutorial : MonoBehaviour
     void SpawnRollingPin(Vector2 position, Vector2 direction)
     {
         if (rollingPinPrefab == null) return;
-        GameObject pin = Instantiate(rollingPinPrefab, position, Quaternion.identity, transform);
+        GameObject pin = Instantiate(rollingPinPrefab, position, Quaternion.identity, generatedMazeContainer.transform);
         RollingPinEnemy enemy = pin.GetComponent<RollingPinEnemy>();
         if (enemy != null)
         {
