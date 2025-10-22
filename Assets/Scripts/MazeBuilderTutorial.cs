@@ -40,9 +40,7 @@ public class MazeBuilderTutorial : MonoBehaviour
         "#############"
     };
 
-    // In MazeBuilderTutorial.cs
-
-    // Step 1 Layout: Player, Ice, Butter
+    // Player, Ice, Butter
     private string[] tutorialLayout_Step1 = 
     {
         "#######",
@@ -50,7 +48,7 @@ public class MazeBuilderTutorial : MonoBehaviour
         "#######"
     };
 
-    // Step 3 Layout: Player, Chili, Ice, Butter
+    // Player, Chili, Ice, Butter
     private string[] tutorialLayout_Step3 = 
     {
         "#########",
@@ -58,7 +56,7 @@ public class MazeBuilderTutorial : MonoBehaviour
         "#########"
     };
 
-    // This will keep track of all spawned objects so we can clean them up.
+    // tracking all spawned objects so we can clean them up.
     private GameObject generatedMazeContainer;
 
 
@@ -132,10 +130,10 @@ public class MazeBuilderTutorial : MonoBehaviour
         GameObject wall = Instantiate(wallPrefab, position, Quaternion.identity, generatedMazeContainer.transform);
         if (currentBuildingLayout == tutorialLayout_Step3)
         {
-            // 2. If it is, THEN check if this is the right-most wall.
+            // THEN check if this is the right-most wall.
             if (x_coordinate == currentBuildingLayout[0].Length - 1)
             {
-                // 3. Only if both are true, add the special tag.
+                // Only if both are true, add the special tag.
                 wall.tag = "RightWall";
                 Debug.Log($"RightWall tag added to wall at X coordinate: {x_coordinate}"); // For confirmation
             }
@@ -362,10 +360,8 @@ public class MazeBuilderTutorial : MonoBehaviour
         }
     }
 
-    //Add of pre-intro steps
     public void ClearMaze()
     {
-        // If the container from the previous maze exists, destroy it.
         if (generatedMazeContainer != null)
         {
             Debug.Log("Destroying the entire old maze container.");
