@@ -6,6 +6,7 @@ TagManager:
   tags:
   - Ingredient
   - Exit
+  - RightWall
   layers:
   - Default
   - TransparentFX

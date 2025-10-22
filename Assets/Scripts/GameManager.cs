@@ -1,6 +1,8 @@
+using System.Collections;          
+using System.Collections.Generic;  
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using System.Collections.Generic;
+
 
 public class GameManager : MonoBehaviour
 {
@@ -13,10 +15,11 @@ public class GameManager : MonoBehaviour
 
     private UICanvas uiCanvas;
 
-    private float timeLimit = 120f;
+    private float timeLimit = 90f;
     private float currentTime;
     private bool isGameActive = true;
-    private HashSet<IngredientType> collectedIngredients = new HashSet<IngredientType>();
+    private Dictionary<IngredientType, int> collectedIngredients = new Dictionary<IngredientType, int>();
+
 
     void Awake()
     {
@@ -28,7 +31,6 @@ public class GameManager : MonoBehaviour
         }
         else
         {
-            Debug.LogError("UI Prefab is not assigned in the GameManager inspector!");
             return;
         }
 
@@ -67,35 +69,58 @@ public class GameManager : MonoBehaviour
     public void OnIngredientEaten(IngredientType type)
     {
         if (!isGameActive) return;
-        collectedIngredients.Add(type);
-        Debug.Log($"Collected: {type}");
+
+        if (!collectedIngredients.ContainsKey(type))
+            collectedIngredients[type] = 0;
+
+        collectedIngredients[type] += 1;
+
+        Debug.Log($"Collected: {type}, total count = {collectedIngredients[type]}");
     }
+
 
     public void OnExitReached()
     {
         if (!isGameActive) return;
 
-        bool hasChili = collectedIngredients.Contains(IngredientType.Chili);
-        bool hasButter = collectedIngredients.Contains(IngredientType.Butter);
-        bool hasBread = collectedIngredients.Contains(IngredientType.Bread);
+        int requiredCount = 2;
 
-        if (hasChili && hasButter && hasBread)
+        int GetCount(IngredientType type)
+        {
+            return collectedIngredients.ContainsKey(type) ? collectedIngredients[type] : 0;
+        }
+        int chiliCount = GetCount(IngredientType.Chili);
+        int butterCount = GetCount(IngredientType.Butter);
+        int breadCount = GetCount(IngredientType.Bread);
+
+        bool hasEnoughChili = chiliCount >= requiredCount;
+        bool hasEnoughButter = butterCount >= requiredCount;
+        bool hasEnoughBread = breadCount >= requiredCount;
+
+        if (hasEnoughChili && hasEnoughButter && hasEnoughBread)
         {
             WinGame();
         }
         else
         {
             List<string> missing = new List<string>();
-            if (!hasChili) missing.Add("Chili");
-            if (!hasButter) missing.Add("Butter");
-            if (!hasBread) missing.Add("Bread");
 
-            string reason = "Oops! You missed " + string.Join(", ", missing) + "!";
+            if (!hasEnoughChili)
+                missing.Add($"Chili ({chiliCount}/{requiredCount})");
 
-            Debug.Log(reason);
-            LoseGame(reason); 
+            if (!hasEnoughButter)
+                missing.Add($"Butter ({butterCount}/{requiredCount})");
+
+            if (!hasEnoughBread)
+                missing.Add($"Bread ({breadCount}/{requiredCount})");
+
+            string reason = "Oops! You only collected:\n" + string.Join(", ", missing);
+            LoseGame(reason);
         }
     }
+
+
+
 
 
     private void WinGame()
@@ -117,14 +142,34 @@ public class GameManager : MonoBehaviour
 
     private void LoseGame(string reason = "")
     {
+        if (!isGameActive) return; 
+
         isGameActive = false;
         Time.timeScale = 0f;
-        uiCanvas.gameOverPanel.SetActive(true);
 
-        if (uiCanvas.loseReasonText != null)
-        {
+        if (uiCanvas != null)
+            uiCanvas.gameOverPanel.SetActive(true);
+
+        if (uiCanvas != null && uiCanvas.loseReasonText != null)
             uiCanvas.loseReasonText.text = reason;
-        }
+
+        Debug.Log("LoseGame() called: " + reason);
+    }
+
+
+
+    public void OnPlayerHitByEnemy()
+    {
+        if (!isGameActive) return;
+
+        isGameActive = false;
+        Time.timeScale = 0f;
+
+        if (uiCanvas != null && uiCanvas.gameOverPanel != null)
+            uiCanvas.gameOverPanel.SetActive(true);
+
+        if (uiCanvas != null && uiCanvas.loseReasonText != null)
+            uiCanvas.loseReasonText.text = "Oops! You got hit!";
     }
 
     private void UpdateTimerUI()
@@ -141,12 +186,25 @@ public class GameManager : MonoBehaviour
         SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 
+    public void ShowRestartPanel()
+    {
+        Time.timeScale = 0f;
+
+        if (uiCanvas != null)
+        {
+            uiCanvas.gameOverPanel.SetActive(true);     // show the lose panel
+            if (uiCanvas.loseReasonText != null)
+                uiCanvas.loseReasonText.text = "";      // blank out the reason
+        }
+    }
+
+
     private int CalculateStars(float time)
     {
-        if (time <= 24f) return 5;
-        if (time <= 48f) return 4;
-        if (time <= 72f) return 3;
-        if (time <= 96f) return 2;
+        if (time <= 18f) return 5;
+        if (time <= 36f) return 4;
+        if (time <= 54f) return 3;
+        if (time <= 72f) return 2;
         return 1;
     }
 }

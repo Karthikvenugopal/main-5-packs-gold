@@ -8,7 +8,7 @@ public class RollingPinCellSpawner : MonoBehaviour
     [Header("Movement Settings")]
     [SerializeField] private Vector2 spawnOffset = new Vector2(0f, -1f); 
     [SerializeField] private Vector2 moveDirection = Vector2.up;
-    [SerializeField] private float moveSpeed = 2.0f;
+    // [SerializeField] private float moveSpeed = 2.0f;
 
     private GameObject spawnedPin;
 
