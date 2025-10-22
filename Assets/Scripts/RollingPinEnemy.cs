@@ -16,6 +16,7 @@ public class RollingPinEnemy : MonoBehaviour
     private Rigidbody2D rb;
     private Vector2 moveDirection;
     private float nextAbilityStealTime;
+    private bool hasHitPlayerRecently = false;
 
     private void Awake()
     {
@@ -35,20 +36,34 @@ public class RollingPinEnemy : MonoBehaviour
     private void FixedUpdate()
     {
         if (moveDirection.sqrMagnitude < Mathf.Epsilon)
-        {
             return;
-        }
 
         Vector2 delta = moveDirection * moveSpeed * Time.fixedDeltaTime;
         Vector2 nextPosition = rb.position + delta;
 
         float checkDistance = delta.magnitude + 0.05f;
-        RaycastHit2D hit = Physics2D.CircleCast(rb.position, 0.35f, moveDirection, checkDistance, obstacleLayers);
-        if (hit.collider != null)
+        RaycastHit2D wallHit = Physics2D.CircleCast(rb.position, 0.35f, moveDirection, checkDistance, obstacleLayers);
+        if (wallHit.collider != null)
         {
             ReverseDirection();
             return;
         }
+
+        if (Mathf.Abs(moveDirection.x) > Mathf.Abs(moveDirection.y))
+        {
+            Vector2 edgeCheckOrigin = rb.position + moveDirection * 0.5f;
+            float edgeCheckDistance = 0.8f;
+            int groundMask = LayerMask.GetMask("Wall", "Floor");
+
+            RaycastHit2D edgeHit = Physics2D.Raycast(edgeCheckOrigin, Vector2.down, edgeCheckDistance, groundMask);
+
+            if (!edgeHit.collider)
+            {
+                ReverseDirection();
+                return;
+            }
+        }
+
 
         rb.MovePosition(nextPosition);
     }
@@ -61,13 +76,34 @@ public class RollingPinEnemy : MonoBehaviour
             return;
         }
 
-        if (!collision.collider.TryGetComponent(out PlayerAbilityController abilityController))
+        if (collision.collider.TryGetComponent(out PlayerAbilityController abilityController))
         {
-            return;
-        }
+            bool hasShield = abilityController.HasAbility(IngredientType.Chocolate);
 
-        HandlePlayerCollision(abilityController, collision.collider.attachedRigidbody);
+            if (hasHitPlayerRecently) return;
+            hasHitPlayerRecently = true;
+            Invoke(nameof(ResetPlayerHitFlag), 0.5f); 
+
+            if (!hasShield)
+            {
+                GameManager gm = FindAnyObjectByType<GameManager>();
+                if (gm != null)
+                {
+                    gm.OnPlayerHitByEnemy();
+                }
+            }
+            else
+            {
+                ReverseDirection();
+            }
+        }
     }
+
+    private void ResetPlayerHitFlag()
+    {
+        hasHitPlayerRecently = false;
+    }
+
 
     private void HandlePlayerCollision(PlayerAbilityController abilityController, Rigidbody2D playerRb)
     {
@@ -107,6 +143,14 @@ public class RollingPinEnemy : MonoBehaviour
     {
         moveDirection = -moveDirection;
     }
+
+    public void SetInitialDirection(Vector2 dir)
+    {
+        initialDirection = dir;
+
+        moveDirection = GetSnappedDirection(initialDirection);
+    }
+
 
     private static Vector2 GetSnappedDirection(Vector2 direction)
     {

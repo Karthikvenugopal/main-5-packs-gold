@@ -12,6 +12,8 @@ public class MazeBuilder : MonoBehaviour
     public GameObject chiliPickupPrefab;
     public GameObject butterPickupPrefab;
     public GameObject breadPickupPrefab;
+    [Header("Enemies")]
+    public GameObject rollingPinPrefab;
     [Header("Obstacle Prefabs")]
     public GameObject iceWallPrefab;
     public GameObject stickyZonePrefab;
@@ -30,21 +32,21 @@ public class MazeBuilder : MonoBehaviour
             "###################################",
             "S.....#......#.....#......#.......#",
             "####..#..##..#..#..###....#....####",
-            "#..#.....#....C.#.........I.......#",
+            "#..#.....#....C.#.........I....#..#",
             "#..##....###..#######....##.R..#.##",
             "#.....#.......B....#......####...##",
             "#.#...#....######.....#.......W..##",
-            "#.#...##~~~~~~..#...###...##......#",
-            "#.#.....~~~~~~......#.....#...C.###",
+            "#.#...##~~~~~~..#...###...####....#",
+            "#.#.^...~~~~~~......#.....#..#C.###",
             "###...#......####...#........##...#",
             "#.....#...####....#######.....###.#",
             "#...###...#.......#.B...#.......#.#",
-            "#.......................I.........#",
+            "#............P..........I.........#",
             "####...##############..####...#####",
             "#..#.......#......#......#...##...#",
-            "#..~~~~....#................W.....#",
-            "#..~~~~###.....###...#............#",
-            "#..~~~~....R...#.....#.....##.....E",
+            "#..~~~~....#.........#......W.....#",
+            "#..~~~~#####...###...#............#",
+            "#..~~~~....R...#.....#.....##...^.E",
             "###################################"
         };
 
@@ -114,6 +116,22 @@ public class MazeBuilder : MonoBehaviour
                         SpawnExit(pos);
                         break;
 
+                    case 'P': //move right
+                        SpawnFloor(pos);
+                        SpawnRollingPin(pos, Vector2.right);
+                        break;
+                    case 'p': //move left
+                        SpawnFloor(pos);
+                        SpawnRollingPin(pos, Vector2.left);
+                        break;
+                    case '^'://move up
+                        SpawnFloor(pos);
+                        SpawnRollingPin(pos, Vector2.up);
+                        break;
+                    case 'v'://move down
+                        SpawnFloor(pos);
+                        SpawnRollingPin(pos, Vector2.down);
+                        break;
 
                     case '.':
                     case ' ':
@@ -142,16 +160,26 @@ public class MazeBuilder : MonoBehaviour
     void SpawnExit(Vector2 position)
     {
         GameObject exit = new GameObject("Exit");
-        exit.transform.position = position;
+
+        exit.transform.position = position + new Vector2(0.7f, 0.5f);
         exit.transform.SetParent(transform);
 
         BoxCollider2D col = exit.AddComponent<BoxCollider2D>();
         col.isTrigger = true;
 
-        exit.tag = "Exit";
+        col.size = new Vector2(0.75f, 0.75f);
+        col.offset = Vector2.zero;
 
+        exit.tag = "Exit";
         exit.AddComponent<ExitTrigger>();
+
+        SpriteRenderer sr = exit.AddComponent<SpriteRenderer>();
+        sr.color = new Color(0f, 1f, 0f, 0.3f);
+        sr.sortingOrder = 5;
     }
+
+
+
 
     void SpawnIngredient(Vector2 position, IngredientType type, float durationSeconds)
     {
@@ -187,6 +215,15 @@ public class MazeBuilder : MonoBehaviour
 
         pickup.Configure(type, durationSeconds);
     }
+    void SpawnRollingPin(Vector2 position, Vector2 direction)
+    {
+        if (rollingPinPrefab == null) return;
+        GameObject pin = Instantiate(rollingPinPrefab, position, Quaternion.identity, transform);
+        RollingPinEnemy enemy = pin.GetComponent<RollingPinEnemy>();
+        if (enemy != null) enemy.SetInitialDirection(direction);
+    }
+
+
 
 
     void SpawnWaterPatch(Vector2 position)
