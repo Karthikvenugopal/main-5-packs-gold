@@ -14,7 +14,6 @@ GameObject:
   - component: {fileID: 7841754323236084365}
   - component: {fileID: 3907570101199488744}
   - component: {fileID: 2101589873672919440}
-  - component: {fileID: 7545437842396864644}
   m_Layer: 0
   m_Name: RollingPin
   m_TagString: Untagged
@@ -199,17 +198,3 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0c313655c5094c8c8a35bfdaf16eceec, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RollingPinVisuals
---- !u!114 &7545437842396864644
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5393905221537955907}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 30fd52f12a7282d4b83e9b221ea1696d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::KillOnPlayerContact2D
-  useTrigger: 0
-  restartDelay: 0.75

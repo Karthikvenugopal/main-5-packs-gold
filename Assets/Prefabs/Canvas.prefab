@@ -996,7 +996,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dc42784cf147c0c48a680349fa168899, type: 3}
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.GraphicRaycaster
-  m_IgnoreReversedGraphics: 1
+  m_IgnoreReversedGraphics: 0
   m_BlockingObjects: 0
   m_BlockingMask:
     serializedVersion: 2
@@ -1024,6 +1024,7 @@ MonoBehaviour:
   gameOverPanel: {fileID: 7857628248067315681}
   restartButtons:
   - {fileID: 7047857640996199994}
+  loseReasonText: {fileID: 0}
 --- !u!1 &6006313413840086296
 GameObject:
   m_ObjectHideFlags: 0
