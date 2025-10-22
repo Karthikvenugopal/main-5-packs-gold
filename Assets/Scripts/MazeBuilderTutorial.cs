@@ -21,6 +21,9 @@ public class MazeBuilderTutorial : MonoBehaviour
     public float chiliDurationSeconds = 0f;
     public float butterDurationSeconds = 12f;
 
+    [Header("Enemies")]
+    public GameObject rollingPinPrefab;
+
     [Header("Dependencies")]
     public GameManager gameManager;
 
@@ -51,11 +54,30 @@ public class MazeBuilderTutorial : MonoBehaviour
     };
 
     // Step 3 Layout: Player, Chili, Ice, Butter
-    private string[] tutorialLayout_Step3 = 
+    private string[] tutorialLayout_Step3 =
     {
         "#########",
         "#S C I B#",
         "#########"
+    };
+    
+    private string[] tutorialLayout_Step4 = 
+    {
+        "###############",
+            "#.............#",
+            "#..####.##..#.#",
+            "#..#..#.#.~~#.#",
+            "#.C#..#.#.~~W.#",
+            "#..#..###.##..#",
+            "#..#~~~~~~...I#",
+            "#..#~~~~~~.##I#",
+            "##.#######.##I#",
+            "##.#.......#..#",
+            "#..#.#.###.####",
+            "#..#.#.###..W.#",
+            "#..#.#...#....E",
+            "#S.#.#...####.#",
+            "###############"
     };
 
     // This will keep track of all spawned objects so we can clean them up.
@@ -114,6 +136,27 @@ public class MazeBuilderTutorial : MonoBehaviour
                         SpawnFloor(pos);
                         SpawnStickyZone(pos);
                         break;
+
+                    case 'P': // move right
+                        SpawnFloor(pos);
+                        SpawnRollingPin(pos, Vector2.right);
+                        break;
+
+                    case 'p': // move left
+                        SpawnFloor(pos);
+                        SpawnRollingPin(pos, Vector2.left);
+                        break;
+
+                    case '^': // move up
+                        SpawnFloor(pos);
+                        SpawnRollingPin(pos, Vector2.up);
+                        break;
+
+                    case 'v': // move down
+                        SpawnFloor(pos);
+                        SpawnRollingPin(pos, Vector2.down);
+                        break;
+
 
                     case '.':
                     case ' ':
@@ -210,6 +253,16 @@ public class MazeBuilderTutorial : MonoBehaviour
         water.layer = LayerMask.NameToLayer("Wall");
     }
 
+    void SpawnRollingPin(Vector2 position, Vector2 direction)
+    {
+        if (rollingPinPrefab == null) return;
+        GameObject pin = Instantiate(rollingPinPrefab, position, Quaternion.identity, transform);
+        RollingPinEnemy enemy = pin.GetComponent<RollingPinEnemy>();
+        if (enemy != null)
+        {
+            enemy.SetInitialDirection(direction);
+        }
+    }
 
     GameObject CreateRuntimeIngredient(IngredientType type, Vector2 position)
     {
@@ -383,6 +436,7 @@ public class MazeBuilderTutorial : MonoBehaviour
 
         if (step == 1) layoutToBuild = tutorialLayout_Step1;
         else if (step == 3) layoutToBuild = tutorialLayout_Step3;
+        else if (step == 4) layoutToBuild = tutorialLayout_Step4;
 
         this.currentBuildingLayout = layoutToBuild;
 

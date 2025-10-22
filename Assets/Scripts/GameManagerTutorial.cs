@@ -7,7 +7,7 @@ using System.Collections;
 
 public class GameManagerTutorial : MonoBehaviour
 {
-    public enum TutorialStep { Intro, TryForButter, HitIceWall, GetChili, MeltIce, FinalPopup, Completed }
+    public enum TutorialStep { Intro, TryForButter, HitIceWall, GetChili, MeltIce, FinalPopup, Step4Maze, Completed }
     private TutorialStep currentStep;
 
     [Header("Dependencies")]
@@ -75,11 +75,20 @@ public class GameManagerTutorial : MonoBehaviour
                 break;
             case TutorialStep.FinalPopup:
                 ShowPopup("Yay, You did it! Now try to beat the maze!", 
-                () => GoToStep(TutorialStep.Completed));
+                () => GoToStep(TutorialStep.Step4Maze));
+                break;
+            case TutorialStep.Step4Maze:
+                mazeBuilder.BuildTutorialLevel(4);
+                totalIngredients = GameObject.FindGameObjectsWithTag("Ingredient").Length;
+                collectedIngredients = 0;
+                player = GameObject.FindGameObjectWithTag("Player");
+                if (player != null) player.transform.position = mazeBuilder.currentPlayerSpawnPoint;
+                ShowPopup("Collect all ingredients and exit the maze!\nBeware of the Rolling Pins trying to crush you in your path!", () => { /* player starts */ });
                 break;
             case TutorialStep.Completed:
                 Time.timeScale = 1f;
-                SceneManager.LoadScene("SampleScene");
+                ShowPopup("Congratulations! You completed the tutorial!", 
+                () => SceneManager.LoadScene("SampleScene"));
                 break;
         }
     }
@@ -159,9 +168,16 @@ public class GameManagerTutorial : MonoBehaviour
 
     private void CheckForTutorialCompletion()
     {
-        if (collectedIngredients >= totalIngredients && currentStep >= TutorialStep.MeltIce)
+        if (collectedIngredients >= totalIngredients)
         {
-            GoToStep(TutorialStep.FinalPopup);
+            if (currentStep == TutorialStep.MeltIce || currentStep == TutorialStep.FinalPopup)
+            {
+                GoToStep(TutorialStep.FinalPopup);
+            }
+            else if (currentStep == TutorialStep.Step4Maze)
+            {
+                GoToStep(TutorialStep.Completed);
+            }
         }
     }
 }
