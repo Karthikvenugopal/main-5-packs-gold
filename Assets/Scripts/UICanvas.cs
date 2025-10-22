@@ -11,5 +11,13 @@ public class UICanvas : MonoBehaviour
     public GameObject gameOverPanel;
     public UnityEngine.UI.Button[] restartButtons;
     public TextMeshProUGUI loseReasonText;
+    [Header("Top Instruction Text")]
+    public TextMeshProUGUI instructionText;
+    [Header("Tutorial Popup")]
+    public GameObject tutorialPopupPanel;
+    public TextMeshProUGUI popupText;
+    public UnityEngine.UI.Button continueButton;
+
+    
 
 }

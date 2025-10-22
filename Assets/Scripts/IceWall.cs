@@ -30,6 +30,8 @@ public class IceWall : MonoBehaviour
 
     private void MeltInternal()
     {
+        // ADD THIS LINE
+        Debug.Log("An Ice Wall was melted at position: " + transform.position + " at game time: " + Time.time);
         melted = true;
         if (meltEffect != null)
         {
@@ -43,4 +45,5 @@ public class IceWall : MonoBehaviour
         }
         Destroy(gameObject);
     }
+
 }
