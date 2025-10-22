@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections.Generic;
 
 public class MazeBuilderTutorial : MonoBehaviour
 {
@@ -23,30 +24,44 @@ public class MazeBuilderTutorial : MonoBehaviour
     [Header("Dependencies")]
     public GameManager gameManager;
 
-    void Start()
+    public Vector2 currentPlayerSpawnPoint;
+    private string[] currentBuildingLayout; // This will remember the layout being built.
+
+    string[] maze =
     {
-        string[] maze =
-        {
-            "#############",
-            "#...B...~~..#",
-            "#..#..#.....#",
-            "#..#..#...R.#",
-            "#..#I.#.#..##",
-            "#..#..#.#.W##",
-            "#..#..#.#...#",
-            "#S..C...#.C.#",
-            "#############"
-        };
+        "#############",
+        "#...B...~~..#",
+        "#..#..#.....#",
+        "#..#..#...R.#",
+        "#..#I.#.#..##",
+        "#..#..#.#.W##",
+        "#..#..#.#...#",
+        "#S..C...#.C.#",
+        "#############"
+    };
 
-        BuildMaze(maze);
-        
-        int ingredientCount = GameObject.FindGameObjectsWithTag("Ingredient").Length;
+    // In MazeBuilderTutorial.cs
 
-        if (gameManager != null)
-        {
-            gameManager.StartLevel(ingredientCount);
-        }
-    }
+    // Step 1 Layout: Player, Ice, Butter
+    private string[] tutorialLayout_Step1 = 
+    {
+        "#######",
+        "#S I B#",
+        "#######"
+    };
+
+    // Step 3 Layout: Player, Chili, Ice, Butter
+    private string[] tutorialLayout_Step3 = 
+    {
+        "#########",
+        "#S C I B#",
+        "#########"
+    };
+
+    // This will keep track of all spawned objects so we can clean them up.
+    private GameObject generatedMazeContainer;
+
+
 
     void BuildMaze(string[] layout)
     {
@@ -61,12 +76,13 @@ public class MazeBuilderTutorial : MonoBehaviour
                 switch (c)
                 {
                     case '#':
-                        SpawnWall(pos);
+                        SpawnWall(pos,x);
                         break;
 
                     case 'S':
                         SpawnFloor(pos);
                         CreateSpawnMarker(pos);
+                        currentPlayerSpawnPoint = pos;
                         break;
 
                     case 'C':
@@ -110,17 +126,30 @@ public class MazeBuilderTutorial : MonoBehaviour
         CenterMaze(layout);
     }
 
-    void SpawnWall(Vector2 position)
+    void SpawnWall(Vector2 position, int x_coordinate)
     {
         if (wallPrefab == null) return;
-        GameObject wall = Instantiate(wallPrefab, position, Quaternion.identity, transform);
+        GameObject wall = Instantiate(wallPrefab, position, Quaternion.identity, generatedMazeContainer.transform);
+        if (currentBuildingLayout == tutorialLayout_Step3)
+        {
+            // 2. If it is, THEN check if this is the right-most wall.
+            if (x_coordinate == currentBuildingLayout[0].Length - 1)
+            {
+                // 3. Only if both are true, add the special tag.
+                wall.tag = "RightWall";
+                Debug.Log($"RightWall tag added to wall at X coordinate: {x_coordinate}"); // For confirmation
+            }
+        }
+
+        if(wall.TryGetComponent(out SpriteRenderer sr)) sr.sortingOrder = 0;
         wall.layer = LayerMask.NameToLayer("Wall");
     }
 
     void SpawnFloor(Vector2 position)
     {
         if (floorPrefab == null) return;
-        Instantiate(floorPrefab, position, Quaternion.identity, transform);
+        GameObject floor = Instantiate(floorPrefab, position, Quaternion.identity, generatedMazeContainer.transform);
+        if(floor.TryGetComponent(out SpriteRenderer sr)) sr.sortingOrder = 0;
     }
 
     void SpawnIngredient(Vector2 position, IngredientType type, float durationSeconds)
@@ -143,8 +172,10 @@ public class MazeBuilderTutorial : MonoBehaviour
         }
 
         GameObject ingredient = prefab != null
-            ? Instantiate(prefab, position, Quaternion.identity, transform)
+            ? Instantiate(prefab, position, Quaternion.identity, generatedMazeContainer.transform)
             : CreateRuntimeIngredient(type, position);
+
+        
 
         ingredient.tag = "Ingredient";
 
@@ -164,7 +195,7 @@ public class MazeBuilderTutorial : MonoBehaviour
         GameObject source = waterPatchPrefab != null ? waterPatchPrefab : wallPrefab;
         if (source == null) return;
 
-        GameObject water = Instantiate(source, position, Quaternion.identity, transform);
+        GameObject water = Instantiate(source, position, Quaternion.identity, generatedMazeContainer.transform);
 
         if (water.TryGetComponent(out SpriteRenderer sr))
         {
@@ -183,7 +214,7 @@ public class MazeBuilderTutorial : MonoBehaviour
     GameObject CreateRuntimeIngredient(IngredientType type, Vector2 position)
     {
         GameObject ingredient = new GameObject($"{type}Pickup");
-        ingredient.transform.SetParent(transform);
+        ingredient.transform.SetParent(generatedMazeContainer.transform);
         ingredient.transform.position = position;
 
         ingredient.AddComponent<SpriteRenderer>();
@@ -203,7 +234,7 @@ public class MazeBuilderTutorial : MonoBehaviour
 
         if (sr != null)
         {
-            sr.sortingOrder = 1;
+            sr.sortingOrder = 2;
 
             Sprite customSprite = IngredientVisualFactory.GetSprite(type);
             if (customSprite != null)
@@ -219,6 +250,8 @@ public class MazeBuilderTutorial : MonoBehaviour
                     IngredientType.Chili => new Color(0.88f, 0.24f, 0.16f, 1f),
                     IngredientType.Butter => new Color(0.99f, 0.91f, 0.47f, 1f),
                     IngredientType.Bread => new Color(0.74f, 0.47f, 0.27f, 1f),
+                    IngredientType.Garlic => new Color(0.9f, 0.92f, 0.82f, 1f),
+                    IngredientType.Chocolate => new Color(0.46f, 0.28f, 0.16f, 1f),
                     _ => sr.color
                 };
             }
@@ -250,10 +283,11 @@ public class MazeBuilderTutorial : MonoBehaviour
         GameObject source = iceWallPrefab != null ? iceWallPrefab : wallPrefab;
         if (source == null) return;
 
-        GameObject ice = Instantiate(source, position, Quaternion.identity, transform);
+        GameObject ice = Instantiate(source, position, Quaternion.identity, generatedMazeContainer.transform);
 
         if (ice.TryGetComponent(out SpriteRenderer sr))
         {
+            sr.sortingOrder = 1; // Set order to 1
             sr.color = new Color(0.62f, 0.84f, 1f, 1f);
         }
 
@@ -267,7 +301,8 @@ public class MazeBuilderTutorial : MonoBehaviour
 
     void SpawnStickyZone(Vector2 position)
     {
-        GameObject zone = stickyZonePrefab != null ? Instantiate(stickyZonePrefab, position, Quaternion.identity, transform) : CreateRuntimeStickyZone(position);
+        GameObject zone = stickyZonePrefab != null ? Instantiate(stickyZonePrefab, position, Quaternion.identity, generatedMazeContainer.transform) : CreateRuntimeStickyZone(position);
+
         if (!zone.TryGetComponent<StickyZone>(out _))
         {
             zone.AddComponent<StickyZone>();
@@ -280,7 +315,7 @@ public class MazeBuilderTutorial : MonoBehaviour
     GameObject CreateRuntimeStickyZone(Vector2 position)
     {
         GameObject zone = new GameObject("StickyZone");
-        zone.transform.SetParent(transform);
+        zone.transform.SetParent(generatedMazeContainer.transform);
         zone.transform.position = position;
 
         SpriteRenderer sr = zone.AddComponent<SpriteRenderer>();
@@ -303,7 +338,7 @@ public class MazeBuilderTutorial : MonoBehaviour
     {
         GameObject spawnMarker = new GameObject("PlayerSpawn");
         spawnMarker.transform.position = position;
-        spawnMarker.transform.SetParent(transform);
+        spawnMarker.transform.SetParent(generatedMazeContainer.transform);
     }
 
     void CenterMaze(string[] layout)
@@ -324,6 +359,37 @@ public class MazeBuilderTutorial : MonoBehaviour
             float verticalSize = (height / 2f) + 1f;
             float horizontalSize = ((width / 2f) + 1f) / Camera.main.aspect;
             Camera.main.orthographicSize = Mathf.Max(verticalSize, horizontalSize);
+        }
+    }
+
+    //Add of pre-intro steps
+    public void ClearMaze()
+    {
+        // If the container from the previous maze exists, destroy it.
+        if (generatedMazeContainer != null)
+        {
+            Debug.Log("Destroying the entire old maze container.");
+            Destroy(generatedMazeContainer);
+        }
+    }
+
+
+    public void BuildTutorialLevel(int step)
+    {
+        ClearMaze();
+        string[] layoutToBuild = null;
+
+        generatedMazeContainer = new GameObject("[GeneratedMaze]");
+
+        if (step == 1) layoutToBuild = tutorialLayout_Step1;
+        else if (step == 3) layoutToBuild = tutorialLayout_Step3;
+
+        this.currentBuildingLayout = layoutToBuild;
+
+        if (layoutToBuild != null)
+        {
+            BuildMaze(layoutToBuild);
+            CenterMaze(layoutToBuild);
         }
     }
 }

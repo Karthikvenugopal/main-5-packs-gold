@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: -596345676083940304}
   - component: {fileID: 7931163011521278605}
   m_Layer: 0
-  m_Name: Bread
+  m_Name: Chocolate
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -81,15 +81,15 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
-  m_Sprite: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Sprite: {fileID: 7482667652216324306, guid: 311925a002f4447b3a28927169b83ea6, type: 3}
+  m_Color: {r: 0.43529412, g: 0.26666668, b: 0.15686275, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
   m_Size: {x: 1, y: 1}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
-  m_WasSpriteAssigned: 0
+  m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
 --- !u!58 &-596345676083940304
@@ -140,5 +140,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7a260a2a6ec44a07b78dc1c77bfaca73, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::IngredientPickup
-  ingredientType: 2
-  abilityDurationSeconds: 0
+  ingredientType: 4
+  abilityDurationSeconds: 8

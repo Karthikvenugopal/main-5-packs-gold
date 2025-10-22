@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using System.Collections.Generic;
 
 public class GameManager : MonoBehaviour
 {
@@ -14,9 +15,8 @@ public class GameManager : MonoBehaviour
 
     private float timeLimit = 120f;
     private float currentTime;
-    private int totalIngredients;
-    private int ingredientsEaten = 0;
     private bool isGameActive = true;
+    private HashSet<IngredientType> collectedIngredients = new HashSet<IngredientType>();
 
     void Awake()
     {
@@ -40,20 +40,14 @@ public class GameManager : MonoBehaviour
 
     public void StartLevel(int totalIngredientCount)
     {
-        totalIngredients = totalIngredientCount;
         isGameActive = true;
         currentTime = timeLimit;
 
         uiCanvas.timerText.gameObject.SetActive(true);
-        
         uiCanvas.gameWonPanel.SetActive(false);
         uiCanvas.gameOverPanel.SetActive(false);
 
-        if (totalIngredients == 0)
-        {
-            Debug.LogWarning("MazeBuilder reported 0 ingredients. The level will complete instantly.");
-            WinGame();
-        }
+        collectedIngredients.Clear();
     }
 
     void Update()
@@ -70,32 +64,39 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    private void InitializeGame()
-    {
-        currentTime = timeLimit;
-        isGameActive = true;
-        
-        uiCanvas.gameWonPanel.SetActive(false);
-        uiCanvas.gameOverPanel.SetActive(false);
-
-        totalIngredients = GameObject.FindGameObjectsWithTag("Ingredient").Length;
-        if (totalIngredients == 0)
-        {
-            Debug.LogWarning("No ingredients found!");
-            WinGame();
-        }
-    }
-
-    public void OnIngredientEaten()
+    public void OnIngredientEaten(IngredientType type)
     {
         if (!isGameActive) return;
-        ingredientsEaten++;
-        if (ingredientsEaten >= totalIngredients)
+        collectedIngredients.Add(type);
+        Debug.Log($"Collected: {type}");
+    }
+
+    public void OnExitReached()
+    {
+        if (!isGameActive) return;
+
+        bool hasChili = collectedIngredients.Contains(IngredientType.Chili);
+        bool hasButter = collectedIngredients.Contains(IngredientType.Butter);
+        bool hasBread = collectedIngredients.Contains(IngredientType.Bread);
+
+        if (hasChili && hasButter && hasBread)
         {
             WinGame();
         }
+        else
+        {
+            List<string> missing = new List<string>();
+            if (!hasChili) missing.Add("Chili");
+            if (!hasButter) missing.Add("Butter");
+            if (!hasBread) missing.Add("Bread");
+
+            string reason = "Oops! You missed " + string.Join(", ", missing) + "!";
+
+            Debug.Log(reason);
+            LoseGame(reason); 
+        }
     }
-    
+
 
     private void WinGame()
     {
@@ -106,42 +107,34 @@ public class GameManager : MonoBehaviour
         float timeTaken = timeLimit - currentTime;
         int starsEarned = CalculateStars(timeTaken);
 
-        if (starFullSprite == null || starEmptySprite == null)
-        {
-            Debug.LogError("Star sprites have not been assigned in the GameManager's Inspector!");
-            return;
-        }
-
         for (int i = 0; i < uiCanvas.stars.Length; i++)
         {
-            if (i < starsEarned)
-            {
-                uiCanvas.stars[i].sprite = starFullSprite;
-            }
-            else
-            {
-                uiCanvas.stars[i].sprite = starEmptySprite;
-            }
+            uiCanvas.stars[i].sprite = (i < starsEarned)
+                ? starFullSprite
+                : starEmptySprite;
         }
     }
 
-    private void LoseGame()
+    private void LoseGame(string reason = "")
     {
         isGameActive = false;
         Time.timeScale = 0f;
         uiCanvas.gameOverPanel.SetActive(true);
+
+        if (uiCanvas.loseReasonText != null)
+        {
+            uiCanvas.loseReasonText.text = reason;
+        }
     }
-    
+
     private void UpdateTimerUI()
     {
         int minutes = Mathf.FloorToInt(currentTime / 60);
         int seconds = Mathf.FloorToInt(currentTime % 60);
-
         int milliseconds = Mathf.FloorToInt((currentTime * 100) % 100);
-
-        uiCanvas.timerText.text = string.Format("Time left: {0:00}:{1:00}:{2:00}", minutes, seconds, milliseconds);
+        uiCanvas.timerText.text = $"Time left: {minutes:00}:{seconds:00}:{milliseconds:00}";
     }
-    
+
     public void RestartGame()
     {
         Time.timeScale = 1f;

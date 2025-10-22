@@ -18,7 +18,7 @@ public class MazeBuilder : MonoBehaviour
     public GameObject waterPatchPrefab;
     [Header("Ability Durations")]
     public float chiliDurationSeconds = 0f;
-    public float butterDurationSeconds = 12f;
+    public float butterDurationSeconds = 6f;
 
     [Header("Dependencies")]
     public GameManager gameManager;
@@ -27,30 +27,31 @@ public class MazeBuilder : MonoBehaviour
     {
         string[] maze =
         {
-            "##########################",
-            "#....................R.###",
-            "#..###.....#.~~~~#..#..###",
-            "#....#..#..#.~~~~#..#.W###",
-            "#...I...#..#.............#",
-            "#C.#.#..#..#..B...#...####",
-            "#..#.#..#..#......#.C.#..#",
-            "#..#.#..#..######I#...#..#",
-            "#..#.#.B.......#....#....#",
-            "#..#..~~~#.....#.C..#..#.#",
-            "#..#..~~~#...###....#..#.#",
-            "#..#.....R.....W.......#.#",
-            "#..######..#...####..###.#",
-            "#S......#..###.......#...#",
-            "##########################"
+            "###################################",
+            "S.....#......#.....#......#.......#",
+            "####..#..##..#..#..###....#....####",
+            "#..#.....#....C.#.........I.......#",
+            "#..##....###..#######....##.R..#.##",
+            "#.....#.......B....#......####...##",
+            "#.#...#....######.....#.......W..##",
+            "#.#...##~~~~~~..#...###...##......#",
+            "#.#.....~~~~~~......#.....#...C.###",
+            "###...#......####...#........##...#",
+            "#.....#...####....#######.....###.#",
+            "#...###...#.......#.B...#.......#.#",
+            "#.......................I.........#",
+            "####...##############..####...#####",
+            "#..#.......#......#......#...##...#",
+            "#..~~~~....#................W.....#",
+            "#..~~~~###.....###...#............#",
+            "#..~~~~....R...#.....#.....##.....E",
+            "###################################"
         };
 
-        // 1. Build the entire maze. We don't need its return value anymore.
         BuildMaze(maze);
         
-        // 2. Search the scene for all objects with the "Ingredient" tag and get the count.
         int ingredientCount = GameObject.FindGameObjectsWithTag("Ingredient").Length;
 
-        // 3. Notify the GameManager.
         if (gameManager != null)
         {
             gameManager.StartLevel(ingredientCount);
@@ -108,6 +109,12 @@ public class MazeBuilder : MonoBehaviour
                         SpawnStickyZone(pos);
                         break;
 
+                    case 'E':
+                        SpawnFloor(pos);
+                        SpawnExit(pos);
+                        break;
+
+
                     case '.':
                     case ' ':
                     default:
@@ -132,11 +139,24 @@ public class MazeBuilder : MonoBehaviour
         Instantiate(floorPrefab, position, Quaternion.identity, transform);
     }
 
+    void SpawnExit(Vector2 position)
+    {
+        GameObject exit = new GameObject("Exit");
+        exit.transform.position = position;
+        exit.transform.SetParent(transform);
+
+        BoxCollider2D col = exit.AddComponent<BoxCollider2D>();
+        col.isTrigger = true;
+
+        exit.tag = "Exit";
+
+        exit.AddComponent<ExitTrigger>();
+    }
+
     void SpawnIngredient(Vector2 position, IngredientType type, float durationSeconds)
     {
         GameObject prefab = null;
 
-        // Choose correct prefab based on ingredient type
         switch (type)
         {
             case IngredientType.Chili:
@@ -152,17 +172,14 @@ public class MazeBuilder : MonoBehaviour
                 break;
         }
 
-        // Spawn prefab or create fallback
         GameObject ingredient = prefab != null
             ? Instantiate(prefab, position, Quaternion.identity, transform)
             : CreateRuntimeIngredient(type, position);
 
-        // Add tag to ingredient
         ingredient.tag = "Ingredient";
 
         ConfigureIngredientObject(ingredient, type);
 
-        // Attach IngredientPickup if not present
         if (!ingredient.TryGetComponent(out IngredientPickup pickup))
         {
             pickup = ingredient.AddComponent<IngredientPickup>();
@@ -177,7 +194,8 @@ public class MazeBuilder : MonoBehaviour
         GameObject source = waterPatchPrefab != null ? waterPatchPrefab : wallPrefab;
         if (source == null) return;
 
-        GameObject water = Instantiate(source, position, Quaternion.identity, transform);
+        GameObject water = Instantiate(source, position + Vector2.down * 0.55f, Quaternion.identity, transform);
+
 
         if (water.TryGetComponent(out SpriteRenderer sr))
         {
@@ -232,12 +250,14 @@ public class MazeBuilder : MonoBehaviour
                     IngredientType.Chili => new Color(0.88f, 0.24f, 0.16f, 1f),
                     IngredientType.Butter => new Color(0.99f, 0.91f, 0.47f, 1f),
                     IngredientType.Bread => new Color(0.74f, 0.47f, 0.27f, 1f),
+                    IngredientType.Garlic => new Color(0.9f, 0.92f, 0.82f, 1f),
+                    IngredientType.Chocolate => new Color(0.46f, 0.28f, 0.16f, 1f),
                     _ => sr.color
                 };
             }
         }
 
-        float pickupScale = Mathf.Max(0.1f, cellSize * 0.6f);
+        float pickupScale = Mathf.Max(0.1f, cellSize * 1.2f);
         Vector3 targetScale = IngredientVisualFactory.GetScale(type, pickupScale);
         ingredient.transform.localScale = targetScale;
 
@@ -324,14 +344,12 @@ public class MazeBuilder : MonoBehaviour
         float width = layout[0].Length * cellSize;
         float height = layout.Length * cellSize;
 
-        // maze center calc
         Vector3 center = new Vector3(
             (width - cellSize) / 2f,
             -(height - cellSize) / 2f,
             -10f
         );
 
-        // Move cam to center and fit 
         if (Camera.main != null)
         {
             Camera.main.transform.position = center;
