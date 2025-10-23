@@ -27,6 +27,7 @@ public class GameManagerTutorial : MonoBehaviour
     private bool breadCollected = false; 
     private bool stickyPassed = false; 
     private bool waterCleared = false; 
+    private bool iceWallPopupTriggered = false;
     private int collectedIngredients = 0;
     private int totalIngredients = 0;
     
@@ -147,7 +148,18 @@ public class GameManagerTutorial : MonoBehaviour
 
     // --- Public Event Handlers ---
 
-    public void OnPlayerHitIceWall() { if (currentStep == TutorialStep.TryForButter) GoToStep(TutorialStep.HitIceWall); }
+    public void OnPlayerHitIceWall() { 
+        if (currentStep == TutorialStep.TryForButter && !iceWallPopupTriggered) {
+            iceWallPopupTriggered = true;
+            StartCoroutine(DelayedIceWallPopup());
+        }
+    }
+    
+    private IEnumerator DelayedIceWallPopup()
+    {
+        yield return new WaitForSeconds(2f);
+        GoToStep(TutorialStep.HitIceWall);
+    }
     public void OnChiliCollected() { if (!chiliCollected) { chiliCollected = true; collectedIngredients++; if (currentStep == TutorialStep.GetChili) GoToStep(TutorialStep.MeltIce); CheckForTutorialCompletion(); } }
     public void OnIceWallMelted() { if (!iceMelted) { iceMelted = true; CheckForTutorialCompletion(); } }
     public void OnButterCollected() {
