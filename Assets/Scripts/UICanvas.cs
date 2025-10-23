@@ -1,5 +1,6 @@
 using UnityEngine;
 using TMPro;
+using UnityEngine.UI;
 
 public class UICanvas : MonoBehaviour
 {
@@ -20,6 +21,16 @@ public class UICanvas : MonoBehaviour
     [Header("Next Level Button")]
     public UnityEngine.UI.Button nextLevelButton;
 
-    
+    [Header("Level Info")]
+    public UnityEngine.UI.Button infoButton;
+    public UnityEngine.UI.Button infoCloseButton;
+    public GameObject levelInfoPanel;
 
+    public void ShowLevelInfo(bool show)
+    {
+        if (levelInfoPanel != null)
+        {
+            levelInfoPanel.SetActive(show);
+        }
+    }
 }

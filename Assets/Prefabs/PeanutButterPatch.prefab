@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: -4521557039116411636}
   - component: {fileID: -9210686941534070753}
   m_Layer: 0
-  m_Name: WaterPatch
+  m_Name: PeanutButterPatch
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -82,7 +82,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 1
   m_Sprite: {fileID: 7482667652216324306, guid: 311925a002f4447b3a28927169b83ea6, type: 3}
-  m_Color: {r: 1, g: 0, b: 0, a: 1}
+  m_Color: {r: 0.72156864, g: 0.4862745, b: 0.24313727, a: 0.85}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
@@ -149,5 +149,5 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d52bb032f2814464f9773249f8f36633, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::WaterPatch
-  soakEffect: {fileID: 0}
+  m_EditorClassIdentifier: Assembly-CSharp::PeanutButterPatch
+  scoopEffect: {fileID: 0}
