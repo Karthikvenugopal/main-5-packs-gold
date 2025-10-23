@@ -526,7 +526,7 @@ MonoBehaviour:
   rollingPinPrefab: {fileID: 5393905221537955907, guid: a4554a4a5cfd43139e477aec45515649, type: 3}
   iceWallPrefab: {fileID: 6349953291806104131, guid: bc08693b2d5249aeb8c3de8839320afc, type: 3}
   stickyZonePrefab: {fileID: 2081963789226404748, guid: 341dc0ead98644619cdd2fc369e56c92, type: 3}
-  waterPatchPrefab: {fileID: 2081963789226404748, guid: 8687f356ec0334562b58541e7b6ada79, type: 3}
+  peanutButterPatchPrefab: {fileID: 2081963789226404748, guid: 8687f356ec0334562b58541e7b6ada79, type: 3}
   chiliDurationSeconds: 0
   butterDurationSeconds: 12
   gameManager: {fileID: 1746984134}
