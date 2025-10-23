@@ -30,6 +30,8 @@ public class GameManager : MonoBehaviour
     private bool isLoadingInfoPage;
     private string targetInfoSceneName;
     private string loadedInfoSceneName;
+    [SerializeField] private float lowTimeHighlightThreshold = 20f;
+    private bool lowTimeHighlightTriggered;
 
 
     void Awake()
@@ -88,6 +90,7 @@ public class GameManager : MonoBehaviour
         uiCanvas.gameOverPanel.SetActive(false);
 
         collectedIngredients.Clear();
+        lowTimeHighlightTriggered = false;
 
         targetInfoSceneName = ResolveInfoSceneName();
 
@@ -111,6 +114,14 @@ public class GameManager : MonoBehaviour
         currentTime -= Time.deltaTime;
         currentTime = Mathf.Max(0, currentTime);
         UpdateTimerUI();
+
+        if (!lowTimeHighlightTriggered &&
+            ShouldHighlightIngredients() &&
+            currentTime <= lowTimeHighlightThreshold)
+        {
+            lowTimeHighlightTriggered = true;
+            HighlightRemainingIngredients();
+        }
 
         if (currentTime <= 0)
         {
@@ -545,6 +556,30 @@ public class GameManager : MonoBehaviour
             infoPageInstance.SetActive(false);
         }
         uiCanvas?.ShowLevelInfo(false);
+    }
+
+    private void HighlightRemainingIngredients()
+    {
+        IngredientPickup[] pickups = FindObjectsOfType<IngredientPickup>();
+        foreach (var pickup in pickups)
+        {
+            if (pickup != null && pickup.gameObject.activeInHierarchy)
+            {
+                pickup.EnableHighlight();
+            }
+        }
+    }
+
+    private bool ShouldHighlightIngredients()
+    {
+        string sceneName = SceneManager.GetActiveScene().name;
+        if (string.IsNullOrEmpty(sceneName)) return false;
+
+        if (sceneName.IndexOf("Instruction", System.StringComparison.OrdinalIgnoreCase) >= 0) return false;
+        if (sceneName.IndexOf("Tutorial", System.StringComparison.OrdinalIgnoreCase) >= 0) return false;
+        if (sceneName.IndexOf("Demo", System.StringComparison.OrdinalIgnoreCase) >= 0) return false;
+
+        return true;
     }
 
     private string ResolveInfoSceneName()
