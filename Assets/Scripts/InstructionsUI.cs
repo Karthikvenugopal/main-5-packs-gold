@@ -18,7 +18,7 @@ public class InstructionsUI : MonoBehaviour
     public float gravity = -1200f;      
     public float fadeDuration = 0.8f;
     public float delayBeforeLoad = 1.4f;
-    public string nextSceneName = "SampleScene"; 
+    public string nextSceneName = "Level1Scene"; 
 
     private bool started = false;
 
