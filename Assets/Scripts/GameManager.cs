@@ -83,38 +83,45 @@ public class GameManager : MonoBehaviour
     {
         if (!isGameActive) return;
 
-        int requiredCount = 2;
+        Dictionary<IngredientType, int> requiredIngredients = new();
 
-        int GetCount(IngredientType type)
+        string currentScene = SceneManager.GetActiveScene().name;
+
+        if (currentScene.Contains("SampleScene")) 
         {
-            return collectedIngredients.ContainsKey(type) ? collectedIngredients[type] : 0;
+            requiredIngredients[IngredientType.Bread] = 2;
+            requiredIngredients[IngredientType.Butter] = 2;
+            requiredIngredients[IngredientType.Chili] = 2;
         }
-        int chiliCount = GetCount(IngredientType.Chili);
-        int butterCount = GetCount(IngredientType.Butter);
-        int breadCount = GetCount(IngredientType.Bread);
+        else 
+        {
+            requiredIngredients[IngredientType.Bread] = 2;
+            requiredIngredients[IngredientType.Butter] = 2;
+        }
 
-        bool hasEnoughChili = chiliCount >= requiredCount;
-        bool hasEnoughButter = butterCount >= requiredCount;
-        bool hasEnoughBread = breadCount >= requiredCount;
+        List<string> missingList = new List<string>();
+        bool hasAll = true;
 
-        if (hasEnoughChili && hasEnoughButter && hasEnoughBread)
+        foreach (var kvp in requiredIngredients)
+        {
+            IngredientType type = kvp.Key;
+            int required = kvp.Value;
+            int collected = collectedIngredients.ContainsKey(type) ? collectedIngredients[type] : 0;
+
+            if (collected < required)
+            {
+                hasAll = false;
+                missingList.Add($"{type} ({collected}/{required})");
+            }
+        }
+
+        if (hasAll)
         {
             WinGame();
         }
         else
         {
-            List<string> missing = new List<string>();
-
-            if (!hasEnoughChili)
-                missing.Add($"Chili ({chiliCount}/{requiredCount})");
-
-            if (!hasEnoughButter)
-                missing.Add($"Butter ({butterCount}/{requiredCount})");
-
-            if (!hasEnoughBread)
-                missing.Add($"Bread ({breadCount}/{requiredCount})");
-
-            string reason = "Oops! You only collected:\n" + string.Join(", ", missing);
+            string reason = "Oops! You missed out on:\n" + string.Join(", ", missingList);
             LoseGame(reason);
         }
     }
