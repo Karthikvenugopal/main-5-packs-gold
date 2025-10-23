@@ -531,7 +531,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4ecd59d14ce0e416d8716eda269c0085, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::MazeBuilder_Level2
+  m_EditorClassIdentifier: Assembly-CSharp::MazeBuilder_Level1
   cellSize: 1
   wallPrefab: {fileID: 6349953291806104131, guid: 55dbc409933f0ce45ae632a39313ee5b, type: 3}
   floorPrefab: {fileID: 321813267270251343, guid: 1ab68f276875c024fb3d4259ef242666, type: 3}
