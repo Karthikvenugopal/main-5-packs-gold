@@ -2,6 +2,8 @@ using System.Collections;
 using System.Collections.Generic;  
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using System;
+
 
 
 public class GameManager : MonoBehaviour
@@ -19,6 +21,11 @@ public class GameManager : MonoBehaviour
     private float currentTime;
     private bool isGameActive = true;
     private Dictionary<IngredientType, int> collectedIngredients = new Dictionary<IngredientType, int>();
+
+    //analytics
+    private string levelId;
+    private DateTime startedUtc;
+
 
 
     void Awake()
@@ -61,6 +68,10 @@ public class GameManager : MonoBehaviour
         uiCanvas.gameOverPanel.SetActive(false);
 
         collectedIngredients.Clear();
+
+        //analytics 
+        levelId = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name; // e.g., "Level1Scene"
+        startedUtc = DateTime.UtcNow;
     }
 
     void Update()
@@ -149,6 +160,15 @@ public class GameManager : MonoBehaviour
         uiCanvas.gameWonPanel.SetActive(true);
 
         float timeTaken = timeLimit - currentTime;
+
+        //Analytics
+        string levelId = SceneManager.GetActiveScene().name;
+        AnalyticsManager.I?.LogRow(levelId, success: true, timeSpentS: timeTaken);
+        var sender  = FindObjectOfType<AnalyticsSender>();
+        if (sender) sender.SendLevelResult(levelId, true, timeTaken);
+
+
+
         int starsEarned = CalculateStars(timeTaken);
 
         for (int i = 0; i < uiCanvas.stars.Length; i++)
@@ -174,6 +194,15 @@ public class GameManager : MonoBehaviour
             uiCanvas.loseReasonText.text = reason;
 
         Debug.Log("LoseGame() called: " + reason);
+
+        //analytics 
+        float timeSpent = timeLimit - currentTime;
+        string levelId = SceneManager.GetActiveScene().name;
+        AnalyticsManager.I?.LogRow(levelId, success: false, timeSpentS: timeSpent);
+        var sender  = FindObjectOfType<AnalyticsSender>();
+        if (sender) sender.SendLevelResult(levelId, false, timeSpent);
+
+
     }
 
 
