@@ -25,14 +25,10 @@ public class PlayerController2D : MonoBehaviour
         float moveX = Input.GetAxisRaw("Horizontal");
         float moveY = Input.GetAxisRaw("Vertical");
 
-        if (Mathf.Abs(moveX) > 0.01f) moveY = 0f;
+        //if (Mathf.Abs(moveX) > 0.01f) moveY = 0f;
 
         moveInput = new Vector2(moveX, moveY).normalized;
     }
-
-
-
-    // In PlayerController2D.cs
 
     void FixedUpdate()
     {
@@ -50,24 +46,18 @@ public class PlayerController2D : MonoBehaviour
         RaycastHit2D hit = Physics2D.BoxCast(rb.position, col.size * 0.9f, 0f, moveInput, moveAmount.magnitude, wallLayer);
         bool blocked = hit.collider != null;
 
-        if (blocked) // We check for any block first
+        if (blocked) 
         {
-            // 1. Check if the object we hit has the "RightWall" tag.
             if (hit.collider.CompareTag("RightWall"))
             {
-                // 2. Find the tutorial manager.
                 GameManagerTutorial tutorialManager = FindFirstObjectByType<GameManagerTutorial>();
                 if (tutorialManager != null)
                 {
-                    // 3. Call the new, specific method to report the event.
                     tutorialManager.OnPlayerHitRightWall();
-                    
-                    // We return here because we don't need to check for other interactions like IceWall on the same frame.
                     return; 
                 }
             }
 
-            // Your existing logic for interactive objects like IceWall.
             if (abilityController != null)
             {
                 if (hit.collider.TryGetComponent(out IceWall iceWall))

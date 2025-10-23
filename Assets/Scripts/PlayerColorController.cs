@@ -27,12 +27,11 @@ public class PlayerColorController : MonoBehaviour
 
     private void Update()
     {
-        // Smoothly interpolate to the new color.
         if (_sr != null && _sr.color != _target)
             _sr.color = Color.Lerp(_sr.color, _target, 1f - Mathf.Exp(-Time.deltaTime / Mathf.Max(0.0001f, lerpTime)));
     }
 
-    // Called automatically by PlayerAbilityController via SendMessage.
+    // Called automatically by PlayerAbilityController
     public void OnAbilityChanged(IngredientType ability)
     {
         _target = ability switch

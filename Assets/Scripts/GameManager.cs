@@ -186,6 +186,19 @@ public class GameManager : MonoBehaviour
         SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 
+    public void ShowRestartPanel()
+    {
+        Time.timeScale = 0f;
+
+        if (uiCanvas != null)
+        {
+            uiCanvas.gameOverPanel.SetActive(true);     // show the lose panel
+            if (uiCanvas.loseReasonText != null)
+                uiCanvas.loseReasonText.text = "";      // blank out the reason
+        }
+    }
+
+
     private int CalculateStars(float time)
     {
         if (time <= 18f) return 5;
