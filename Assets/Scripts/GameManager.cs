@@ -38,6 +38,17 @@ public class GameManager : MonoBehaviour
         {
             button.onClick.AddListener(RestartGame);
         }
+
+        // Set up NextLevel button
+        if (uiCanvas.nextLevelButton != null)
+        {
+            Debug.Log("NextLevel button found, adding listener");
+            uiCanvas.nextLevelButton.onClick.AddListener(LoadNextLevel);
+        }
+        else
+        {
+            Debug.Log("NextLevel button is NULL - not assigned in UICanvas!");
+        }
     }
 
     public void StartLevel(int totalIngredientCount)
@@ -132,6 +143,7 @@ public class GameManager : MonoBehaviour
 
     private void WinGame()
     {
+        Debug.Log("WinGame called - showing game won panel");
         isGameActive = false;
         Time.timeScale = 0f;
         uiCanvas.gameWonPanel.SetActive(true);
@@ -145,6 +157,7 @@ public class GameManager : MonoBehaviour
                 ? starFullSprite
                 : starEmptySprite;
         }
+
     }
 
     private void LoseGame(string reason = "")
@@ -193,6 +206,28 @@ public class GameManager : MonoBehaviour
         SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 
+    public void LoadNextLevel()
+    {
+        Debug.Log("LoadNextLevel called - navigating to InstructionsScene2");
+        Time.timeScale = 1f;
+        
+        // Test if the scene exists
+        if (Application.CanStreamedLevelBeLoaded("InstructionsScene2"))
+        {
+            Debug.Log("InstructionsScene2 exists, loading...");
+            SceneManager.LoadScene("InstructionsScene2");
+        }
+        else
+        {
+            Debug.LogError("InstructionsScene2 scene not found! Available scenes:");
+            for (int i = 0; i < SceneManager.sceneCountInBuildSettings; i++)
+            {
+                string scenePath = SceneManager.GetSceneByBuildIndex(i).path;
+                Debug.Log($"Scene {i}: {scenePath}");
+            }
+        }
+    }
+
     public void ShowRestartPanel()
     {
         Time.timeScale = 0f;
@@ -214,4 +249,5 @@ public class GameManager : MonoBehaviour
         if (time <= 72f) return 2;
         return 1;
     }
+
 }
