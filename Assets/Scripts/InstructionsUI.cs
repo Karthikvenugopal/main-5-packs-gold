@@ -38,7 +38,7 @@ public class InstructionsUI : MonoBehaviour
         }
 
         yield return new WaitForSeconds(delayBeforeLoad);
-        SceneManager.LoadScene(nextSceneName);
+        SceneManager.LoadScene("Level1Scene");
     }
 
     private IEnumerator FallAndFade(InstructionsItem item)
