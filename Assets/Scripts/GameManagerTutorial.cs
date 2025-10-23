@@ -26,7 +26,7 @@ public class GameManagerTutorial : MonoBehaviour
     private bool butterCollected = false;
     private bool breadCollected = false; 
     private bool stickyPassed = false; 
-    private bool waterCleared = false; 
+    private bool peanutButterCleared = false; 
     private bool iceWallPopupTriggered = false;
     private int collectedIngredients = 0;
     private int totalIngredients = 0;
@@ -172,7 +172,7 @@ public class GameManagerTutorial : MonoBehaviour
     
     public void OnBreadCollected() { if (!breadCollected) { breadCollected = true; collectedIngredients++; CheckForTutorialCompletion(); } }
     public void OnStickyZonePassed() { if (!stickyPassed) { stickyPassed = true; Debug.Log("Player passed a sticky zone."); } }
-    public void OnWaterPatchCleared() { if (!waterCleared) { waterCleared = true; Debug.Log("Player cleared a water patch."); } }
+    public void OnPeanutButterCleared() { if (!peanutButterCleared) { peanutButterCleared = true; Debug.Log("Player cleared a peanut butter spill."); } }
     // --- END OF ADDED METHODS ---
 
     private void CheckForTutorialCompletion()

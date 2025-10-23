@@ -16,7 +16,7 @@ public class MazeBuilderTutorial : MonoBehaviour
     [Header("Obstacle Prefabs")]
     public GameObject iceWallPrefab;
     public GameObject stickyZonePrefab;
-    public GameObject waterPatchPrefab;
+    public GameObject peanutButterPatchPrefab;
     [Header("Ability Durations")]
     public float chiliDurationSeconds = 0f;
     public float butterDurationSeconds = 12f;
@@ -131,9 +131,9 @@ public class MazeBuilderTutorial : MonoBehaviour
                         SpawnIceWall(pos);
                         break;
 
-                    case 'W':
+                    case 'W': // Peanut butter smear (legacy map char)
                         SpawnFloor(pos);
-                        SpawnWaterPatch(pos);
+                        SpawnPeanutButterPatch(pos);
                         break;
 
                     case 'R': 
@@ -242,24 +242,24 @@ public class MazeBuilderTutorial : MonoBehaviour
     }
 
 
-    void SpawnWaterPatch(Vector2 position)
+    void SpawnPeanutButterPatch(Vector2 position)
     {
-        GameObject source = waterPatchPrefab != null ? waterPatchPrefab : wallPrefab;
+        GameObject source = peanutButterPatchPrefab != null ? peanutButterPatchPrefab : wallPrefab;
         if (source == null) return;
 
-        GameObject water = Instantiate(source, position, Quaternion.identity, generatedMazeContainer.transform);
+        GameObject smear = Instantiate(source, position, Quaternion.identity, generatedMazeContainer.transform);
 
-        if (water.TryGetComponent(out SpriteRenderer sr))
+        if (smear.TryGetComponent(out SpriteRenderer sr))
         {
-            sr.color = new Color(0.4f, 0.6f, 1f, 0.75f);
+            sr.color = new Color(0.72f, 0.49f, 0.24f, 0.85f);
         }
 
-        if (!water.TryGetComponent(out WaterPatch wp))
+        if (!smear.TryGetComponent(out PeanutButterPatch wp))
         {
-            wp = water.AddComponent<WaterPatch>();
+            wp = smear.AddComponent<PeanutButterPatch>();
         }
 
-        water.layer = LayerMask.NameToLayer("Wall");
+        smear.layer = LayerMask.NameToLayer("Wall");
     }
 
     void SpawnRollingPin(Vector2 position, Vector2 direction)
