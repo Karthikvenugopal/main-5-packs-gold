@@ -17,6 +17,8 @@ public class UICanvas : MonoBehaviour
     public GameObject tutorialPopupPanel;
     public TextMeshProUGUI popupText;
     public UnityEngine.UI.Button continueButton;
+    [Header("Next Level Button")]
+    public UnityEngine.UI.Button nextLevelButton;
 
     
 
