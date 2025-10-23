@@ -2471,7 +2471,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3b9c8456236ff4a3097f4d5f1d6edd55, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ingredientType: 1
+  ingredientType: 2
   targetImage: {fileID: 1675867338}
   maxDimension: 70
 --- !u!114 &2100000001
@@ -2486,7 +2486,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3b9c8456236ff4a3097f4d5f1d6edd55, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ingredientType: 0
+  ingredientType: 1
   targetImage: {fileID: 1796426926}
   maxDimension: 70
 --- !u!114 &2100000002
@@ -2501,7 +2501,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3b9c8456236ff4a3097f4d5f1d6edd55, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ingredientType: 2
+  ingredientType: 3
   targetImage: {fileID: 1856148655}
   maxDimension: 70
 --- !u!1660057539 &9223372036854775807

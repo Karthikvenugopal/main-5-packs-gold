@@ -667,6 +667,7 @@ MonoBehaviour:
   waterPatchPrefab: {fileID: 2081963789226404748, guid: 8687f356ec0334562b58541e7b6ada79, type: 3}
   chiliDurationSeconds: 0
   butterDurationSeconds: 12
+  rollingPinPrefab: {fileID: 5393905221537955907, guid: a4554a4a5cfd43139e477aec45515649, type: 3}
   gameManager: {fileID: 0}
   currentPlayerSpawnPoint: {x: 0, y: 0}
 --- !u!1001 &952949839
@@ -1332,11 +1333,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 96011f735da65443fa14e9e7b32a66e1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameManagerTutorial
-  endPanel: {fileID: 1933584067}
-  tutorialPopupPanel: {fileID: 952949843}
-  popupText: {fileID: 952949842}
-  continueButton: {fileID: 952949841}
   mazeBuilder: {fileID: 920500694}
+  endPanel: {fileID: 1933584067}
+  animationDuration: 0.3
+  startScale: {x: 0.7, y: 0.7, z: 1}
 --- !u!1 &1878311481
 GameObject:
   m_ObjectHideFlags: 0
