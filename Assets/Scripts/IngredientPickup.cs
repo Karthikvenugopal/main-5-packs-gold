@@ -11,6 +11,8 @@ public class IngredientPickup : MonoBehaviour
     private GameManager gameManager;
     private GameManagerTutorial tutorialManager;
 
+    public IngredientType Type => ingredientType;
+
     private void Awake()
     {
         Collider2D col = GetComponent<Collider2D>();
