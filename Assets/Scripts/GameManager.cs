@@ -145,7 +145,7 @@ public class GameManager : MonoBehaviour
 
         string currentScene = SceneManager.GetActiveScene().name;
 
-        if (currentScene.Contains("SampleScene")) 
+        if (currentScene.Contains("Level2Scene")) 
         {
             requiredIngredients[IngredientType.Bread] = 2;
             requiredIngredients[IngredientType.Butter] = 2;
@@ -603,7 +603,7 @@ public class GameManager : MonoBehaviour
             return "InstructionScene";
         }
 
-        if (levelScene.IndexOf("SampleScene", System.StringComparison.OrdinalIgnoreCase) >= 0)
+        if (levelScene.IndexOf("Level2Scene", System.StringComparison.OrdinalIgnoreCase) >= 0)
         {
             return "InstructionsScene2";
         }
