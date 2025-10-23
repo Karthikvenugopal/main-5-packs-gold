@@ -18,7 +18,7 @@ public class InstructionsUI2 : MonoBehaviour
     public float gravity = -1200f;      
     public float fadeDuration = 0.8f;
     public float delayBeforeLoad = 1.4f;
-    public string nextSceneName = "SampleScene"; 
+    public string nextSceneName = "Level2Scene"; 
 
     private bool started = false;
 
@@ -39,8 +39,8 @@ public class InstructionsUI2 : MonoBehaviour
         }
 
         yield return new WaitForSeconds(delayBeforeLoad);
-        Debug.Log("InstructionsUI2 navigating to SampleScene");
-        SceneManager.LoadScene("SampleScene");
+        Debug.Log("InstructionsUI2 navigating to Level2Scene");
+        SceneManager.LoadScene("Level2Scene");
     }
 
     private IEnumerator FallAndFade(InstructionsItem2 item)

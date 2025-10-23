@@ -1244,7 +1244,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1630155650
 RectTransform:
   m_ObjectHideFlags: 0
@@ -1420,6 +1420,7 @@ MonoBehaviour:
   uiPrefab: {fileID: 1280657551}
   starFullSprite: {fileID: -8176624545519491494, guid: 831c46261a8ee4d13af2ec949214e1c5, type: 3}
   starEmptySprite: {fileID: 2152435787208944178, guid: 9db2be538f38f4659b27b80deca33ab3, type: 3}
+  lowTimeHighlightThreshold: 20
 --- !u!1 &1983061803
 GameObject:
   m_ObjectHideFlags: 0
