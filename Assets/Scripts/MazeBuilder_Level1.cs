@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class MazeBuilder_Level2 : MonoBehaviour
+public class MazeBuilder_Level1 : MonoBehaviour
 {
     [Header("Maze Settings")]
     public float cellSize = 1f;
@@ -28,24 +28,25 @@ public class MazeBuilder_Level2 : MonoBehaviour
     void Start()
     {
         string[] maze =
-        {
-            "#####################################",
-            "S..#..#..#....#...#..........#...####",
-            "#..##..#.####...###..#..#B####.#..#.#",
-            "##...........W.....^..##.....#.R...##",
-            "#.#..##..####..###......#...##....###",
-            "#.#.....R#...#..##......##~~~~###...#",
-            "#.##..##.#.####.######..##~~~~...W..#",
-            "#.........~~~~~~I......###...###...##",
-            "#B#.#....#~~~~~~##.....#.....#C...#.#",
-            "#.###..##.....####..####..#..#....###",
-            "#.#...###G...#####..##...#######..###",
-            "#.#..#####.....#....#......I..##....#",
-            "#.#..........#####..#.######..#....##",
-            "#.#####...#....#......###..#..#.^.###",
-            "#..#..~~~~~##....C....###..#..#...W.#",
-            "#..#..~~~~~....#......#....#........E",
-            "#####################################"
+        {   
+            "#########################",
+            "#S#######################",
+            "#............#####......#",
+            "##..######.........#...B#",
+            "#........#.^.####..#.^.##",
+            "#...R....#.....##.......#",
+            "#.......####~~~~~~~#....#",
+            "#.......#...~~~~~~~#....#",
+            "######.###..####...#....#",
+            "#.....W............#....#",
+            "#########..#R.....#######",
+            "#..........######......##",
+            "#.B.....#..###......#####",
+            "#####~~~~~~.#..######..##",
+            "#....~~~~~~..W.#.......##",
+            "#......#####.....########",
+            "#......#.......P........#",
+            "#######################E#"
         };
 
         BuildMaze(maze);
@@ -159,20 +160,20 @@ public class MazeBuilder_Level2 : MonoBehaviour
     {
         GameObject exit = new GameObject("Exit");
 
-        exit.transform.position = position + new Vector2(0.7f, 0.5f);
+        exit.transform.position = position + new Vector2(0.6f, -0.6f);  
         exit.transform.SetParent(transform);
 
         BoxCollider2D col = exit.AddComponent<BoxCollider2D>();
         col.isTrigger = true;
 
-        col.size = new Vector2(0.75f, 0.75f);
+        col.size = new Vector2(0.6f, 0.6f);
         col.offset = Vector2.zero;
 
         exit.tag = "Exit";
         exit.AddComponent<ExitTrigger>();
 
         SpriteRenderer sr = exit.AddComponent<SpriteRenderer>();
-        sr.color = new Color(0f, 1f, 0f, 0.3f);
+        sr.color = new Color(0f, 1f, 0f, 0.25f);
         sr.sortingOrder = 5;
     }
 
