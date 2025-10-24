@@ -1,7 +1,7 @@
 using UnityEngine;
 
 [RequireComponent(typeof(BoxCollider2D))]
-public class PeanutButterPatch : MonoBehaviour
+public class JamPatch : MonoBehaviour
 {
     [SerializeField] private ParticleSystem scoopEffect;
 
@@ -40,7 +40,7 @@ public class PeanutButterPatch : MonoBehaviour
 
         if (tutorialManager != null)
         {
-            tutorialManager.OnPeanutButterCleared();
+            tutorialManager.OnJamCleared();
         }
 
         Destroy(gameObject);

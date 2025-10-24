@@ -75,9 +75,9 @@ public class PlayerController2D : MonoBehaviour
                         }
                     }
                 }
-                else if (hit.collider.TryGetComponent(out PeanutButterPatch peanutPatch))
+                else if (hit.collider.TryGetComponent(out JamPatch jamPatch))
                 {
-                    if (peanutPatch.TryScoop(abilityController))
+                    if (jamPatch.TryScoop(abilityController))
                     {
                         blocked = false;
                     }
