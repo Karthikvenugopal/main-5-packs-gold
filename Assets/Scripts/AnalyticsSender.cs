@@ -1,6 +1,6 @@
 // Sends level results from Unity (Editor/WebGL) to a Google Sheets Apps Script Web App.
 // Schema sent (JSON):
-// { timestamp, session_id, level_id, success, time_spent_s, user_agent }
+// { timestamp, session_id, level_id, success, time_spent_s}
 
 using System.Collections;
 using UnityEngine;
@@ -9,7 +9,7 @@ using UnityEngine.Networking;   // UnityWebRequest
 public class AnalyticsSender : MonoBehaviour
 {
     [Header("Google Apps Script Web App URL (/exec)")]
-    [Tooltip("Example URL: https://script.google.com/macros/s/AKfycb.../exec")]
+    [Tooltip("Example URL")]
     [SerializeField] private string endpoint = "";
 
     private static string SessionId
@@ -34,7 +34,7 @@ public class AnalyticsSender : MonoBehaviour
         //public string user_agent;
     }
     
-    // Call this from GameManager on win/lose.
+    // Call from GameManager on win/lose.
     public void SendLevelResult(string levelId, bool success, float timeSpentS)
     {
         if (string.IsNullOrWhiteSpace(endpoint))
