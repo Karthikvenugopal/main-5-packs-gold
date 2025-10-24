@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.Serialization;
+using TMPro;
 
 public class MazeBuilder : MonoBehaviour
 {
@@ -174,9 +175,27 @@ public class MazeBuilder : MonoBehaviour
         exit.tag = "Exit";
         exit.AddComponent<ExitTrigger>();
 
+        // Create the exit
         SpriteRenderer sr = exit.AddComponent<SpriteRenderer>();
-        sr.color = new Color(0f, 1f, 0f, 0.3f);
+        sr.color = new Color(0.6f, 0.3f, 0.1f, 0.8f); // Brown color
         sr.sortingOrder = 5;
+
+        GameObject textObject = new GameObject("ExitText");
+        textObject.transform.SetParent(exit.transform);
+        textObject.transform.localPosition = Vector3.zero;
+
+        TextMeshPro textMeshPro = textObject.AddComponent<TextMeshPro>();
+        textMeshPro.text = "EXIT";
+        textMeshPro.fontSize = 7;
+        textMeshPro.color = Color.white;
+        textMeshPro.alignment = TextAlignmentOptions.Center;
+        
+        textMeshPro.fontStyle = FontStyles.Bold;
+        textMeshPro.enableWordWrapping = false;
+        textMeshPro.overflowMode = TextOverflowModes.Overflow;
+        textMeshPro.margin = new Vector4(0, 0, 0, 0);
+
+        textObject.transform.localPosition = new Vector3(-1f, 0.1f, -0.1f);
     }
 
 
