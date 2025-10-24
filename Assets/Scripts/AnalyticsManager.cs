@@ -1,36 +1,21 @@
-using System;
-using System.IO;
 using UnityEngine;
 
 public class AnalyticsManager : MonoBehaviour
 {
     public static AnalyticsManager I;
-    public string fileName = "chef_analytics.csv";
-    string _path;
 
     void Awake()
     {
         if (I != null && I != this) { Destroy(gameObject); return; }
         I = this;
         DontDestroyOnLoad(gameObject);
-
-        _path = Path.Combine(Application.persistentDataPath, fileName);
-        if (!File.Exists(_path))
-        {
-            File.WriteAllText(_path, "session_id,level_id,success,time_spent_s,utc\n");
-        }
     }
 
     public void LogRow(string levelId, bool success, float timeSpentS)
     {
-        string row = $"{SystemInfo.deviceUniqueIdentifier},{levelId},{(success?1:0)},{timeSpentS:F2},{DateTime.UtcNow:o}\n";
-        try { File.AppendAllText(_path, row); }
-        catch (Exception e) { Debug.LogWarning($"Analytics write failed: {e.Message}"); }
-
-        // visualize in WebGL
         AverageTime.Update(levelId, success, timeSpentS);
 #if UNITY_EDITOR
-        Debug.Log($"[Analytics] {row} → {_path}");
+        Debug.Log($"[Analytics] levelId={levelId}, success={success}, time={timeSpentS:F2}s (Editor log only)");
 #endif
     }
 }
