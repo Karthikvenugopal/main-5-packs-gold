@@ -142,3 +142,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::IngredientPickup
   ingredientType: 0
   abilityDurationSeconds: 0
+  highlightPulseColor: {r: 1, g: 0.9, b: 0.25, a: 1}
+  highlightPulseSpeed: 6
+  highlightScaleMultiplier: 1.15

@@ -16,10 +16,13 @@ public class MazeBuilderTutorial : MonoBehaviour
     [Header("Obstacle Prefabs")]
     public GameObject iceWallPrefab;
     public GameObject stickyZonePrefab;
-    public GameObject waterPatchPrefab;
+    public GameObject peanutButterPatchPrefab;
     [Header("Ability Durations")]
     public float chiliDurationSeconds = 0f;
     public float butterDurationSeconds = 12f;
+
+    [Header("Enemies")]
+    public GameObject rollingPinPrefab;
 
     [Header("Dependencies")]
     public GameManager gameManager;
@@ -48,15 +51,45 @@ public class MazeBuilderTutorial : MonoBehaviour
         "#######"
     };
 
-    // Player, Chili, Ice, Butter
-    private string[] tutorialLayout_Step3 = 
+    // Step 3 Layout: Player, Chili, Ice, Butter
+    private string[] tutorialLayout_Step3 =
     {
         "#########",
         "#S C I B#",
         "#########"
     };
 
-    // tracking all spawned objects so we can clean them up.
+    private string[] tutorialLayout_Step4 =
+    {
+    "################",
+    "#........B.#.#.#",
+    "#.###.######.#R#",
+    "#I#.#...#.......#",
+    "#.#.#~~~#..P....#",
+    "#.#.#~~~#.....###",
+    "#.#...###...#...#",
+    "#.##........#.W.#",
+    "#.C#.^.##...#...#",
+    "#..#...#....#...#",
+    "#.##...###..#...#",
+    "#S#.........#...#",
+    "#################"
+    };
+    // "###################",
+    // "#S....#.....#.....#",
+    // "#.##..#..#..#..#..#",
+    // "#.#...#..#..#..#..#",
+    // "#.#...####..####..#",
+    // "#.#.............#.#",
+    // "#.####..#####..#..#",
+    // "#.....#.....#..#..#",
+    // "###.#.#####.#.##..#",
+    // "#...#.......#.....#",
+    // "#...#########..#..#",
+    // "#..............#E.#",
+    // "###################"
+
+    // This will keep track of all spawned objects so we can clean them up.
     private GameObject generatedMazeContainer;
 
 
@@ -98,9 +131,9 @@ public class MazeBuilderTutorial : MonoBehaviour
                         SpawnIceWall(pos);
                         break;
 
-                    case 'W':
+                    case 'W': // Peanut butter smear (legacy map char)
                         SpawnFloor(pos);
-                        SpawnWaterPatch(pos);
+                        SpawnPeanutButterPatch(pos);
                         break;
 
                     case 'R': 
@@ -112,6 +145,27 @@ public class MazeBuilderTutorial : MonoBehaviour
                         SpawnFloor(pos);
                         SpawnStickyZone(pos);
                         break;
+
+                    case 'P': // move right
+                        SpawnFloor(pos);
+                        SpawnRollingPin(pos, Vector2.right);
+                        break;
+
+                    case 'p': // move left
+                        SpawnFloor(pos);
+                        SpawnRollingPin(pos, Vector2.left);
+                        break;
+
+                    case '^': // move up
+                        SpawnFloor(pos);
+                        SpawnRollingPin(pos, Vector2.up);
+                        break;
+
+                    case 'v': // move down
+                        SpawnFloor(pos);
+                        SpawnRollingPin(pos, Vector2.down);
+                        break;
+
 
                     case '.':
                     case ' ':
@@ -188,26 +242,36 @@ public class MazeBuilderTutorial : MonoBehaviour
     }
 
 
-    void SpawnWaterPatch(Vector2 position)
+    void SpawnPeanutButterPatch(Vector2 position)
     {
-        GameObject source = waterPatchPrefab != null ? waterPatchPrefab : wallPrefab;
+        GameObject source = peanutButterPatchPrefab != null ? peanutButterPatchPrefab : wallPrefab;
         if (source == null) return;
 
-        GameObject water = Instantiate(source, position, Quaternion.identity, generatedMazeContainer.transform);
+        GameObject smear = Instantiate(source, position, Quaternion.identity, generatedMazeContainer.transform);
 
-        if (water.TryGetComponent(out SpriteRenderer sr))
+        if (smear.TryGetComponent(out SpriteRenderer sr))
         {
-            sr.color = new Color(0.4f, 0.6f, 1f, 0.75f);
+            sr.color = new Color(0.72f, 0.49f, 0.24f, 0.85f);
         }
 
-        if (!water.TryGetComponent(out WaterPatch wp))
+        if (!smear.TryGetComponent(out PeanutButterPatch wp))
         {
-            wp = water.AddComponent<WaterPatch>();
+            wp = smear.AddComponent<PeanutButterPatch>();
         }
 
-        water.layer = LayerMask.NameToLayer("Wall");
+        smear.layer = LayerMask.NameToLayer("Wall");
     }
 
+    void SpawnRollingPin(Vector2 position, Vector2 direction)
+    {
+        if (rollingPinPrefab == null) return;
+        GameObject pin = Instantiate(rollingPinPrefab, position, Quaternion.identity, generatedMazeContainer.transform);
+        RollingPinEnemy enemy = pin.GetComponent<RollingPinEnemy>();
+        if (enemy != null)
+        {
+            enemy.SetInitialDirection(direction);
+        }
+    }
 
     GameObject CreateRuntimeIngredient(IngredientType type, Vector2 position)
     {
@@ -379,6 +443,7 @@ public class MazeBuilderTutorial : MonoBehaviour
 
         if (step == 1) layoutToBuild = tutorialLayout_Step1;
         else if (step == 3) layoutToBuild = tutorialLayout_Step3;
+        else if (step == 4) layoutToBuild = tutorialLayout_Step4;
 
         this.currentBuildingLayout = layoutToBuild;
 

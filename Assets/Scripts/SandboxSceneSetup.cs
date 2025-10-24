@@ -8,7 +8,7 @@ public class SandboxSceneSetup : MonoBehaviour
     [SerializeField] private GameObject floorPrefab;
     [SerializeField] private GameObject wallPrefab;
     [SerializeField] private GameObject stickyZonePrefab;
-    [SerializeField] private GameObject waterPatchPrefab;
+    [SerializeField] private GameObject peanutButterPatchPrefab;
     [SerializeField] private GameObject iceWallPrefab;
 
     [Header("Ingredient Prefabs")]
@@ -110,9 +110,9 @@ public class SandboxSceneSetup : MonoBehaviour
             Instantiate(stickyZonePrefab, arenaCenter + new Vector2(2.5f, -2.5f), Quaternion.identity, transform);
         }
 
-        if (waterPatchPrefab != null)
+        if (peanutButterPatchPrefab != null)
         {
-            Instantiate(waterPatchPrefab, arenaCenter + new Vector2(-2.5f, -2.5f), Quaternion.identity, transform);
+            Instantiate(peanutButterPatchPrefab, arenaCenter + new Vector2(-2.5f, -2.5f), Quaternion.identity, transform);
         }
 
         if (iceWallPrefab != null)

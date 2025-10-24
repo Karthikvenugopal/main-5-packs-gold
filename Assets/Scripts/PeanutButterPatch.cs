@@ -1,42 +1,48 @@
 using UnityEngine;
 
 [RequireComponent(typeof(BoxCollider2D))]
-public class WaterPatch : MonoBehaviour
+public class PeanutButterPatch : MonoBehaviour
 {
-    [SerializeField] private ParticleSystem soakEffect;
-    private bool soaked;
+    [SerializeField] private ParticleSystem scoopEffect;
+
+    private bool cleared;
     private GameManagerTutorial tutorialManager;
+
     private void Awake()
     {
         BoxCollider2D col = GetComponent<BoxCollider2D>();
         col.isTrigger = false;
         gameObject.layer = LayerMask.NameToLayer("Wall");
     }
+
     private void Start()
     {
         tutorialManager = FindAnyObjectByType<GameManagerTutorial>();
     }
 
-    public bool TrySoak(PlayerAbilityController abilityController)
+    public bool TryScoop(PlayerAbilityController abilityController)
     {
-        if (soaked || abilityController == null) return soaked;
+        if (cleared || abilityController == null) return cleared;
         if (!abilityController.ConsumeAbility(IngredientType.Bread)) return false;
 
-        SoakInternal();
+        ClearPatch();
         return true;
     }
 
-    private void SoakInternal()
+    private void ClearPatch()
     {
-        soaked = true;
-        if (soakEffect != null)
+        cleared = true;
+
+        if (scoopEffect != null)
         {
-            Instantiate(soakEffect, transform.position, Quaternion.identity);
+            Instantiate(scoopEffect, transform.position, Quaternion.identity);
         }
-                if (tutorialManager != null)
+
+        if (tutorialManager != null)
         {
-            tutorialManager.OnWaterPatchCleared();
+            tutorialManager.OnPeanutButterCleared();
         }
+
         Destroy(gameObject);
     }
 }
