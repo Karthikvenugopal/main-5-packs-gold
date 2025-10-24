@@ -17,6 +17,10 @@ public class RollingPinEnemy : MonoBehaviour
     private Vector2 moveDirection;
     private float nextAbilityStealTime;
     private bool hasHitPlayerRecently = false;
+    private Collider2D collider2D;
+    private readonly RaycastHit2D[] movementHits = new RaycastHit2D[1];
+    private ContactFilter2D obstacleFilter;
+    private const float MovementCastBuffer = 0.05f;
 
     private void Awake()
     {
@@ -25,12 +29,21 @@ public class RollingPinEnemy : MonoBehaviour
         rb.freezeRotation = true;
         rb.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
 
+        collider2D = GetComponent<Collider2D>();
+
         moveDirection = GetSnappedDirection(initialDirection);
 
         if (obstacleLayers == 0)
         {
             obstacleLayers = LayerMask.GetMask("Wall");
         }
+
+        obstacleFilter = new ContactFilter2D
+        {
+            useLayerMask = true,
+            layerMask = obstacleLayers,
+            useTriggers = false
+        };
     }
 
     private void FixedUpdate()
@@ -41,12 +54,25 @@ public class RollingPinEnemy : MonoBehaviour
         Vector2 delta = moveDirection * moveSpeed * Time.fixedDeltaTime;
         Vector2 nextPosition = rb.position + delta;
 
-        float checkDistance = delta.magnitude + 0.05f;
-        RaycastHit2D wallHit = Physics2D.CircleCast(rb.position, 0.35f, moveDirection, checkDistance, obstacleLayers);
-        if (wallHit.collider != null)
+        if (collider2D != null)
         {
-            ReverseDirection();
-            return;
+            float castDistance = delta.magnitude + MovementCastBuffer;
+            int hitCount = collider2D.Cast(moveDirection, obstacleFilter, movementHits, castDistance, true);
+            if (hitCount > 0)
+            {
+                ReverseDirection();
+                return;
+            }
+        }
+        else
+        {
+            float checkDistance = delta.magnitude + MovementCastBuffer;
+            RaycastHit2D wallHit = Physics2D.CircleCast(rb.position, 0.5f, moveDirection, checkDistance, obstacleLayers);
+            if (wallHit.collider != null)
+            {
+                ReverseDirection();
+                return;
+            }
         }
 
         if (Mathf.Abs(moveDirection.x) > Mathf.Abs(moveDirection.y))
