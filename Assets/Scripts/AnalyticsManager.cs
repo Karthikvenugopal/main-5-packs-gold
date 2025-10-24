@@ -24,12 +24,10 @@ public class AnalyticsManager : MonoBehaviour
     public void LogRow(string levelId, bool success, float timeSpentS)
     {
         string row = $"{SystemInfo.deviceUniqueIdentifier},{levelId},{(success?1:0)},{timeSpentS:F2},{DateTime.UtcNow:o}\n";
-
-        // File.AppendAllText writes to IndexedDB via persistentDataPath
         try { File.AppendAllText(_path, row); }
         catch (Exception e) { Debug.LogWarning($"Analytics write failed: {e.Message}"); }
 
-        // Keep a running average per-level in PlayerPrefs to visualize in WebGL
+        // visualize in WebGL
         AverageTime.Update(levelId, success, timeSpentS);
 #if UNITY_EDITOR
         Debug.Log($"[Analytics] {row} → {_path}");
@@ -37,7 +35,7 @@ public class AnalyticsManager : MonoBehaviour
     }
 }
 
-// Simple running-average helper that survives WebGL sessions via PlayerPrefs
+// Running-average helper 
 public static class AverageTime
 {
     static string SumKey(string levelId) => $"avg_sum_{levelId}";
