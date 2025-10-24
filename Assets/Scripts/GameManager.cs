@@ -632,6 +632,17 @@ public class GameManager : MonoBehaviour
 
         if (uiCanvas != null && uiCanvas.loseReasonText != null)
             uiCanvas.loseReasonText.text = "Oops! You got hit!";
+
+        // --- Analytics: log this as a failure (FALSE) ---
+        float timeSpent = timeLimit - currentTime;  
+        string levelId  = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
+
+        // local CSV 
+        AnalyticsManager.I?.LogRow(levelId, success: false, timeSpentS: timeSpent);
+
+        // Google Sheet 
+        var sender = FindObjectOfType<AnalyticsSender>();
+        if (sender) sender.SendLevelResult(levelId, false, timeSpent);
     }
 
     private void UpdateTimerUI()
