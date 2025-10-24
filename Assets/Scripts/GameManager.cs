@@ -74,7 +74,7 @@ public class GameManager : MonoBehaviour
                 {
                     restartImage.sprite = GetDefaultSprite();
                     restartImage.type = Image.Type.Sliced;
-                    restartImage.color = new Color(0.16f, 0.18f, 0.22f, 0.95f);
+                    restartImage.color = new Color(1f, 0.95f, 0.6f, 1f);
                 }
                 
                 
@@ -82,11 +82,11 @@ public class GameManager : MonoBehaviour
                 if (restartButtonComponent != null)
                 {
                     ColorBlock colors = restartButtonComponent.colors;
-                    colors.normalColor = new Color(0.16f, 0.18f, 0.22f, 0.95f);
-                    colors.highlightedColor = new Color(0.16f, 0.18f, 0.22f, 0.95f);
-                    colors.pressedColor = new Color(0.16f, 0.18f, 0.22f, 0.95f);
-                    colors.selectedColor = new Color(0.16f, 0.18f, 0.22f, 0.95f);
-                    colors.disabledColor = new Color(0.16f, 0.18f, 0.22f, 0.5f);
+                    colors.normalColor = new Color(1f, 0.95f, 0.6f, 1f);
+                    colors.highlightedColor = new Color(1f, 1f, 0.75f, 1f);
+                    colors.pressedColor = new Color(0.95f, 0.85f, 0.45f, 1f);
+                    colors.selectedColor = new Color(1f, 0.95f, 0.6f, 1f);
+                    colors.disabledColor = new Color(1f, 0.95f, 0.6f, 0.5f);
                     restartButtonComponent.colors = colors;
                 }
                 
@@ -96,7 +96,7 @@ public class GameManager : MonoBehaviour
                 {
                     restartLabel.fontSize = 28f;
                     restartLabel.alignment = TextAlignmentOptions.Center;
-                    restartLabel.color = Color.white;
+                    restartLabel.color = Color.black;
                     restartLabel.enableWordWrapping = false;
                 }
             }
