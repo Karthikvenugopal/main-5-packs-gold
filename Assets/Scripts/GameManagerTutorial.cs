@@ -131,15 +131,17 @@ public class GameManagerTutorial : MonoBehaviour
                 break;
 
             case TutorialStep.FinalPopup:
-                ShowPopup("Yay, You did it! Now try to beat the maze!",
-                    () => GoToStep(TutorialStep.Completed));
+                // ShowPopup("Yay, You did it! Now try to beat the maze!",
+                //     () => GoToStep(TutorialStep.Completed));
+                ShowPopup("Congratulations! You completed the tutorial!",
+                    () => SceneManager.LoadScene("Level1Scene"));
                 break;
 
-            case TutorialStep.Completed:
-                Time.timeScale = 1f;
-                ShowPopup("Congratulations! You completed the tutorial!",
-                    () => SceneManager.LoadScene("Level2Scene"));
-                break;
+            // case TutorialStep.Completed:
+            //     Time.timeScale = 1f;
+            //     ShowPopup("Congratulations! You completed the tutorial!",
+            //         () => SceneManager.LoadScene("Level1Scene"));
+            //     break;
         }
     }
 
