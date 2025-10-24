@@ -124,7 +124,7 @@ public class GameManagerTutorial : MonoBehaviour
                 break;
 
             case TutorialStep.ClearPeanutButter:
-                ShowPopup("Awesome! You got the bread power.\nNow try go through the peanut butter", () => { });
+                ShowPopup("Awesome! You got the bread power.\nNow try go through the jam", () => { });
                 break;
 
             case TutorialStep.CollectFinalButter:
@@ -287,7 +287,7 @@ public class GameManagerTutorial : MonoBehaviour
         if (!peanutButterCleared)
         {
             peanutButterCleared = true;
-            Debug.Log("Player cleared a peanut butter spill.");
+            Debug.Log("Player cleared a jam spill.");
             if (currentStep == TutorialStep.ClearPeanutButter)
                 GoToStep(TutorialStep.CollectFinalButter);
         }
