@@ -9,7 +9,7 @@ public class PlayerSpawner : MonoBehaviour
         if (spawnMarker != null && playerPrefab != null)
         {
             GameObject playerObject = Instantiate(playerPrefab, spawnMarker.transform.position, Quaternion.identity);
-            if(playerObject.TryGetComponent(out SpriteRenderer sr)) sr.sortingOrder = 3; // Highest order
+            if(playerObject.TryGetComponent(out SpriteRenderer sr)) sr.sortingOrder = 3; 
         }
         else
         {

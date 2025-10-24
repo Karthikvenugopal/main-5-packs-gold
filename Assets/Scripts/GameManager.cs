@@ -34,7 +34,7 @@ public class GameManager : MonoBehaviour
     [SerializeField] private float lowTimeHighlightThreshold = 20f;
     private bool lowTimeHighlightTriggered;
 
-    //analytics
+    
     private string levelId;
     private DateTime startedUtc;
 
@@ -59,17 +59,17 @@ public class GameManager : MonoBehaviour
         {
             button.onClick.AddListener(RestartGame);
             
-            // Apply consistent styling to match info button
+            
             if (button != null)
             {
-                // Set button size to 150x50
+                
                 RectTransform restartRect = button.GetComponent<RectTransform>();
                 if (restartRect != null)
                 {
                     restartRect.sizeDelta = new Vector2(150f, 50f);
                 }
                 
-                // Apply info button styling
+                
                 if (button.TryGetComponent(out Image restartImage))
                 {
                     restartImage.sprite = GetDefaultSprite();
@@ -77,7 +77,7 @@ public class GameManager : MonoBehaviour
                     restartImage.color = new Color(0.16f, 0.18f, 0.22f, 0.95f);
                 }
                 
-                // Override button colors to match info button
+                
                 UnityEngine.UI.Button restartButtonComponent = button.GetComponent<UnityEngine.UI.Button>();
                 if (restartButtonComponent != null)
                 {
@@ -90,7 +90,7 @@ public class GameManager : MonoBehaviour
                     restartButtonComponent.colors = colors;
                 }
                 
-                // Update text styling to match info button
+                
                 TextMeshProUGUI restartLabel = button.GetComponentInChildren<TextMeshProUGUI>();
                 if (restartLabel != null)
                 {
@@ -102,7 +102,7 @@ public class GameManager : MonoBehaviour
             }
         }
 
-        // Set up NextLevel button
+        
         if (uiCanvas.nextLevelButton != null)
         {
             Debug.Log("NextLevel button found, adding listener");
@@ -113,7 +113,7 @@ public class GameManager : MonoBehaviour
             Debug.Log("NextLevel button is NULL - not assigned in UICanvas!");
         }
 
-        // Set up MainMenu button
+        
         if (uiCanvas.mainMenuButton != null)
         {
             Debug.Log("MainMenu button found, adding listener");
@@ -150,8 +150,8 @@ public class GameManager : MonoBehaviour
 
         collectedIngredients.Clear();
 
-        //analytics 
-        levelId = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name; // e.g., "Level1Scene"
+        
+        levelId = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name; 
         startedUtc = DateTime.UtcNow;
     }
 
@@ -250,7 +250,7 @@ public class GameManager : MonoBehaviour
 
         float timeTaken = timeLimit - currentTime;
 
-        //Analytics
+        
         string levelId = SceneManager.GetActiveScene().name;
         AnalyticsManager.I?.LogRow(levelId, success: true, timeSpentS: timeTaken);
         AnalyticsSender.I?.SendLevelResult(levelId, true, timeTaken);
@@ -283,7 +283,7 @@ public class GameManager : MonoBehaviour
 
         Debug.Log("LoseGame() called: " + reason);
 
-        //analytics 
+        
         float timeSpent = timeLimit - currentTime;
         string levelId = SceneManager.GetActiveScene().name;
         AnalyticsManager.I?.LogRow(levelId, success: false, timeSpentS: timeSpent);
@@ -684,14 +684,14 @@ public class GameManager : MonoBehaviour
         if (uiCanvas != null && uiCanvas.loseReasonText != null)
             uiCanvas.loseReasonText.text = "Oops! You got hit!";
 
-        // --- Analytics: log this as a failure (FALSE) ---
+        
         float timeSpent = timeLimit - currentTime;  
         string levelId  = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
 
-        // local CSV 
+        
         AnalyticsManager.I?.LogRow(levelId, success: false, timeSpentS: timeSpent);
 
-        // Google Sheet 
+        
         AnalyticsSender.I?.SendLevelResult(levelId, false, timeSpent);
     }
 
@@ -714,7 +714,7 @@ public class GameManager : MonoBehaviour
         Debug.Log("LoadNextLevel called - navigating to InstructionsScene2");
         Time.timeScale = 1f;
         
-        // Test if the scene exists
+        
         if (Application.CanStreamedLevelBeLoaded("InstructionsScene2"))
         {
             Debug.Log("InstructionsScene2 exists, loading...");
@@ -744,9 +744,9 @@ public class GameManager : MonoBehaviour
 
         if (uiCanvas != null)
         {
-            uiCanvas.gameOverPanel.SetActive(true);     // show the lose panel
+            uiCanvas.gameOverPanel.SetActive(true);     
             if (uiCanvas.loseReasonText != null)
-                uiCanvas.loseReasonText.text = "";      // blank out the reason
+                uiCanvas.loseReasonText.text = "";      
         }
     }
 
