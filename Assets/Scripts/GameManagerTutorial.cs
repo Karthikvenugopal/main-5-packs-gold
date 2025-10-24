@@ -113,7 +113,7 @@ public class GameManagerTutorial : MonoBehaviour
                 break;
 
             case TutorialStep.HitPeanutButter:
-                ShowPopup("You cannot go through the peanut butter, maybe bread can help",
+                ShowPopup("You cannot go through the Jam Spill, maybe bread can help",
                     () => GoToStep(TutorialStep.SpawnBread));
                 break;
 
