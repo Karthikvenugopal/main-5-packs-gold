@@ -134,7 +134,7 @@ public class GameManagerTutorial : MonoBehaviour
                 
                 
                 ShowPopup("Congratulations! You completed the tutorial!",
-                    () => SceneManager.LoadScene("Level1Scene"));
+                    () => SceneManager.LoadScene("InstructionScene"));
                 break;
 
             
