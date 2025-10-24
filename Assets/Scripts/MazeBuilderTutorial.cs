@@ -67,7 +67,8 @@ public class MazeBuilderTutorial : MonoBehaviour
         "####### #",
         "# W     #",
         "# #######",
-        "#B#######"
+        "#B#######",
+        "#########"
     };
 
     // Step 6 Layout: Same as Step 5, but now includes Bread ('R') for the player to collect.
@@ -78,7 +79,8 @@ public class MazeBuilderTutorial : MonoBehaviour
         "####### #",
         "# W  R S#",
         "# #######",
-        "#B#######"
+        "#B#######",
+        "#########"
     };
 
     private string[] tutorialLayout_Step4 =
