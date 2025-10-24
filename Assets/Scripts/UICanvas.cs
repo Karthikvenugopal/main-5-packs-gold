@@ -20,6 +20,8 @@ public class UICanvas : MonoBehaviour
     public UnityEngine.UI.Button continueButton;
     [Header("Next Level Button")]
     public UnityEngine.UI.Button nextLevelButton;
+    [Header("Main Menu Button")]
+    public UnityEngine.UI.Button mainMenuButton;
 
     [Header("Level Info")]
     public UnityEngine.UI.Button infoButton;

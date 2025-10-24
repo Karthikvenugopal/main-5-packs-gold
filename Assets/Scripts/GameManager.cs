@@ -113,6 +113,17 @@ public class GameManager : MonoBehaviour
             Debug.Log("NextLevel button is NULL - not assigned in UICanvas!");
         }
 
+        // Set up MainMenu button
+        if (uiCanvas.mainMenuButton != null)
+        {
+            Debug.Log("MainMenu button found, adding listener");
+            uiCanvas.mainMenuButton.onClick.AddListener(LoadMainMenu);
+        }
+        else
+        {
+            Debug.Log("MainMenu button is NULL - not assigned in UICanvas!");
+        }
+
         if (uiCanvas.infoButton != null)
         {
             uiCanvas.infoButton.onClick.RemoveAllListeners();
@@ -721,6 +732,13 @@ public class GameManager : MonoBehaviour
                 Debug.Log($"Scene {i}: {scenePath}");
             }
         }
+    }
+
+    public void LoadMainMenu()
+    {
+        Debug.Log("LoadMainMenu called - navigating to MainMenu");
+        Time.timeScale = 1f;
+        SceneManager.LoadScene("MainMenu");
     }
 
     public void ShowRestartPanel()
