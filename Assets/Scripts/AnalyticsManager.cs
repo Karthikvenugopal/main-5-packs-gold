@@ -20,7 +20,7 @@ public class AnalyticsManager : MonoBehaviour
     }
 }
 
-// Running-average helper 
+
 public static class AverageTime
 {
     static string SumKey(string levelId) => $"avg_sum_{levelId}";
@@ -28,7 +28,7 @@ public static class AverageTime
 
     public static void Update(string levelId, bool success, float timeS)
     {
-        // only include successful completions in the average calculation
+        
         if (!success) return; 
         float sum = PlayerPrefs.GetFloat(SumKey(levelId), 0f);
         int cnt = PlayerPrefs.GetInt(CountKey(levelId), 0);

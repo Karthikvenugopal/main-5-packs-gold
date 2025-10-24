@@ -69,16 +69,16 @@ public class PlayerController2D : MonoBehaviour
         {
             
 
-            // Check for interactions if the player has an ability controller
+            
             if (abilityController != null)
             {
                 if (hit.collider.TryGetComponent(out IceWall iceWall))
                 {
                     if (iceWall.TryMelt(abilityController))
                     {
-                        blocked = false; // Allow movement if melted
+                        blocked = false; 
                     }
-                    else // Failed to melt (no chili)
+                    else 
                     {
                         GameManagerTutorial tutorialManager = FindFirstObjectByType<GameManagerTutorial>();
                         if (tutorialManager != null)
@@ -93,15 +93,15 @@ public class PlayerController2D : MonoBehaviour
                     if (jamPatch.TryScoop(abilityController))
 
                     {
-                        blocked = false; // Allow movement if cleared
+                        blocked = false; 
                     }
-                    else // Failed to clear (no bread)
+                    else 
                     {
-                        // Notify the tutorial manager about hitting peanut butter without bread
+                        
                         GameManagerTutorial tutorialManager = FindFirstObjectByType<GameManagerTutorial>();
                         if (tutorialManager != null)
                         {
-                            // We need a specific method in GameManagerTutorial for this
+                            
                             tutorialManager.OnPlayerHitPeanutButter(); 
                         }
                     }

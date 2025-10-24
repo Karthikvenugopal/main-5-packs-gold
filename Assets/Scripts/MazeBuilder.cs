@@ -98,7 +98,7 @@ public class MazeBuilder : MonoBehaviour
                         SpawnIceWall(pos);
                         break;
 
-                    case 'W': // Jam spill (legacy map char)
+                    case 'W': 
                         SpawnFloor(pos);
                         SpawnJamPatch(pos);
                         break;
@@ -118,19 +118,19 @@ public class MazeBuilder : MonoBehaviour
                         SpawnExit(pos);
                         break;
 
-                    case 'P': //move right
+                    case 'P': 
                         SpawnFloor(pos);
                         SpawnRollingPin(pos, Vector2.right);
                         break;
-                    case 'p': //move left
+                    case 'p': 
                         SpawnFloor(pos);
                         SpawnRollingPin(pos, Vector2.left);
                         break;
-                    case '^'://move up
+                    case '^':
                         SpawnFloor(pos);
                         SpawnRollingPin(pos, Vector2.up);
                         break;
-                    case 'v'://move down
+                    case 'v':
                         SpawnFloor(pos);
                         SpawnRollingPin(pos, Vector2.down);
                         break;
@@ -175,9 +175,9 @@ public class MazeBuilder : MonoBehaviour
         exit.tag = "Exit";
         exit.AddComponent<ExitTrigger>();
 
-        // Create the exit
+        
         SpriteRenderer sr = exit.AddComponent<SpriteRenderer>();
-        sr.color = new Color(0.6f, 0.3f, 0.1f, 0.8f); // Brown color
+        sr.color = new Color(0.6f, 0.3f, 0.1f, 0.8f); 
         sr.sortingOrder = 5;
 
         GameObject textObject = new GameObject("ExitText");
