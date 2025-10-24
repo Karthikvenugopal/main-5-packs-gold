@@ -11,6 +11,14 @@ public class PlayerController2D : MonoBehaviour
 
     private BoxCollider2D col;
 
+    [Header("Mobile Controls")]
+    [SerializeField] private bool enableMobileControlsInEditor = false;
+    [SerializeField] private float mobileDeadZonePixels = 40f;
+    [SerializeField] private float mobileMaxDragDistancePixels = 160f;
+
+    private Vector2 touchStartPosition;
+    private bool touchActive;
+
     void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
@@ -22,12 +30,22 @@ public class PlayerController2D : MonoBehaviour
 
     void Update()
     {
-        float moveX = Input.GetAxisRaw("Horizontal");
-        float moveY = Input.GetAxisRaw("Vertical");
+        if (ShouldUseMobileInput())
+        {
+            moveInput = ReadMobileMoveInput();
+        }
+        else
+        {
+            float moveX = Input.GetAxisRaw("Horizontal");
+            float moveY = Input.GetAxisRaw("Vertical");
 
-        //if (Mathf.Abs(moveX) > 0.01f) moveY = 0f;
+            moveInput = new Vector2(moveX, moveY).normalized;
+        }
 
-        moveInput = new Vector2(moveX, moveY).normalized;
+        if (moveInput.sqrMagnitude > 1f)
+        {
+            moveInput.Normalize();
+        }
     }
 
 
@@ -95,5 +113,55 @@ public class PlayerController2D : MonoBehaviour
         {
             rb.MovePosition(nextPos);
         }
+    }
+
+    private bool ShouldUseMobileInput()
+    {
+        if (Application.isMobilePlatform) return true;
+        return enableMobileControlsInEditor;
+    }
+
+    private Vector2 ReadMobileMoveInput()
+    {
+        if (Input.touchCount == 0)
+        {
+            touchActive = false;
+            return Vector2.zero;
+        }
+
+        Touch touch = Input.GetTouch(0);
+
+        if (touch.phase == TouchPhase.Began || !touchActive)
+        {
+            touchActive = true;
+            touchStartPosition = touch.position;
+        }
+        else if (touch.phase == TouchPhase.Canceled || touch.phase == TouchPhase.Ended)
+        {
+            touchActive = false;
+            return Vector2.zero;
+        }
+
+        Vector2 drag = touch.position - touchStartPosition;
+
+        if (drag.sqrMagnitude < mobileDeadZonePixels * mobileDeadZonePixels)
+        {
+            return Vector2.zero;
+        }
+
+        float magnitudeRatio = 1f;
+
+        if (mobileMaxDragDistancePixels > Mathf.Epsilon)
+        {
+            float max = mobileMaxDragDistancePixels;
+            float magnitude = Mathf.Min(drag.magnitude, max);
+            if (magnitude > 0f)
+            {
+                drag = drag.normalized * magnitude;
+                magnitudeRatio = Mathf.Clamp01(magnitude / max);
+            }
+        }
+
+        return drag.normalized * magnitudeRatio;
     }
 }
