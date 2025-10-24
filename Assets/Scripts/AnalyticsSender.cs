@@ -8,8 +8,8 @@ using UnityEngine.Networking;   // UnityWebRequest
 
 public class AnalyticsSender : MonoBehaviour
 {
-    [Header("Google Apps Script Web App URL (must end with /exec)")]
-    [Tooltip("Example: https://script.google.com/macros/s/AKfycb.../exec")]
+    [Header("Google Apps Script Web App URL (/exec)")]
+    [Tooltip("Example URL: https://script.google.com/macros/s/AKfycb.../exec")]
     [SerializeField] private string endpoint = "";
 
     private static string SessionId
@@ -31,7 +31,7 @@ public class AnalyticsSender : MonoBehaviour
         public string level_id;
         public bool success;
         public float time_spent_s;
-        public string user_agent;
+        //public string user_agent;
     }
     
     // Call this from GameManager on win/lose.
@@ -54,7 +54,7 @@ public class AnalyticsSender : MonoBehaviour
             level_id     = levelId,
             success      = success,
             time_spent_s = timeSpentS,
-            user_agent   = SystemInfo.operatingSystem
+            //user_agent   = SystemInfo.operatingSystem
         };
 
         string json = JsonUtility.ToJson(payload);
