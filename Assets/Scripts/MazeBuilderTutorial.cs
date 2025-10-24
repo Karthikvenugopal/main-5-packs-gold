@@ -59,6 +59,27 @@ public class MazeBuilderTutorial : MonoBehaviour
         "#########"
     };
 
+    private string[] tutorialLayout_Step5 =
+    {
+        "#########",
+        "#      S#",
+        "####### #",
+        "# W     #",
+        "# #######",
+        "#B#######"
+    };
+
+    // Step 6 Layout: Same as Step 5, but now includes Bread ('R') for the player to collect.
+    private string[] tutorialLayout_Step6 =
+    {
+        "#########",
+        "#       #",
+        "####### #",
+        "# W  R S#",
+        "# #######",
+        "#B#######"
+    };
+
     private string[] tutorialLayout_Step4 =
     {
     "################",
@@ -75,19 +96,7 @@ public class MazeBuilderTutorial : MonoBehaviour
     "#S#.........#...#",
     "#################"
     };
-    // "###################",
-    // "#S....#.....#.....#",
-    // "#.##..#..#..#..#..#",
-    // "#.#...#..#..#..#..#",
-    // "#.#...####..####..#",
-    // "#.#.............#.#",
-    // "#.####..#####..#..#",
-    // "#.....#.....#..#..#",
-    // "###.#.#####.#.##..#",
-    // "#...#.......#.....#",
-    // "#...#########..#..#",
-    // "#..............#E.#",
-    // "###################"
+
 
     // This will keep track of all spawned objects so we can clean them up.
     private GameObject generatedMazeContainer;
@@ -434,16 +443,17 @@ public class MazeBuilderTutorial : MonoBehaviour
     }
 
 
+    // In MazeBuilderTutorial.cs
     public void BuildTutorialLevel(int step)
     {
         ClearMaze();
         string[] layoutToBuild = null;
-
         generatedMazeContainer = new GameObject("[GeneratedMaze]");
 
         if (step == 1) layoutToBuild = tutorialLayout_Step1;
         else if (step == 3) layoutToBuild = tutorialLayout_Step3;
-        else if (step == 4) layoutToBuild = tutorialLayout_Step4;
+        else if (step == 5) layoutToBuild = tutorialLayout_Step5; // For Peanut Butter intro
+        else if (step == 6) layoutToBuild = tutorialLayout_Step6; // For adding Bread
 
         this.currentBuildingLayout = layoutToBuild;
 
