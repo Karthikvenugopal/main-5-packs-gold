@@ -89,7 +89,7 @@ public class GameManagerTutorial : MonoBehaviour
             case TutorialStep.Completed:
                 Time.timeScale = 1f;
                 ShowPopup("Congratulations! You completed the tutorial!", 
-                () => SceneManager.LoadScene("SampleScene"));
+                () => SceneManager.LoadScene("Level2Scene"));
                 break;
         }
     }

@@ -5,6 +5,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
+using System;
 using UnityEngine.UI;
 
 
@@ -32,6 +33,11 @@ public class GameManager : MonoBehaviour
     private string loadedInfoSceneName;
     [SerializeField] private float lowTimeHighlightThreshold = 20f;
     private bool lowTimeHighlightTriggered;
+
+    //analytics
+    private string levelId;
+    private DateTime startedUtc;
+
 
 
     void Awake()
@@ -90,21 +96,10 @@ public class GameManager : MonoBehaviour
         uiCanvas.gameOverPanel.SetActive(false);
 
         collectedIngredients.Clear();
-        lowTimeHighlightTriggered = false;
 
-        targetInfoSceneName = ResolveInfoSceneName();
-
-        if (infoPageInstance != null && loadedInfoSceneName != targetInfoSceneName)
-        {
-            Destroy(infoPageInstance);
-            infoPageInstance = null;
-            loadedInfoSceneName = null;
-        }
-
-        if (infoPageInstance == null && !isLoadingInfoPage)
-        {
-            StartCoroutine(EnsureInfoPageLoaded());
-        }
+        //analytics 
+        levelId = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name; // e.g., "Level1Scene"
+        startedUtc = DateTime.UtcNow;
     }
 
     void Update()
@@ -150,7 +145,7 @@ public class GameManager : MonoBehaviour
 
         string currentScene = SceneManager.GetActiveScene().name;
 
-        if (currentScene.Contains("SampleScene")) 
+        if (currentScene.Contains("Level2Scene")) 
         {
             requiredIngredients[IngredientType.Bread] = 2;
             requiredIngredients[IngredientType.Butter] = 2;
@@ -201,6 +196,15 @@ public class GameManager : MonoBehaviour
         uiCanvas.gameWonPanel.SetActive(true);
 
         float timeTaken = timeLimit - currentTime;
+
+        //Analytics
+        string levelId = SceneManager.GetActiveScene().name;
+        AnalyticsManager.I?.LogRow(levelId, success: true, timeSpentS: timeTaken);
+        var sender  = FindObjectOfType<AnalyticsSender>();
+        if (sender) sender.SendLevelResult(levelId, true, timeTaken);
+
+
+
         int starsEarned = CalculateStars(timeTaken);
 
         for (int i = 0; i < uiCanvas.stars.Length; i++)
@@ -226,6 +230,15 @@ public class GameManager : MonoBehaviour
             uiCanvas.loseReasonText.text = reason;
 
         Debug.Log("LoseGame() called: " + reason);
+
+        //analytics 
+        float timeSpent = timeLimit - currentTime;
+        string levelId = SceneManager.GetActiveScene().name;
+        AnalyticsManager.I?.LogRow(levelId, success: false, timeSpentS: timeSpent);
+        var sender  = FindObjectOfType<AnalyticsSender>();
+        if (sender) sender.SendLevelResult(levelId, false, timeSpent);
+
+
     }
 
     private void EnsureLevelInfoUI()
@@ -590,7 +603,7 @@ public class GameManager : MonoBehaviour
             return "InstructionScene";
         }
 
-        if (levelScene.IndexOf("SampleScene", System.StringComparison.OrdinalIgnoreCase) >= 0)
+        if (levelScene.IndexOf("Level2Scene", System.StringComparison.OrdinalIgnoreCase) >= 0)
         {
             return "InstructionsScene2";
         }
