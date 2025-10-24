@@ -8,6 +8,8 @@ public class AnalyticsSender : MonoBehaviour
 {
     [Header("Google Apps Script Web App URL (ends with /exec)")]
     [SerializeField] private string endpoint = "https://script.google.com/macros/s/AKfycbz8FKFQ0m-JgIKFuVkcmGRgkNvfuVcHkCsEfIYbwP76pfzQAVbZNg6YQzGt7dWV3xxG0Q/exec";  
+    [SerializeField] private bool skipWebRequestsInWebGL = true;
+    private bool skipLogged;
 
     public static AnalyticsSender I { get; private set; }
 
@@ -46,6 +48,18 @@ public class AnalyticsSender : MonoBehaviour
             Debug.LogWarning("[AnalyticsSender] Web App URL (endpoint) not set.");
             return;
         }
+
+#if !UNITY_EDITOR
+        if (skipWebRequestsInWebGL && Application.platform == RuntimePlatform.WebGLPlayer)
+        {
+            if (!skipLogged)
+            {
+                Debug.Log("[WebAnalytics] Skipped analytics post on WebGL build.");
+                skipLogged = true;
+            }
+            return;
+        }
+#endif
 
         var payload = new AnalyticsRow
         {

@@ -242,8 +242,7 @@ public class GameManager : MonoBehaviour
         //Analytics
         string levelId = SceneManager.GetActiveScene().name;
         AnalyticsManager.I?.LogRow(levelId, success: true, timeSpentS: timeTaken);
-        var sender  = FindObjectOfType<AnalyticsSender>();
-        if (sender) sender.SendLevelResult(levelId, true, timeTaken);
+        AnalyticsSender.I?.SendLevelResult(levelId, true, timeTaken);
 
 
 
@@ -277,8 +276,7 @@ public class GameManager : MonoBehaviour
         float timeSpent = timeLimit - currentTime;
         string levelId = SceneManager.GetActiveScene().name;
         AnalyticsManager.I?.LogRow(levelId, success: false, timeSpentS: timeSpent);
-        var sender  = FindObjectOfType<AnalyticsSender>();
-        if (sender) sender.SendLevelResult(levelId, false, timeSpent);
+        AnalyticsSender.I?.SendLevelResult(levelId, false, timeSpent);
 
 
     }
@@ -683,8 +681,7 @@ public class GameManager : MonoBehaviour
         AnalyticsManager.I?.LogRow(levelId, success: false, timeSpentS: timeSpent);
 
         // Google Sheet 
-        var sender = FindObjectOfType<AnalyticsSender>();
-        if (sender) sender.SendLevelResult(levelId, false, timeSpent);
+        AnalyticsSender.I?.SendLevelResult(levelId, false, timeSpent);
     }
 
     private void UpdateTimerUI()
