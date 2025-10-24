@@ -34,7 +34,7 @@ public class RollingPinIconDisplay : MonoBehaviour
 
         if (targetImage == null) return;
 
-        // Create a simple rolling pin sprite
+        
         Sprite rollingPinSprite = CreateRollingPinSprite();
         if (rollingPinSprite != null)
         {
@@ -48,13 +48,13 @@ public class RollingPinIconDisplay : MonoBehaviour
 
         RectTransform rectTransform = targetImage.rectTransform;
         float size = maxDimension;
-        // Set exact dimensions: width 150, height 50
+        
         rectTransform.sizeDelta = new Vector2(150f, 50f);
     }
 
     private Sprite CreateRollingPinSprite()
     {
-        // Use the same visual generation as the actual RollingPin prefab
+        
         const int width = 150;
         const int height = 50;
 

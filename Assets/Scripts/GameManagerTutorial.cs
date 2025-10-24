@@ -44,9 +44,9 @@ public class GameManagerTutorial : MonoBehaviour
     private bool breadCollected = false;
     private bool stickyPassed = false;
     private bool waterCleared = false;
-    // [FormerlySerializedAs("peanutButterCleared")] private bool jamCleared = false;
+    
 
-    // private bool iceWallPopupTriggered = false;
+    
     private int collectedIngredients = 0;
     private int totalIngredients = 0;
     private bool peanutButterCleared = false;
@@ -131,17 +131,17 @@ public class GameManagerTutorial : MonoBehaviour
                 break;
 
             case TutorialStep.FinalPopup:
-                // ShowPopup("Yay, You did it! Now try to beat the maze!",
-                //     () => GoToStep(TutorialStep.Completed));
+                
+                
                 ShowPopup("Congratulations! You completed the tutorial!",
                     () => SceneManager.LoadScene("Level1Scene"));
                 break;
 
-            // case TutorialStep.Completed:
-            //     Time.timeScale = 1f;
-            //     ShowPopup("Congratulations! You completed the tutorial!",
-            //         () => SceneManager.LoadScene("Level1Scene"));
-            //     break;
+            
+            
+            
+            
+            
         }
     }
 

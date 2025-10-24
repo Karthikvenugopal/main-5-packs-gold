@@ -78,7 +78,7 @@ public class IngredientPickup : MonoBehaviour
         if (isCollected) return;
         if (!other.TryGetComponent(out PlayerAbilityController abilityController)) return;
 
-        // Single-slot behavior is enforced inside PlayerAbilityController.GrantAbility
+        
         abilityController.GrantAbility(ingredientType, abilityDurationSeconds);
         isCollected = true;
 

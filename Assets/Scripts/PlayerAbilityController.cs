@@ -16,7 +16,7 @@ public class PlayerAbilityController : MonoBehaviour
     [Header("Movement & Effects")]
     [SerializeField] private float baseSpeed = 4f;
     [SerializeField] private float butterSpeedMultiplier = 1.15f;   
-    [SerializeField] private float stickySlowMultiplier  = 0.60f;   // movement is sticky without Butter
+    [SerializeField] private float stickySlowMultiplier  = 0.60f;   
 
     [Header("UI / FX Broadcast")]
     [Tooltip("If true, will SendMessage(\"OnAbilityChanged\", IngredientType) when ability changes.")]
@@ -24,15 +24,15 @@ public class PlayerAbilityController : MonoBehaviour
 
     public IngredientType CurrentAbility { get; private set; } = IngredientType.None;
 
-    // State
+    
     private bool _inStickyZone;
 
-    // (if duration > 0 is used)
+    
     private Coroutine _expireRoutine;
 
     private void Awake()
     {
-        // Start clean
+        
         ApplyVisualsFor(CurrentAbility);
     }
 
@@ -50,7 +50,7 @@ public class PlayerAbilityController : MonoBehaviour
     private IEnumerator ExpireAfter(float seconds, IngredientType abilityGranted)
     {
         yield return new WaitForSeconds(seconds);
-        // Only clear if the same ability is still active
+        
         if (CurrentAbility == abilityGranted)
         {
             ClearCurrentAbilityEffects();
@@ -60,16 +60,16 @@ public class PlayerAbilityController : MonoBehaviour
         _expireRoutine = null;
     }
 
-    // ─────────────────────────────────────────────────────────────────────────────
-    // Single-slot ability API
-    // ─────────────────────────────────────────────────────────────────────────────
+    
+    
+    
     public void SetCurrentAbility(IngredientType newAbility)
     {
         if (newAbility == CurrentAbility) return;
 
         if (_expireRoutine != null) { StopCoroutine(_expireRoutine); _expireRoutine = null; }
 
-        // Clear old effects
+        
         ClearCurrentAbilityEffects();
         CurrentAbility = newAbility;
         ApplyCurrentAbilityEffects();
@@ -105,13 +105,13 @@ public class PlayerAbilityController : MonoBehaviour
         return true;
     }
 
-    // Called by StickyZone
+    
     public void EnterStickyZone() => _inStickyZone = true;
     public void ExitStickyZone()  => _inStickyZone = false;
 
-    // ─────────────────────────────────────────────────────────────────────────────
-    // Movement helpers (for PlayerController2D)
-    // ─────────────────────────────────────────────────────────────────────────────
+    
+    
+    
     public float CurrentSpeedMultiplier
     {
         get
@@ -126,7 +126,7 @@ public class PlayerAbilityController : MonoBehaviour
         }
     }
 
-    /// Back-compat for existing PlayerController2D code. 
+    
     public float GetMoveSpeedMultiplier() => CurrentSpeedMultiplier;
 
     public float GetMoveSpeed(float externalMultiplier = 1f)
@@ -134,23 +134,23 @@ public class PlayerAbilityController : MonoBehaviour
 
     private void ApplyCurrentAbilityEffects()
     {
-        // if (CurrentAbility == IngredientType.Garlic) EnableGarlicAura();
+        
     }
 
     private void ClearCurrentAbilityEffects()
     {
-        // DisableGarlicAura(); reset per-ability flags, etc.
+        
     }
 
-    // ─────────────────────────────────────────────────────────────────────────────
-    // UI / Visuals
-    // ─────────────────────────────────────────────────────────────────────────────
+    
+    
+    
     private void ApplyVisualsFor(IngredientType ability)
     {
         if (!broadcastAbilityChanged) return;
 
-        // Notify any component on this GameObject that implements:
-        //   void OnAbilityChanged(IngredientType ability)
+        
+        
         SendMessage("OnAbilityChanged", ability, SendMessageOptions.DontRequireReceiver);
     }
 }

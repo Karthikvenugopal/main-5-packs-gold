@@ -34,13 +34,13 @@ public class AnalyticsSender : MonoBehaviour
         public string timestamp;
         public string session_id;
         public string level_id;
-        public string success;      // "TRUE" or "FALSE" (text, not bool)
+        public string success;      
         public float  time_spent_s;
     }
 
-    /// <summary>
-    /// Call this from GameManager on win/lose.
-    /// </summary>
+    
+    
+    
     public void SendLevelResult(string levelId, bool wasSuccessful, float timeSpentS)
     {
         if (string.IsNullOrWhiteSpace(endpoint))
@@ -61,7 +61,7 @@ public class AnalyticsSender : MonoBehaviour
             timestamp    = DateTime.UtcNow.ToString("o"),
             session_id   = SessionId,
             level_id     = levelId,
-            success      = wasSuccessful ? "TRUE" : "FALSE",  // send as text
+            success      = wasSuccessful ? "TRUE" : "FALSE",  
             time_spent_s = Mathf.Max(0f, timeSpentS)
         };
 

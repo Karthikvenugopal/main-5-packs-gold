@@ -29,7 +29,7 @@ public class MazeBuilderTutorial : MonoBehaviour
     public GameManager gameManager;
 
     public Vector2 currentPlayerSpawnPoint;
-    private string[] currentBuildingLayout; // This will remember the layout being built.
+    private string[] currentBuildingLayout; 
 
     string[] maze =
     {
@@ -44,7 +44,7 @@ public class MazeBuilderTutorial : MonoBehaviour
         "#############"
     };
 
-    // Player, Ice, Butter
+    
     private string[] tutorialLayout_Step1 = 
     {
         "#######",
@@ -52,7 +52,7 @@ public class MazeBuilderTutorial : MonoBehaviour
         "#######"
     };
 
-    // Step 3 Layout: Player, Chili, Ice, Butter
+    
     private string[] tutorialLayout_Step3 =
     {
         "#########",
@@ -71,7 +71,7 @@ public class MazeBuilderTutorial : MonoBehaviour
         "#########"
     };
 
-    // Step 6 Layout: Same as Step 5, but now includes Bread ('R') for the player to collect.
+    
     private string[] tutorialLayout_Step6 =
     {
         "#########",
@@ -101,7 +101,7 @@ public class MazeBuilderTutorial : MonoBehaviour
     };
 
 
-    // This will keep track of all spawned objects so we can clean them up.
+    
     private GameObject generatedMazeContainer;
 
 
@@ -143,7 +143,7 @@ public class MazeBuilderTutorial : MonoBehaviour
                         SpawnIceWall(pos);
                         break;
 
-                    case 'W': // Jam spill (legacy map char)
+                    case 'W': 
                         SpawnFloor(pos);
                         SpawnJamPatch(pos);
                         break;
@@ -158,22 +158,22 @@ public class MazeBuilderTutorial : MonoBehaviour
                         SpawnStickyZone(pos);
                         break;
 
-                    case 'P': // move right
+                    case 'P': 
                         SpawnFloor(pos);
                         SpawnRollingPin(pos, Vector2.right);
                         break;
 
-                    case 'p': // move left
+                    case 'p': 
                         SpawnFloor(pos);
                         SpawnRollingPin(pos, Vector2.left);
                         break;
 
-                    case '^': // move up
+                    case '^': 
                         SpawnFloor(pos);
                         SpawnRollingPin(pos, Vector2.up);
                         break;
 
-                    case 'v': // move down
+                    case 'v': 
                         SpawnFloor(pos);
                         SpawnRollingPin(pos, Vector2.down);
                         break;
@@ -196,12 +196,12 @@ public class MazeBuilderTutorial : MonoBehaviour
         GameObject wall = Instantiate(wallPrefab, position, Quaternion.identity, generatedMazeContainer.transform);
         if (currentBuildingLayout == tutorialLayout_Step3)
         {
-            // THEN check if this is the right-most wall.
+            
             if (x_coordinate == currentBuildingLayout[0].Length - 1)
             {
-                // Only if both are true, add the special tag.
+                
                 wall.tag = "RightWall";
-                Debug.Log($"RightWall tag added to wall at X coordinate: {x_coordinate}"); // For confirmation
+                Debug.Log($"RightWall tag added to wall at X coordinate: {x_coordinate}"); 
             }
         }
 
@@ -361,7 +361,7 @@ public class MazeBuilderTutorial : MonoBehaviour
 
         if (ice.TryGetComponent(out SpriteRenderer sr))
         {
-            sr.sortingOrder = 1; // Set order to 1
+            sr.sortingOrder = 1; 
             sr.color = new Color(0.62f, 0.84f, 1f, 1f);
         }
 
@@ -446,7 +446,7 @@ public class MazeBuilderTutorial : MonoBehaviour
     }
 
 
-    // In MazeBuilderTutorial.cs
+    
     public void BuildTutorialLevel(int step)
     {
         ClearMaze();
@@ -455,8 +455,8 @@ public class MazeBuilderTutorial : MonoBehaviour
 
         if (step == 1) layoutToBuild = tutorialLayout_Step1;
         else if (step == 3) layoutToBuild = tutorialLayout_Step3;
-        else if (step == 5) layoutToBuild = tutorialLayout_Step5; // For Peanut Butter intro
-        else if (step == 6) layoutToBuild = tutorialLayout_Step6; // For adding Bread
+        else if (step == 5) layoutToBuild = tutorialLayout_Step5; 
+        else if (step == 6) layoutToBuild = tutorialLayout_Step6; 
 
         this.currentBuildingLayout = layoutToBuild;
 
