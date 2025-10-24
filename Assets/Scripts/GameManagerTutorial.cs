@@ -8,7 +8,23 @@ using UnityEngine.Serialization;
 
 public class GameManagerTutorial : MonoBehaviour
 {
-    public enum TutorialStep { Intro, TryForButter, HitIceWall, GetChili, MeltIce, FinalPopup, Step4Maze, Completed }
+    public enum TutorialStep
+    {
+        Intro,
+        TryForButter,
+        HitIceWall,
+        GetChili,
+        MeltIce,
+        CollectedFirstButter,
+        TryPeanutButter,
+        HitPeanutButter,
+        SpawnBread,
+        ClearPeanutButter,
+        CollectFinalButter,
+        FinalPopup,
+        Completed
+    }
+
     private TutorialStep currentStep;
 
     [Header("Dependencies")]
@@ -25,17 +41,21 @@ public class GameManagerTutorial : MonoBehaviour
     private bool chiliCollected = false;
     private bool iceMelted = false;
     private bool butterCollected = false;
-    private bool breadCollected = false; 
-    private bool stickyPassed = false; 
-    [FormerlySerializedAs("peanutButterCleared")] private bool jamCleared = false; 
-    private bool iceWallPopupTriggered = false;
+    private bool breadCollected = false;
+    private bool stickyPassed = false;
+    private bool waterCleared = false;
+    // [FormerlySerializedAs("peanutButterCleared")] private bool jamCleared = false;
+
+    // private bool iceWallPopupTriggered = false;
     private int collectedIngredients = 0;
     private int totalIngredients = 0;
-    
+    private bool peanutButterCleared = false;
+
     void Start()
     {
         uiCanvas = FindFirstObjectByType<UICanvas>();
-        if (uiCanvas == null) {
+        if (uiCanvas == null)
+        {
             Debug.LogError("UICanvas script not found in scene!");
             return;
         }
@@ -50,47 +70,78 @@ public class GameManagerTutorial : MonoBehaviour
 
     void GoToStep(TutorialStep nextStep)
     {
+        Debug.Log("Transitioning to step: " + nextStep);
         currentStep = nextStep;
+        GameObject player = null;
+
         switch (currentStep)
         {
             case TutorialStep.Intro:
                 mazeBuilder.BuildTutorialLevel(1);
-                totalIngredients = GameObject.FindGameObjectsWithTag("Ingredient").Length;
-                collectedIngredients = 0;
-                ShowPopup("Use W, A, S, D or Arrow keys to move.\nTry to collect the butter!", () => GoToStep(TutorialStep.TryForButter));
+                ShowPopup("Use W, A, S, D or Arrow keys to move.\nTry to collect the butter!",
+                    () => GoToStep(TutorialStep.TryForButter));
                 break;
+
             case TutorialStep.TryForButter:
                 break;
+
             case TutorialStep.HitIceWall:
-                ShowPopup("Oops! You can't go through ice.\nMaybe chili can help?", () => GoToStep(TutorialStep.GetChili));
+                ShowPopup("Oops! You can't go through ice.\nMaybe chili can help?",
+                    () => GoToStep(TutorialStep.GetChili));
                 break;
+
             case TutorialStep.GetChili:
                 mazeBuilder.BuildTutorialLevel(3);
                 totalIngredients = GameObject.FindGameObjectsWithTag("Ingredient").Length;
                 collectedIngredients = 0;
-                GameObject player = GameObject.FindGameObjectWithTag("Player");
-                if (player != null) player.transform.position = mazeBuilder.currentPlayerSpawnPoint;
-                break;
-            case TutorialStep.MeltIce:
-                ShowPopup("Great! You've got the Chili power.\nNow try melting that ice wall!", () => {});
-                break;
-            case TutorialStep.FinalPopup:
-                ShowPopup("Yay, You did it! Now try to beat the maze!", 
-                () => GoToStep(TutorialStep.Step4Maze));
-                break;
-            case TutorialStep.Step4Maze:
-                mazeBuilder.BuildTutorialLevel(4);
-                totalIngredients = GameObject.FindGameObjectsWithTag("Ingredient").Length;
-                collectedIngredients = 0;
                 player = GameObject.FindGameObjectWithTag("Player");
                 if (player != null) player.transform.position = mazeBuilder.currentPlayerSpawnPoint;
-                ShowPopup("Collect all ingredients and exit the maze!\nBeware of the Rolling Pins trying to crush you in your path!", () => { /* player starts */ });
                 break;
-            case TutorialStep.Completed:
-                Time.timeScale = 1f;
-                ShowPopup("Congratulations! You completed the tutorial!", 
-                () => SceneManager.LoadScene("Level2Scene"));
+
+            case TutorialStep.MeltIce:
+                ShowPopup("Great! You've got the Chili power.\nNow try melting that ice wall!", () => { });
                 break;
+
+            case TutorialStep.CollectedFirstButter:
+                mazeBuilder.BuildTutorialLevel(5);
+                player = GameObject.FindGameObjectWithTag("Player");
+                if (player != null) player.transform.position = mazeBuilder.currentPlayerSpawnPoint;
+                GoToStep(TutorialStep.TryPeanutButter);
+                break;
+
+            case TutorialStep.TryPeanutButter:
+                break;
+
+            case TutorialStep.HitPeanutButter:
+                ShowPopup("You cannot go through the peanut butter, maybe bread can help",
+                    () => GoToStep(TutorialStep.SpawnBread));
+                break;
+
+            case TutorialStep.SpawnBread:
+                mazeBuilder.BuildTutorialLevel(6);
+                player = GameObject.FindGameObjectWithTag("Player");
+                if (player != null) player.transform.position = mazeBuilder.currentPlayerSpawnPoint;
+                break;
+
+            case TutorialStep.ClearPeanutButter:
+                ShowPopup("Awesome! You got the bread power.\nNow try go through the peanut butter", () => { });
+                break;
+
+            case TutorialStep.CollectFinalButter:
+                break;
+
+            case TutorialStep.FinalPopup:
+                // ShowPopup("Yay, You did it! Now try to beat the maze!",
+                //     () => GoToStep(TutorialStep.Completed));
+                ShowPopup("Congratulations! You completed the tutorial!",
+                    () => SceneManager.LoadScene("Level1Scene"));
+                break;
+
+            // case TutorialStep.Completed:
+            //     Time.timeScale = 1f;
+            //     ShowPopup("Congratulations! You completed the tutorial!",
+            //         () => SceneManager.LoadScene("Level1Scene"));
+            //     break;
         }
     }
 
@@ -99,13 +150,17 @@ public class GameManagerTutorial : MonoBehaviour
         GameObject panel = uiCanvas.tutorialPopupPanel;
         CanvasGroup canvasGroup = panel.GetComponent<CanvasGroup>();
         Transform panelTransform = panel.transform;
-        
+
         float startAlpha = showing ? 0f : 1f;
         float endAlpha = showing ? 1f : 0f;
         Vector3 startScaleVec = showing ? startScale : Vector3.one;
         Vector3 endScaleVec = showing ? Vector3.one : startScale;
 
-        if (showing) { uiCanvas.popupText.text = message; panel.SetActive(true); }
+        if (showing)
+        {
+            uiCanvas.popupText.text = message;
+            panel.SetActive(true);
+        }
 
         float time = 0f;
         while (time < animationDuration)
@@ -124,7 +179,8 @@ public class GameManagerTutorial : MonoBehaviour
         {
             Time.timeScale = 0f;
             uiCanvas.continueButton.onClick.RemoveAllListeners();
-            uiCanvas.continueButton.onClick.AddListener(() => {
+            uiCanvas.continueButton.onClick.AddListener(() =>
+            {
                 StartCoroutine(AnimatePopup(false, "", onContinueCallback));
             });
         }
@@ -134,60 +190,118 @@ public class GameManagerTutorial : MonoBehaviour
             Time.timeScale = 1f;
             onContinueCallback?.Invoke();
         }
+
+        yield break;
     }
-    
+
     void ShowPopup(string message, Action onContinueCallback)
     {
         StartCoroutine(AnimatePopup(true, message, onContinueCallback));
     }
-    
-    public void OnPlayerHitRightWall()
+
+    public void OnPlayerHitIceWall()
     {
-        GoToStep(TutorialStep.FinalPopup);
+        if (currentStep == TutorialStep.TryForButter)
+            GoToStep(TutorialStep.HitIceWall);
     }
 
+    public void OnPlayerHitPeanutButter()
+    {
+        if (currentStep == TutorialStep.TryPeanutButter)
+            GoToStep(TutorialStep.HitPeanutButter);
+    }
 
-    // --- Public Event Handlers ---
-
-    public void OnPlayerHitIceWall() { 
-        if (currentStep == TutorialStep.TryForButter && !iceWallPopupTriggered) {
-            iceWallPopupTriggered = true;
-            StartCoroutine(DelayedIceWallPopup());
+    public void OnChiliCollected()
+    {
+        if (!chiliCollected)
+        {
+            chiliCollected = true;
+            collectedIngredients++;
+            if (currentStep == TutorialStep.GetChili)
+                GoToStep(TutorialStep.MeltIce);
+            CheckForTutorialCompletion();
         }
     }
-    
-    private IEnumerator DelayedIceWallPopup()
+
+    public void OnIceWallMelted()
     {
-        yield return new WaitForSeconds(2f);
-        GoToStep(TutorialStep.HitIceWall);
+        if (!iceMelted)
+        {
+            iceMelted = true;
+            CheckForTutorialCompletion();
+        }
     }
-    public void OnChiliCollected() { if (!chiliCollected) { chiliCollected = true; collectedIngredients++; if (currentStep == TutorialStep.GetChili) GoToStep(TutorialStep.MeltIce); CheckForTutorialCompletion(); } }
-    public void OnIceWallMelted() { if (!iceMelted) { iceMelted = true; CheckForTutorialCompletion(); } }
-    public void OnButterCollected() {
-        if (!butterCollected) {
-            butterCollected = true; 
-            collectedIngredients++; 
-            CheckForTutorialCompletion(); 
-        } 
+
+    public void OnButterCollected()
+    {
+        if (currentStep == TutorialStep.MeltIce && !butterCollected)
+        {
+            butterCollected = true;
+            collectedIngredients++;
+            GoToStep(TutorialStep.CollectedFirstButter);
+        }
+        else if (currentStep == TutorialStep.CollectFinalButter)
+        {
+            collectedIngredients++;
+            GoToStep(TutorialStep.FinalPopup);
+        }
+        else
+        {
+            collectedIngredients++;
+            CheckForTutorialCompletion();
+        }
     }
-    
-    public void OnBreadCollected() { if (!breadCollected) { breadCollected = true; collectedIngredients++; CheckForTutorialCompletion(); } }
-    public void OnStickyZonePassed() { if (!stickyPassed) { stickyPassed = true; Debug.Log("Player passed a sticky zone."); } }
-    public void OnJamCleared() { if (!jamCleared) { jamCleared = true; Debug.Log("Player cleared a jam spill."); } }
-    // --- END OF ADDED METHODS ---
+
+    public void OnBreadCollected()
+    {
+        if (!breadCollected)
+        {
+            breadCollected = true;
+            collectedIngredients++;
+            if (currentStep == TutorialStep.SpawnBread)
+                GoToStep(TutorialStep.ClearPeanutButter);
+            CheckForTutorialCompletion();
+        }
+    }
+
+    public void OnStickyZonePassed()
+    {
+        if (!stickyPassed)
+        {
+            stickyPassed = true;
+            Debug.Log("Player passed a sticky zone.");
+        }
+    }
+
+    public void OnWaterPatchCleared()
+    {
+        if (!waterCleared)
+        {
+            waterCleared = true;
+            Debug.Log("Player cleared a water patch.");
+        }
+    }
+
+    public void OnPeanutButterCleared()
+    {
+        if (!peanutButterCleared)
+        {
+            peanutButterCleared = true;
+            Debug.Log("Player cleared a peanut butter spill.");
+            if (currentStep == TutorialStep.ClearPeanutButter)
+                GoToStep(TutorialStep.CollectFinalButter);
+        }
+    }
 
     private void CheckForTutorialCompletion()
     {
-        if (collectedIngredients >= totalIngredients)
+        if (currentStep >= TutorialStep.CollectFinalButter && collectedIngredients >= totalIngredients)
         {
-            if (currentStep == TutorialStep.MeltIce || currentStep == TutorialStep.FinalPopup)
-            {
-                GoToStep(TutorialStep.FinalPopup);
-            }
-            else if (currentStep == TutorialStep.Step4Maze)
-            {
-                GoToStep(TutorialStep.Completed);
-            }
+            Debug.Log("CheckForTutorialCompletion: Conditions met, but letting OnButterCollected handle final step.");
         }
+    }
+    public void OnJamCleared()
+    {
+        OnPeanutButterCleared(); 
     }
 }

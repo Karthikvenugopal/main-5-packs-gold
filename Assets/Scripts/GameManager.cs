@@ -58,6 +58,48 @@ public class GameManager : MonoBehaviour
         foreach (var button in uiCanvas.restartButtons)
         {
             button.onClick.AddListener(RestartGame);
+            
+            // Apply consistent styling to match info button
+            if (button != null)
+            {
+                // Set button size to 150x50
+                RectTransform restartRect = button.GetComponent<RectTransform>();
+                if (restartRect != null)
+                {
+                    restartRect.sizeDelta = new Vector2(150f, 50f);
+                }
+                
+                // Apply info button styling
+                if (button.TryGetComponent(out Image restartImage))
+                {
+                    restartImage.sprite = GetDefaultSprite();
+                    restartImage.type = Image.Type.Sliced;
+                    restartImage.color = new Color(0.16f, 0.18f, 0.22f, 0.95f);
+                }
+                
+                // Override button colors to match info button
+                UnityEngine.UI.Button restartButtonComponent = button.GetComponent<UnityEngine.UI.Button>();
+                if (restartButtonComponent != null)
+                {
+                    ColorBlock colors = restartButtonComponent.colors;
+                    colors.normalColor = new Color(0.16f, 0.18f, 0.22f, 0.95f);
+                    colors.highlightedColor = new Color(0.16f, 0.18f, 0.22f, 0.95f);
+                    colors.pressedColor = new Color(0.16f, 0.18f, 0.22f, 0.95f);
+                    colors.selectedColor = new Color(0.16f, 0.18f, 0.22f, 0.95f);
+                    colors.disabledColor = new Color(0.16f, 0.18f, 0.22f, 0.5f);
+                    restartButtonComponent.colors = colors;
+                }
+                
+                // Update text styling to match info button
+                TextMeshProUGUI restartLabel = button.GetComponentInChildren<TextMeshProUGUI>();
+                if (restartLabel != null)
+                {
+                    restartLabel.fontSize = 28f;
+                    restartLabel.alignment = TextAlignmentOptions.Center;
+                    restartLabel.color = Color.white;
+                    restartLabel.enableWordWrapping = false;
+                }
+            }
         }
 
         // Set up NextLevel button
@@ -200,8 +242,7 @@ public class GameManager : MonoBehaviour
         //Analytics
         string levelId = SceneManager.GetActiveScene().name;
         AnalyticsManager.I?.LogRow(levelId, success: true, timeSpentS: timeTaken);
-        var sender  = FindObjectOfType<AnalyticsSender>();
-        if (sender) sender.SendLevelResult(levelId, true, timeTaken);
+        AnalyticsSender.I?.SendLevelResult(levelId, true, timeTaken);
 
 
 
@@ -235,8 +276,7 @@ public class GameManager : MonoBehaviour
         float timeSpent = timeLimit - currentTime;
         string levelId = SceneManager.GetActiveScene().name;
         AnalyticsManager.I?.LogRow(levelId, success: false, timeSpentS: timeSpent);
-        var sender  = FindObjectOfType<AnalyticsSender>();
-        if (sender) sender.SendLevelResult(levelId, false, timeSpent);
+        AnalyticsSender.I?.SendLevelResult(levelId, false, timeSpent);
 
 
     }
@@ -256,11 +296,11 @@ public class GameManager : MonoBehaviour
             RectTransform infoRect = uiCanvas.infoButton.GetComponent<RectTransform>();
             if (infoRect != null)
             {
-                infoRect.anchorMin = new Vector2(1f, 0f);
-                infoRect.anchorMax = new Vector2(1f, 0f);
-                infoRect.pivot = new Vector2(1f, 0f);
-                infoRect.sizeDelta = new Vector2(160f, 48f);
-                infoRect.anchoredPosition = new Vector2(-270f, 30f);
+                infoRect.anchorMin = new Vector2(1f, 1f);
+                infoRect.anchorMax = new Vector2(1f, 1f);
+                infoRect.pivot = new Vector2(1f, 1f);
+                infoRect.sizeDelta = new Vector2(150f, 50f);
+                infoRect.anchoredPosition = new Vector2(-200f, -20f);
             }
 
             if (uiCanvas.infoButton.TryGetComponent(out Image infoImage))
@@ -274,7 +314,7 @@ public class GameManager : MonoBehaviour
             if (label != null)
             {
                 label.text = "Info";
-                label.fontSize = 28f;
+                label.fontSize = 32f;
                 label.alignment = TextAlignmentOptions.Center;
                 label.color = Color.white;
                 label.enableWordWrapping = false;
@@ -288,11 +328,11 @@ public class GameManager : MonoBehaviour
         buttonGO.transform.SetParent(parent, false);
 
         RectTransform rect = buttonGO.GetComponent<RectTransform>();
-        rect.anchorMin = new Vector2(1f, 0f);
-        rect.anchorMax = new Vector2(1f, 0f);
-        rect.pivot = new Vector2(1f, 0f);
-        rect.sizeDelta = new Vector2(160f, 48f);
-        rect.anchoredPosition = new Vector2(-270f, 30f);
+        rect.anchorMin = new Vector2(1f, 1f);
+        rect.anchorMax = new Vector2(1f, 1f);
+        rect.pivot = new Vector2(1f, 1f);
+        rect.sizeDelta = new Vector2(150f, 50f);
+        rect.anchoredPosition = new Vector2(-200f, -20f);
 
         Image background = buttonGO.GetComponent<Image>();
         background.sprite = GetDefaultSprite();
@@ -312,7 +352,7 @@ public class GameManager : MonoBehaviour
 
         TextMeshProUGUI label = labelGO.AddComponent<TextMeshProUGUI>();
         label.text = "Info";
-        label.fontSize = 28f;
+        label.fontSize = 32f;
         label.alignment = TextAlignmentOptions.Center;
         label.color = Color.white;
         label.enableWordWrapping = false;
@@ -632,6 +672,16 @@ public class GameManager : MonoBehaviour
 
         if (uiCanvas != null && uiCanvas.loseReasonText != null)
             uiCanvas.loseReasonText.text = "Oops! You got hit!";
+
+        // --- Analytics: log this as a failure (FALSE) ---
+        float timeSpent = timeLimit - currentTime;  
+        string levelId  = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
+
+        // local CSV 
+        AnalyticsManager.I?.LogRow(levelId, success: false, timeSpentS: timeSpent);
+
+        // Google Sheet 
+        AnalyticsSender.I?.SendLevelResult(levelId, false, timeSpent);
     }
 
     private void UpdateTimerUI()

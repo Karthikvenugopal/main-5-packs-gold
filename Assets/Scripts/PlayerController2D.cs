@@ -30,6 +30,7 @@ public class PlayerController2D : MonoBehaviour
         moveInput = new Vector2(moveX, moveY).normalized;
     }
 
+
     void FixedUpdate()
     {
         if (moveInput == Vector2.zero) return;
@@ -48,25 +49,18 @@ public class PlayerController2D : MonoBehaviour
 
         if (blocked) 
         {
-            if (hit.collider.CompareTag("RightWall"))
-            {
-                GameManagerTutorial tutorialManager = FindFirstObjectByType<GameManagerTutorial>();
-                if (tutorialManager != null)
-                {
-                    tutorialManager.OnPlayerHitRightWall();
-                    return; 
-                }
-            }
+            
 
+            // Check for interactions if the player has an ability controller
             if (abilityController != null)
             {
                 if (hit.collider.TryGetComponent(out IceWall iceWall))
                 {
                     if (iceWall.TryMelt(abilityController))
                     {
-                        blocked = false;
+                        blocked = false; // Allow movement if melted
                     }
-                    else
+                    else // Failed to melt (no chili)
                     {
                         GameManagerTutorial tutorialManager = FindFirstObjectByType<GameManagerTutorial>();
                         if (tutorialManager != null)
@@ -77,9 +71,21 @@ public class PlayerController2D : MonoBehaviour
                 }
                 else if (hit.collider.TryGetComponent(out JamPatch jamPatch))
                 {
+
                     if (jamPatch.TryScoop(abilityController))
+
                     {
-                        blocked = false;
+                        blocked = false; // Allow movement if cleared
+                    }
+                    else // Failed to clear (no bread)
+                    {
+                        // Notify the tutorial manager about hitting peanut butter without bread
+                        GameManagerTutorial tutorialManager = FindFirstObjectByType<GameManagerTutorial>();
+                        if (tutorialManager != null)
+                        {
+                            // We need a specific method in GameManagerTutorial for this
+                            tutorialManager.OnPlayerHitPeanutButter(); 
+                        }
                     }
                 }
             }
