@@ -134,7 +134,7 @@ public class GameManagerTutorial : MonoBehaviour
                 // ShowPopup("Yay, You did it! Now try to beat the maze!",
                 //     () => GoToStep(TutorialStep.Completed));
                 ShowPopup("Congratulations! You completed the tutorial!",
-                    () => SceneManager.LoadScene("Level1Scene"));
+                    () => SceneManager.LoadScene("InstructionScene"));
                 break;
 
             // case TutorialStep.Completed:
