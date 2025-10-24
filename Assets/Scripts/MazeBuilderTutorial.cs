@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Serialization;
 using System.Collections.Generic;
 
 public class MazeBuilderTutorial : MonoBehaviour
@@ -16,7 +17,7 @@ public class MazeBuilderTutorial : MonoBehaviour
     [Header("Obstacle Prefabs")]
     public GameObject iceWallPrefab;
     public GameObject stickyZonePrefab;
-    public GameObject peanutButterPatchPrefab;
+    [FormerlySerializedAs("peanutButterPatchPrefab")] public GameObject jamPatchPrefab;
     [Header("Ability Durations")]
     public float chiliDurationSeconds = 0f;
     public float butterDurationSeconds = 12f;
@@ -140,9 +141,9 @@ public class MazeBuilderTutorial : MonoBehaviour
                         SpawnIceWall(pos);
                         break;
 
-                    case 'W': // Peanut butter smear (legacy map char)
+                    case 'W': // Jam spill (legacy map char)
                         SpawnFloor(pos);
-                        SpawnPeanutButterPatch(pos);
+                        SpawnJamPatch(pos);
                         break;
 
                     case 'R': 
@@ -251,21 +252,21 @@ public class MazeBuilderTutorial : MonoBehaviour
     }
 
 
-    void SpawnPeanutButterPatch(Vector2 position)
+    void SpawnJamPatch(Vector2 position)
     {
-        GameObject source = peanutButterPatchPrefab != null ? peanutButterPatchPrefab : wallPrefab;
+        GameObject source = jamPatchPrefab != null ? jamPatchPrefab : wallPrefab;
         if (source == null) return;
 
         GameObject smear = Instantiate(source, position, Quaternion.identity, generatedMazeContainer.transform);
 
         if (smear.TryGetComponent(out SpriteRenderer sr))
         {
-            sr.color = new Color(0.72f, 0.49f, 0.24f, 0.85f);
+            sr.color = new Color(0.75f, 0.13f, 0.28f, 0.85f);
         }
 
-        if (!smear.TryGetComponent(out PeanutButterPatch wp))
+        if (!smear.TryGetComponent(out JamPatch patch))
         {
-            wp = smear.AddComponent<PeanutButterPatch>();
+            patch = smear.AddComponent<JamPatch>();
         }
 
         smear.layer = LayerMask.NameToLayer("Wall");

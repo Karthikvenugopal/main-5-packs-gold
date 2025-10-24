@@ -4,6 +4,7 @@ using TMPro;
 using System;
 using UnityEngine.UI;
 using System.Collections;
+using UnityEngine.Serialization;
 
 public class GameManagerTutorial : MonoBehaviour
 {
@@ -44,6 +45,10 @@ public class GameManagerTutorial : MonoBehaviour
     private bool breadCollected = false;
     private bool stickyPassed = false;
     private bool waterCleared = false;
+
+    [FormerlySerializedAs("peanutButterCleared")] private bool jamCleared = false; 
+    private bool iceWallPopupTriggered = false;
+
     private int collectedIngredients = 0;
     private int totalIngredients = 0;
     private bool peanutButterCleared = false;
@@ -265,6 +270,25 @@ public class GameManagerTutorial : MonoBehaviour
         }
     }
     
+
+    private IEnumerator DelayedIceWallPopup()
+    {
+        yield return new WaitForSeconds(2f);
+        GoToStep(TutorialStep.HitIceWall);
+    }
+    public void OnChiliCollected() { if (!chiliCollected) { chiliCollected = true; collectedIngredients++; if (currentStep == TutorialStep.GetChili) GoToStep(TutorialStep.MeltIce); CheckForTutorialCompletion(); } }
+    public void OnIceWallMelted() { if (!iceMelted) { iceMelted = true; CheckForTutorialCompletion(); } }
+    public void OnButterCollected() {
+        if (!butterCollected) {
+            butterCollected = true; 
+            collectedIngredients++; 
+            CheckForTutorialCompletion(); 
+        } 
+    }
+    
+    public void OnBreadCollected() { if (!breadCollected) { breadCollected = true; collectedIngredients++; CheckForTutorialCompletion(); } }
+    public void OnStickyZonePassed() { if (!stickyPassed) { stickyPassed = true; Debug.Log("Player passed a sticky zone."); } }
+    public void OnJamCleared() { if (!jamCleared) { jamCleared = true; Debug.Log("Player cleared a jam spill."); } }
 
     private void CheckForTutorialCompletion()
     {

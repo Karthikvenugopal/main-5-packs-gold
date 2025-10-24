@@ -69,10 +69,11 @@ public class PlayerController2D : MonoBehaviour
                         }
                     }
                 }
-                else if (hit.collider.TryGetComponent(out PeanutButterPatch peanutPatch))
+                else if (hit.collider.TryGetComponent(out JamPatch jamPatch))
                 {
-                    // Try to clear the peanut butter patch
-                    if (peanutPatch.TryScoop(abilityController)) // Renamed from TryClear in your code
+
+                    if (jamPatch.TryScoop(abilityController))
+
                     {
                         blocked = false; // Allow movement if cleared
                     }
