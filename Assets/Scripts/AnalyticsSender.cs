@@ -7,7 +7,7 @@ using UnityEngine.Networking;
 public class AnalyticsSender : MonoBehaviour
 {
     [Header("Google Apps Script Web App URL (ends with /exec)")]
-    [SerializeField] private string endpoint = "https://script.google.com/macros/s/AKfycbz8FKFQ0m-JgIKFuVkcmGRgkNvfuVcHkCsEfIYbwP76pfzQAVbZNg6YQzGt7dWV3xxG0Q/exec";   // paste your /exec URL
+    [SerializeField] private string endpoint = "https://script.google.com/macros/s/AKfycbz8FKFQ0m-JgIKFuVkcmGRgkNvfuVcHkCsEfIYbwP76pfzQAVbZNg6YQzGt7dWV3xxG0Q/exec";  
 
     public static AnalyticsSender I { get; private set; }
 
