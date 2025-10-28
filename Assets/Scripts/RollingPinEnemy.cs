@@ -102,6 +102,14 @@ public class RollingPinEnemy : MonoBehaviour
             return;
         }
 
+        bool handledByCoopController = false;
+        if (collision.collider.TryGetComponent(out CoopPlayerController coopPlayer))
+        {
+            handledByCoopController = true;
+            GameManager gm = FindAnyObjectByType<GameManager>();
+            gm?.OnPlayerHitByEnemy();
+        }
+
         if (collision.collider.TryGetComponent(out PlayerAbilityController abilityController))
         {
             bool hasShield = abilityController.HasAbility(IngredientType.Chocolate);
@@ -122,6 +130,11 @@ public class RollingPinEnemy : MonoBehaviour
             {
                 ReverseDirection();
             }
+        }
+
+        if (handledByCoopController)
+        {
+            return;
         }
     }
 
