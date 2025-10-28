@@ -1,49 +1,45 @@
 using UnityEngine;
 
-[RequireComponent(typeof(BoxCollider2D))]
+[RequireComponent(typeof(Collider2D))]
 public class IceWall : MonoBehaviour
 {
     [SerializeField] private ParticleSystem meltEffect;
 
-    private bool melted;
-    private GameManagerTutorial tutorialManager;
+    private bool _melted;
+
     private void Awake()
     {
-        BoxCollider2D collider = GetComponent<BoxCollider2D>();
+        Collider2D collider = GetComponent<Collider2D>();
         collider.isTrigger = false;
         gameObject.layer = LayerMask.NameToLayer("Wall");
     }
 
-    private void Start()
-    {
-        tutorialManager = FindAnyObjectByType<GameManagerTutorial>();
-    }
-
     public bool TryMelt(PlayerAbilityController abilityController)
     {
-        if (melted || abilityController == null) return melted;
+        if (_melted) return true;
+        if (abilityController == null) return false;
         if (!abilityController.ConsumeAbility(IngredientType.Chili)) return false;
 
-        MeltInternal();
+        Melt();
         return true;
     }
 
-    private void MeltInternal()
+    public bool TryMelt(PlayerRole role)
     {
-        
-        Debug.Log("An Ice Wall was melted at position: " + transform.position + " at game time: " + Time.time);
-        melted = true;
+        if (_melted || role != PlayerRole.Fireboy) return false;
+        Melt();
+        return true;
+    }
+
+    private void Melt()
+    {
+        _melted = true;
+
         if (meltEffect != null)
         {
             Instantiate(meltEffect, transform.position, Quaternion.identity);
         }
 
-        GameManagerTutorial tutorialManager = Object.FindFirstObjectByType<GameManagerTutorial>();
-        if (tutorialManager != null)
-        {
-            tutorialManager.OnIceWallMelted();
-        }
         Destroy(gameObject);
     }
-
 }

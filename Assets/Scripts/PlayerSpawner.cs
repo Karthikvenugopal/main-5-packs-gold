@@ -2,24 +2,89 @@ using UnityEngine;
 
 public class PlayerSpawner : MonoBehaviour
 {
-    public GameObject playerPrefab;
-    void Start()
+    [SerializeField] private GameObject playerPrefab;
+    [SerializeField] private GameManager gameManager;
+
+    private void Start()
     {
-      GameObject spawnMarker = GameObject.Find("PlayerSpawn");
-        if (spawnMarker != null && playerPrefab != null)
+        SpawnPlayer("FireboySpawn", PlayerRole.Fireboy);
+        SpawnPlayer("WatergirlSpawn", PlayerRole.Watergirl);
+    }
+
+    private void SpawnPlayer(string spawnName, PlayerRole role)
+    {
+        GameObject spawnMarker = GameObject.Find(spawnName);
+
+        if (spawnMarker == null)
         {
-            GameObject playerObject = Instantiate(playerPrefab, spawnMarker.transform.position, Quaternion.identity);
-            if(playerObject.TryGetComponent(out SpriteRenderer sr)) sr.sortingOrder = 3; 
+            Debug.LogWarning($"Spawn marker '{spawnName}' not found.");
+            return;
         }
-        else
+
+        if (playerPrefab == null)
         {
-            Debug.LogWarning("PlayerSpawn not found or PlayerPrefab not assigned!");
+            Debug.LogWarning("Player prefab is not assigned.");
+            return;
+        }
+
+        GameObject playerObject = Instantiate(playerPrefab, spawnMarker.transform.position, Quaternion.identity);
+        playerObject.name = role.ToString();
+        playerObject.tag = "Player";
+
+        DisableLegacyComponents(playerObject);
+        EnsurePhysicsConfiguration(playerObject);
+
+        CoopPlayerController controller = playerObject.GetComponent<CoopPlayerController>();
+        if (controller == null)
+        {
+            controller = playerObject.AddComponent<CoopPlayerController>();
+        }
+        controller.Initialize(role, gameManager);
+
+        spawnMarker.SetActive(false);
+    }
+
+    private static void DisableLegacyComponents(GameObject playerObject)
+    {
+        if (playerObject.TryGetComponent<PlayerController2D>(out var oldController))
+        {
+            oldController.enabled = false;
+            Object.Destroy(oldController);
+        }
+
+        if (playerObject.TryGetComponent<PlayerAbilityController>(out var ability))
+        {
+            ability.enabled = false;
+            Object.Destroy(ability);
+        }
+
+        if (playerObject.TryGetComponent<PlayerColorController>(out var colorController))
+        {
+            colorController.enabled = false;
+            Object.Destroy(colorController);
+        }
+
+        if (playerObject.TryGetComponent<CircleCollider2D>(out var circleCollider))
+        {
+            Object.Destroy(circleCollider);
         }
     }
 
-
-    void Update()
+    private static void EnsurePhysicsConfiguration(GameObject playerObject)
     {
-        
+        if (!playerObject.TryGetComponent(out Rigidbody2D body))
+        {
+            body = playerObject.AddComponent<Rigidbody2D>();
+        }
+
+        body.gravityScale = 0f;
+        body.freezeRotation = true;
+        body.interpolation = RigidbodyInterpolation2D.Interpolate;
+
+        if (!playerObject.TryGetComponent(out Collider2D collider))
+        {
+            collider = playerObject.AddComponent<BoxCollider2D>();
+        }
+        collider.isTrigger = false;
     }
 }
