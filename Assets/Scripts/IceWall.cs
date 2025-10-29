@@ -14,16 +14,6 @@ public class IceWall : MonoBehaviour
         gameObject.layer = LayerMask.NameToLayer("Wall");
     }
 
-    public bool TryMelt(PlayerAbilityController abilityController)
-    {
-        if (_melted) return true;
-        if (abilityController == null) return false;
-        if (!abilityController.ConsumeAbility(IngredientType.Chili)) return false;
-
-        Melt();
-        return true;
-    }
-
     public bool TryMelt(PlayerRole role)
     {
         if (_melted || role != PlayerRole.Fireboy) return false;

@@ -46,24 +46,6 @@ public class PlayerSpawner : MonoBehaviour
 
     private static void DisableLegacyComponents(GameObject playerObject)
     {
-        if (playerObject.TryGetComponent<PlayerController2D>(out var oldController))
-        {
-            oldController.enabled = false;
-            Object.Destroy(oldController);
-        }
-
-        if (playerObject.TryGetComponent<PlayerAbilityController>(out var ability))
-        {
-            ability.enabled = false;
-            Object.Destroy(ability);
-        }
-
-        if (playerObject.TryGetComponent<PlayerColorController>(out var colorController))
-        {
-            colorController.enabled = false;
-            Object.Destroy(colorController);
-        }
-
         if (playerObject.TryGetComponent<CircleCollider2D>(out var circleCollider))
         {
             Object.Destroy(circleCollider);

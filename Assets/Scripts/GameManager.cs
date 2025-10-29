@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
@@ -7,6 +8,15 @@ using UnityEngine.UI;
 public class GameManager : MonoBehaviour
 {
     [SerializeField] private Color messageBackground = new Color(0f, 0f, 0f, 0.55f);
+    [Header("UI Messages")]
+    [SerializeField] private string levelIntroMessage = "Work together: melt the ice, douse the fire, and reach the exit.";
+    [SerializeField] private string levelStartMessage = "Work together. Fireboy melts ice; Watergirl extinguishes fire.";
+    [SerializeField] private string levelVictoryMessage = "Victory! Both heroes reached safety. Press R to play again.";
+    [SerializeField] private string waitForPartnerMessage = "{0} made it. Wait for your partner!";
+    [SerializeField] private string exitReminderMessage = "Both heroes must stand in the exit to finish.";
+    [Header("Progression")]
+    [SerializeField] private string nextSceneName;
+    [SerializeField] private float nextSceneDelaySeconds = 2f;
 
     private readonly List<CoopPlayerController> _players = new();
     private readonly HashSet<CoopPlayerController> _playersAtExit = new();
@@ -15,6 +25,7 @@ public class GameManager : MonoBehaviour
     private bool _levelReady;
     private bool _gameActive;
     private bool _gameFinished;
+    private Coroutine _loadNextSceneRoutine;
 
     private void Awake()
     {
@@ -25,13 +36,9 @@ public class GameManager : MonoBehaviour
     {
         if (_gameFinished && Input.GetKeyDown(KeyCode.R))
         {
+            CancelNextSceneLoad();
             SceneManager.LoadScene(SceneManager.GetActiveScene().name);
         }
-    }
-
-    public void StartLevel(int totalIngredientCount)
-    {
-        OnLevelReady();
     }
 
     public void RegisterPlayer(CoopPlayerController player)
@@ -50,7 +57,7 @@ public class GameManager : MonoBehaviour
     public void OnLevelReady()
     {
         _levelReady = true;
-        UpdateStatus("Level 1 – The Frozen Gate: melt the ice, douse the fire, and meet at the exit.");
+        UpdateStatus(levelIntroMessage);
         if (_players.Count >= 2)
         {
             TryStartLevel();
@@ -70,7 +77,8 @@ public class GameManager : MonoBehaviour
             player.SetMovementEnabled(true);
         }
 
-        UpdateStatus("Work together. Fireboy melts ice; Watergirl extinguishes fire.");
+        CancelNextSceneLoad();
+        UpdateStatus(levelStartMessage);
     }
 
     public void OnPlayersTouched()
@@ -93,14 +101,11 @@ public class GameManager : MonoBehaviour
 
         if (_playersAtExit.Count == _players.Count)
         {
-            _gameFinished = true;
-            _gameActive = false;
-            UpdateStatus("Victory! Both heroes reached safety. Press R to play again.");
-            FreezePlayers();
+            HandleVictory();
         }
         else
         {
-            UpdateStatus($"{player.Role} made it. Wait for your partner!");
+            UpdateStatus(string.Format(waitForPartnerMessage, player.Role));
         }
     }
 
@@ -110,13 +115,8 @@ public class GameManager : MonoBehaviour
 
         if (_playersAtExit.Remove(player) && _gameActive && !_gameFinished)
         {
-            UpdateStatus("Both heroes must stand in the exit to finish.");
+            UpdateStatus(exitReminderMessage);
         }
-    }
-
-    public void OnIngredientEaten(IngredientType type)
-    {
-        Debug.Log($"Legacy ingredient collected: {type}");
     }
 
     public void OnPlayerHitByEnemy()
@@ -131,12 +131,7 @@ public class GameManager : MonoBehaviour
 
     public void OnExitReached()
     {
-        if (_gameFinished) return;
-
-        _gameFinished = true;
-        _gameActive = false;
-        UpdateStatus("Exit reached. Press R to restart.");
-        FreezePlayers();
+        HandleVictory();
     }
 
     private void FreezePlayers()
@@ -199,5 +194,40 @@ public class GameManager : MonoBehaviour
         _statusLabel.alignment = TextAlignmentOptions.Center;
         _statusLabel.fontSize = 40f;
         _statusLabel.text = string.Empty;
+    }
+
+    private void HandleVictory()
+    {
+        if (_gameFinished) return;
+
+        _gameFinished = true;
+        _gameActive = false;
+        UpdateStatus(levelVictoryMessage);
+        FreezePlayers();
+
+        if (!string.IsNullOrEmpty(nextSceneName))
+        {
+            CancelNextSceneLoad();
+            _loadNextSceneRoutine = StartCoroutine(LoadNextSceneAfterDelay());
+        }
+    }
+
+    private IEnumerator LoadNextSceneAfterDelay()
+    {
+        if (nextSceneDelaySeconds > 0f)
+        {
+            yield return new WaitForSeconds(nextSceneDelaySeconds);
+        }
+
+        _loadNextSceneRoutine = null;
+        SceneManager.LoadScene(nextSceneName);
+    }
+
+    private void CancelNextSceneLoad()
+    {
+        if (_loadNextSceneRoutine == null) return;
+
+        StopCoroutine(_loadNextSceneRoutine);
+        _loadNextSceneRoutine = null;
     }
 }

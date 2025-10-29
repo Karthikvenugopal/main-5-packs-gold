@@ -1,7 +1,7 @@
 using UnityEngine;
 using TMPro;
 
-public class MazeBuilder_Level1 : MonoBehaviour
+public class MazeBuilder_Level2 : MonoBehaviour
 {
     [Header("Maze Settings")]
     [Min(0.1f)]
@@ -18,15 +18,21 @@ public class MazeBuilder_Level1 : MonoBehaviour
 
     private static readonly string[] Layout =
     {
-        "###################",
-        "#F........H......E#",
-        "###.######.########",
-        "###.######.########",
-        "###.##...#.########",
-        "###I##...#.########",
-        "###.##...#I########",
-        "#W.........########",
-        "###################"
+        "###########################",
+        "#F..........###########..W#",
+        "#.###...#I##############..#",
+        "#...#.#.......I..I..H.....#",
+        "###.#.######H##########.###",
+        "#.#.#.#...#..##########.###",
+        "#.#.###.I...###########.###",
+        "#.#.....#...#.H..H..I.....#",
+        "#.########H############.###",
+        "#...........##.###.##....##",
+        "#.#.##H##.####.###.##.....#",
+        "#.#...#...#...I..I.H..I...#",
+        "#.###I#####..#.######.....#",
+        "#...#.......##########..E.#",
+        "###########################"
     };
 
     private const string FireboySpawnName = "FireboySpawn";
@@ -139,8 +145,7 @@ public class MazeBuilder_Level1 : MonoBehaviour
 
         BoxCollider2D trigger = exit.AddComponent<BoxCollider2D>();
         trigger.isTrigger = true;
-        trigger.size = new Vector2(cellSize * 1.8f, cellSize * 1.4f);
-        trigger.offset = Vector2.zero;
+        trigger.size = Vector2.one * cellSize * 0.7f;
 
         ExitZone exitZone = exit.AddComponent<ExitZone>();
         exitZone.Initialize(gameManager);
@@ -151,7 +156,7 @@ public class MazeBuilder_Level1 : MonoBehaviour
 
         GameObject text = new GameObject("Label");
         text.transform.SetParent(exit.transform);
-        text.transform.localPosition = new Vector3(0f, 0.85f * cellSize, -0.1f);
+        text.transform.localPosition = new Vector3(0f, 0.65f * cellSize, -0.1f);
 
         TextMeshPro tmp = text.AddComponent<TextMeshPro>();
         tmp.text = "EXIT";
