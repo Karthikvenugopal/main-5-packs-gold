@@ -1417,7 +1417,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 'Reason: Missing ingredients!'
+  m_text: 'Reason: Partner left behind!'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -1689,6 +1689,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameManager
   messageBackground: {r: 0, g: 0, b: 0, a: 0.55}
+  levelIntroMessage: Level 1 – The Frozen Gate: melt the ice, douse the fire, and meet at the exit.
+  levelStartMessage: Work together. Fireboy melts ice; Watergirl extinguishes fire.
+  levelVictoryMessage: Victory! Both heroes reached safety. Press R to play again.
+  waitForPartnerMessage: "{0} made it. Wait for your partner!"
+  exitReminderMessage: Both heroes must stand in the exit to finish.
+  nextSceneName: Level2Scene
+  nextSceneDelaySeconds: 2
 --- !u!1 &1983061803
 GameObject:
   m_ObjectHideFlags: 0
@@ -1746,7 +1753,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 'Congratulations, Master Chef!
+  m_text: 'Congratulations, Elemental Champions!
 
 
     New Recipe Unlocked: <b>Butter Toast</b> '

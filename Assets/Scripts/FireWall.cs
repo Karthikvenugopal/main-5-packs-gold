@@ -21,14 +21,6 @@ public class FireWall : MonoBehaviour
         return true;
     }
 
-    public bool TryExtinguish(PlayerAbilityController abilityController)
-    {
-        if (_extinguished) return true;
-        if (abilityController == null) return false;
-        Extinguish();
-        return true;
-    }
-
     private void Extinguish()
     {
         _extinguished = true;
