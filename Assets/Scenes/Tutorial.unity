@@ -663,15 +663,84 @@ MonoBehaviour:
   m_GameObject: {fileID: 920500691}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4ecd59d14ce0e416d8716eda269c0085, type: 3}
+  m_Script: {fileID: 11500000, guid: 3a6dc7b7c13e4c58beb79772d823f45f, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::MazeBuilder_Level1
+  m_EditorClassIdentifier: Assembly-CSharp::MazeBuilder_Tutorial
   cellSize: 1
   wallPrefab: {fileID: 6349953291806104131, guid: 55dbc409933f0ce45ae632a39313ee5b, type: 3}
   floorPrefab: {fileID: 321813267270251343, guid: 1ab68f276875c024fb3d4259ef242666, type: 3}
   iceWallPrefab: {fileID: 6349953291806104131, guid: bc08693b2d5249aeb8c3de8839320afc, type: 3}
   fireWallPrefab: {fileID: 4468719429622143330, guid: 1ada63391b0245bd931c379b2c1c8d09, type: 3}
   gameManager: {fileID: 1746984134}
+--- !u!1001 &1020832746
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 321813267270251343, guid: 1ab68f276875c024fb3d4259ef242666, type: 3}
+      propertyPath: m_Name
+      value: Floor
+      objectReference: {fileID: 0}
+    - target: {fileID: 860482827590822504, guid: 1ab68f276875c024fb3d4259ef242666, type: 3}
+      propertyPath: m_Color.b
+      value: 0.18039216
+      objectReference: {fileID: 0}
+    - target: {fileID: 860482827590822504, guid: 1ab68f276875c024fb3d4259ef242666, type: 3}
+      propertyPath: m_Color.g
+      value: 0.23137255
+      objectReference: {fileID: 0}
+    - target: {fileID: 860482827590822504, guid: 1ab68f276875c024fb3d4259ef242666, type: 3}
+      propertyPath: m_Color.r
+      value: 0.2901961
+      objectReference: {fileID: 0}
+    - target: {fileID: 8133964378526706083, guid: 1ab68f276875c024fb3d4259ef242666, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8133964378526706083, guid: 1ab68f276875c024fb3d4259ef242666, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8133964378526706083, guid: 1ab68f276875c024fb3d4259ef242666, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8133964378526706083, guid: 1ab68f276875c024fb3d4259ef242666, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8133964378526706083, guid: 1ab68f276875c024fb3d4259ef242666, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8133964378526706083, guid: 1ab68f276875c024fb3d4259ef242666, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8133964378526706083, guid: 1ab68f276875c024fb3d4259ef242666, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8133964378526706083, guid: 1ab68f276875c024fb3d4259ef242666, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8133964378526706083, guid: 1ab68f276875c024fb3d4259ef242666, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8133964378526706083, guid: 1ab68f276875c024fb3d4259ef242666, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 1ab68f276875c024fb3d4259ef242666, type: 3}
 --- !u!1 &1746984131
 GameObject:
   m_ObjectHideFlags: 0
@@ -732,12 +801,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameManager
   messageBackground: {r: 0, g: 0, b: 0, a: 0.55}
-  levelIntroMessage: Level 1 – The Frozen Gate: melt the ice, douse the fire, and meet at the exit.
+  levelIntroMessage: Tutorial – Learn how Fireboy and Watergirl solve hazards together.
   levelStartMessage: Work together. Fireboy melts ice; Watergirl extinguishes fire.
   levelVictoryMessage: Victory! Both heroes reached safety. Press R to play again.
   waitForPartnerMessage: "{0} made it. Wait for your partner!"
   exitReminderMessage: Both heroes must stand in the exit to finish.
-  nextSceneName: Level2Scene
+  nextSceneName: Level1Scene
   nextSceneDelaySeconds: 2
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
@@ -749,3 +818,4 @@ SceneRoots:
   - {fileID: 920500693}
   - {fileID: 1746984133}
   - {fileID: 265964374}
+  
