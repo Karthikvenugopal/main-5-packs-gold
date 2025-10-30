@@ -12,6 +12,9 @@ public class MazeBuilder_Level2 : MonoBehaviour
     public GameObject floorPrefab;
     public GameObject iceWallPrefab;
     public GameObject fireWallPrefab;
+    public GameObject cannonPrefab;
+    public GameObject cannonProjectilePrefab;
+    public GameObject cannonHitEffectPrefab;
 
     [Header("Dependencies")]
     public GameManager gameManager;
@@ -30,8 +33,8 @@ public class MazeBuilder_Level2 : MonoBehaviour
         "#...........##.###.##....##",
         "#.#.##H##.####.###.##.....#",
         "#.#...#...#...I..I.H..I...#",
-        "#.###I#####..#.######.....#",
-        "#...#.......##########..E.#",
+        "...........................",
+        "....C.....C.....C.....C..E.",
         "###########################"
     };
 
@@ -85,6 +88,11 @@ public class MazeBuilder_Level2 : MonoBehaviour
                         SpawnFireWall(cellPosition);
                         break;
 
+                    case 'C':
+                        SpawnFloor(cellPosition);
+                        SpawnCannon(cellPosition);
+                        break;
+
                     case 'E':
                         SpawnFloor(cellPosition);
                         SpawnExit(cellPosition);
@@ -135,6 +143,33 @@ public class MazeBuilder_Level2 : MonoBehaviour
 
         GameObject fireWall = Instantiate(fireWallPrefab, position, Quaternion.identity, transform);
         fireWall.layer = LayerMask.NameToLayer("Wall");
+    }
+
+    private void SpawnCannon(Vector2 position)
+    {
+        Vector3 worldPosition = new Vector3(
+            position.x + 0.5f * cellSize,
+            position.y - 0.5f * cellSize,
+            0f
+        );
+
+        GameObject cannon = cannonPrefab != null
+            ? Instantiate(cannonPrefab, worldPosition, Quaternion.identity, transform)
+            : new GameObject("Cannon");
+
+        if (cannon.transform.parent != transform)
+        {
+            cannon.transform.SetParent(transform);
+        }
+
+        cannon.transform.position = worldPosition;
+
+        if (!cannon.TryGetComponent(out CannonHazard hazard))
+        {
+            hazard = cannon.AddComponent<CannonHazard>();
+        }
+
+        hazard.Initialize(gameManager, cannonProjectilePrefab, cellSize, cannonHitEffectPrefab);
     }
 
     private void SpawnExit(Vector2 position)
