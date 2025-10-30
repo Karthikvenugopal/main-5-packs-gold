@@ -514,21 +514,14 @@ MonoBehaviour:
   m_GameObject: {fileID: 920500691}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b604eefa67718724b9726fd86b42726c, type: 3}
+  m_Script: {fileID: 11500000, guid: 5bab619d1496474bb63fa41ffd0d32d1, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::MazeBuilder
+  m_EditorClassIdentifier: Assembly-CSharp::MazeBuilder_Level2
   cellSize: 1
   wallPrefab: {fileID: 6349953291806104131, guid: 60acfe2b6b238468282132acfbb6564d, type: 3}
   floorPrefab: {fileID: 321813267270251343, guid: e813d24f41a434343b3608eb3c2b04df, type: 3}
-  chiliPickupPrefab: {fileID: 3497324960553418914, guid: fed8ebd45cd44c32b567e7a07e689eb5, type: 3}
-  butterPickupPrefab: {fileID: 3497324960553418914, guid: 1b39bf89c17740148d9597cf462f8bec, type: 3}
-  breadPickupPrefab: {fileID: 3497324960553418914, guid: 596e7035838b04c8c87190a1918c9fbc, type: 3}
-  rollingPinPrefab: {fileID: 5393905221537955907, guid: a4554a4a5cfd43139e477aec45515649, type: 3}
   iceWallPrefab: {fileID: 6349953291806104131, guid: bc08693b2d5249aeb8c3de8839320afc, type: 3}
-  stickyZonePrefab: {fileID: 2081963789226404748, guid: 341dc0ead98644619cdd2fc369e56c92, type: 3}
-  jamPatchPrefab: {fileID: 2081963789226404748, guid: 8687f356ec0334562b58541e7b6ada79, type: 3}
-  chiliDurationSeconds: 0
-  butterDurationSeconds: 12
+  fireWallPrefab: {fileID: 4468719429622143330, guid: 1ada63391b0245bd931c379b2c1c8d09, type: 3}
   gameManager: {fileID: 1746984134}
 --- !u!4 &920500693
 Transform:
@@ -1306,7 +1299,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 'Reason: Missing ingredients!'
+  m_text: 'Reason: Partner left behind!'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -1549,6 +1542,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerSpawner
   playerPrefab: {fileID: 7307446650723487989, guid: 44964639595521e40aa2d28dda0ba7bd, type: 3}
+  gameManager: {fileID: 1746984134}
 --- !u!4 &1746984133
 Transform:
   m_ObjectHideFlags: 0
@@ -1637,7 +1631,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 'Congratulations, Master Chef!
+  m_text: 'Congratulations, Elemental Champions!
 
 
     New Recipe Unlocked: <b>Chili Toast
