@@ -11,8 +11,9 @@ public enum PlayerRole
 public class CoopPlayerController : MonoBehaviour
 {
     [Header("Movement")]
-    [SerializeField] private float moveSpeed = 4.5f;
+    [SerializeField] private float moveSpeed = 4.0f;
     [SerializeField] private LayerMask collisionMask;
+    [SerializeField] private float collisionBoxScale = 0.75f;
 
     [Header("Visuals")]
     [SerializeField] private Color fireboyColor = new Color(0.93f, 0.39f, 0.18f);
@@ -99,25 +100,26 @@ public class CoopPlayerController : MonoBehaviour
         float distance = moveSpeed * Time.fixedDeltaTime;
         Vector2 targetPosition = _rigidbody.position + direction * distance;
 
-        Vector2 boxSize = GetColliderSize() * 0.9f;
+        Vector2 boxSize = GetColliderSize() * collisionBoxScale;
 
         RaycastHit2D hit = Physics2D.BoxCast(
             _rigidbody.position,
             boxSize,
             0f,
             direction,
-            distance,
+            distance + 0.01f, // Small epsilon for better precision
             collisionMask
         );
 
         if (hit.collider != null && TryHandleSpecialObstacle(hit.collider))
         {
+            // Re-check collision after handling special obstacle
             hit = Physics2D.BoxCast(
                 _rigidbody.position,
                 boxSize,
                 0f,
                 direction,
-                distance,
+                distance + 0.01f,
                 collisionMask
             );
         }
@@ -125,6 +127,11 @@ public class CoopPlayerController : MonoBehaviour
         if (hit.collider == null)
         {
             _rigidbody.MovePosition(targetPosition);
+        }
+        else if (hit.distance > 0.01f)
+        {
+            // If there's a collision but still room to move, move closer
+            _rigidbody.MovePosition(_rigidbody.position + direction * (hit.distance - 0.01f));
         }
     }
 

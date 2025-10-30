@@ -63,10 +63,19 @@ public class PlayerSpawner : MonoBehaviour
         body.freezeRotation = true;
         body.interpolation = RigidbodyInterpolation2D.Interpolate;
 
+        // Scale down the player for easier navigation
+        playerObject.transform.localScale = new Vector3(0.7f, 0.7f, 1f);
+
         if (!playerObject.TryGetComponent(out Collider2D collider))
         {
             collider = playerObject.AddComponent<BoxCollider2D>();
         }
         collider.isTrigger = false;
+
+        // Adjust box collider size if it exists
+        if (collider is BoxCollider2D boxCollider)
+        {
+            boxCollider.size = new Vector2(0.65f, 0.65f);
+        }
     }
 }
