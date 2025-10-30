@@ -107,13 +107,12 @@ public class CoopPlayerController : MonoBehaviour
             boxSize,
             0f,
             direction,
-            distance + 0.01f, // Small epsilon for better precision
+            distance + 0.01f,
             collisionMask
         );
 
         if (hit.collider != null && TryHandleSpecialObstacle(hit.collider))
         {
-            // Re-check collision after handling special obstacle
             hit = Physics2D.BoxCast(
                 _rigidbody.position,
                 boxSize,
@@ -130,7 +129,6 @@ public class CoopPlayerController : MonoBehaviour
         }
         else if (hit.distance > 0.01f)
         {
-            // If there's a collision but still room to move, move closer
             _rigidbody.MovePosition(_rigidbody.position + direction * (hit.distance - 0.01f));
         }
     }
