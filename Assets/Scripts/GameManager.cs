@@ -15,7 +15,7 @@ public class GameManager : MonoBehaviour
     [SerializeField] private Color messageBackground = new Color(0f, 0f, 0f, 0.55f);
     [Header("UI Messages")]
     [SerializeField] private string levelIntroMessage = "Work together: melt the ice, douse the fire, and reach the exit.";
-    [SerializeField] private string levelStartMessage = "Work together. Fireboy melts ice; Watergirl extinguishes fire.";
+    [SerializeField] private string levelStartMessage = "Work together. Ember melts ice; Aqua extinguishes fire.";
     [SerializeField] private string levelVictoryMessage = "Victory! Both heroes reached safety. Press R to play again.";
     [SerializeField] private string waitForPartnerMessage = "{0} made it. Wait for your partner!";
     [SerializeField] private string exitReminderMessage = "Both heroes must stand in the exit to finish.";
@@ -24,12 +24,20 @@ public class GameManager : MonoBehaviour
     [Header("Progression")]
     [SerializeField] private string nextSceneName;
     [SerializeField] private float nextSceneDelaySeconds = 2f;
+    [Header("Victory Panel")]
+    [SerializeField] private bool useVictoryPanel = false;
+    [SerializeField] private string victoryRestartSceneName = "Level1Scene";
+    [Header("Session Tracking")]
+    [SerializeField] private bool resetGlobalTokenTotalsOnLoad = false;
 
     // Keeps a visible record of how many fire tokens the team has picked up.
     public int fireTokensCollected = 0;
 
     // Keeps a visible record of how many water tokens the team has picked up.
     public int waterTokensCollected = 0;
+
+    private static int s_totalFireTokensCollected;
+    private static int s_totalWaterTokensCollected;
 
     private Canvas _hudCanvas;
     private TextMeshProUGUI _heartsLabel;
@@ -39,6 +47,10 @@ public class GameManager : MonoBehaviour
     private bool _reloadingScene;
     private int _totalFireTokens;
     private int _totalWaterTokens;
+    private GameObject _victoryPanel;
+    private TextMeshProUGUI _fireVictoryLabel;
+    private TextMeshProUGUI _waterVictoryLabel;
+    private Button _victoryRestartButton;
 
     private readonly List<CoopPlayerController> _players = new();
     private readonly HashSet<CoopPlayerController> _playersAtExit = new();
@@ -55,9 +67,17 @@ public class GameManager : MonoBehaviour
 
     private void Awake()
     {
+        NormalizeDisplayStrings();
         EnsureHudCanvas();
         CreateHeartsUI();
         CreateTokensUI();
+        CreateVictoryPanel();
+
+        if (resetGlobalTokenTotalsOnLoad)
+        {
+            s_totalFireTokensCollected = 0;
+            s_totalWaterTokensCollected = 0;
+        }
 
         // --- MODIFICATION START ---
         if (!isTutorialMode)
@@ -78,6 +98,11 @@ public class GameManager : MonoBehaviour
         {
             CancelNextSceneLoad();
             SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+        }
+
+        if (_gameActive && !_gameFinished && AreAllPlayersAtExit())
+        {
+            HandleVictory();
         }
     }
 
@@ -135,16 +160,22 @@ public class GameManager : MonoBehaviour
 
     public void OnPlayersTouched(CoopPlayerController playerA, CoopPlayerController playerB)
     {
-        DamageBothPlayers(playerA, playerB);
         if (!_gameActive || _gameFinished) return;
 
-        _gameFinished = true;
-        _gameActive = false;
-        // analytics code
-        EnsureLevelTimer();
-        (levelTimer ?? FindAnyObjectByType<Analytics.LevelTimer>())?.MarkFailure();
-        UpdateStatus("They touched! Press R to restart.");
-        FreezePlayers();
+        bool playerAAtExit = playerA != null && _playersAtExit.Contains(playerA);
+        bool playerBAtExit = playerB != null && _playersAtExit.Contains(playerB);
+        if (playerAAtExit || playerBAtExit)
+        {
+            return;
+        }
+
+        DamageBothPlayers(playerA, playerB);
+        if (_gameFinished) return;
+
+        if (!isTutorialMode)
+        {
+            UpdateStatus("Careful! Keep your distance.");
+        }
     }
 
     public void OnPlayerEnteredExit(CoopPlayerController player)
@@ -155,13 +186,13 @@ public class GameManager : MonoBehaviour
 
         if (!_gameActive || _gameFinished) return;
 
-        if (_playersAtExit.Count == _players.Count)
+        if (AreAllPlayersAtExit())
         {
             HandleVictory();
         }
         else
         {
-            UpdateStatus(string.Format(waitForPartnerMessage, player.Role));
+            UpdateStatus(string.Format(waitForPartnerMessage, GetDisplayName(player.Role)));
         }
     }
 
@@ -184,6 +215,7 @@ public class GameManager : MonoBehaviour
     public void OnFireTokenCollected()
     {
         fireTokensCollected++;
+        s_totalFireTokensCollected++;
         if (_totalFireTokens < fireTokensCollected)
         {
             _totalFireTokens = fireTokensCollected;
@@ -195,19 +227,13 @@ public class GameManager : MonoBehaviour
     public void OnWaterTokenCollected()
     {
         waterTokensCollected++;
+        s_totalWaterTokensCollected++;
         if (_totalWaterTokens < waterTokensCollected)
         {
             _totalWaterTokens = waterTokensCollected;
         }
 
         UpdateTokensUI();
-        _gameFinished = true;
-        _gameActive = false;
-        // analytics code
-        EnsureLevelTimer();
-        (levelTimer ?? FindAnyObjectByType<Analytics.LevelTimer>())?.MarkFailure();
-        UpdateStatus("An enemy caught you! Press R to restart.");
-        FreezePlayers();
     }
 
     public void OnExitReached()
@@ -326,6 +352,114 @@ public class GameManager : MonoBehaviour
         UpdateTokensUI();
     }
 
+    private void CreateVictoryPanel()
+    {
+        if (!useVictoryPanel || _hudCanvas == null || _victoryPanel != null) return;
+
+        _victoryPanel = new GameObject("VictoryPanel");
+        _victoryPanel.transform.SetParent(_hudCanvas.transform, false);
+
+        RectTransform rect = _victoryPanel.AddComponent<RectTransform>();
+        rect.anchorMin = new Vector2(0.5f, 0.5f);
+        rect.anchorMax = new Vector2(0.5f, 0.5f);
+        rect.pivot = new Vector2(0.5f, 0.5f);
+        rect.sizeDelta = new Vector2(560f, 280f);
+        rect.anchoredPosition = Vector2.zero;
+
+        Image background = _victoryPanel.AddComponent<Image>();
+        background.color = new Color(0f, 0f, 0f, 0.78f);
+
+        GameObject titleGO = new GameObject("Title");
+        titleGO.transform.SetParent(_victoryPanel.transform, false);
+        RectTransform titleRect = titleGO.AddComponent<RectTransform>();
+        titleRect.anchorMin = new Vector2(0.5f, 1f);
+        titleRect.anchorMax = new Vector2(0.5f, 1f);
+        titleRect.pivot = new Vector2(0.5f, 1f);
+        titleRect.sizeDelta = new Vector2(520f, 60f);
+        titleRect.anchoredPosition = new Vector2(0f, -24f);
+
+        TextMeshProUGUI titleLabel = titleGO.AddComponent<TextMeshProUGUI>();
+        titleLabel.alignment = TextAlignmentOptions.Center;
+        titleLabel.fontSize = 38f;
+        titleLabel.fontStyle = FontStyles.Bold;
+        titleLabel.text = "Level Complete";
+
+        GameObject fireGO = new GameObject("FireSummary");
+        fireGO.transform.SetParent(_victoryPanel.transform, false);
+        RectTransform fireRect = fireGO.AddComponent<RectTransform>();
+        fireRect.anchorMin = new Vector2(0.5f, 0.5f);
+        fireRect.anchorMax = new Vector2(0.5f, 0.5f);
+        fireRect.pivot = new Vector2(0.5f, 0.5f);
+        fireRect.sizeDelta = new Vector2(520f, 50f);
+        fireRect.anchoredPosition = new Vector2(0f, 36f);
+
+        _fireVictoryLabel = fireGO.AddComponent<TextMeshProUGUI>();
+        _fireVictoryLabel.alignment = TextAlignmentOptions.Center;
+        _fireVictoryLabel.fontSize = 30f;
+        _fireVictoryLabel.text = string.Empty;
+
+        GameObject waterGO = new GameObject("WaterSummary");
+        waterGO.transform.SetParent(_victoryPanel.transform, false);
+        RectTransform waterRect = waterGO.AddComponent<RectTransform>();
+        waterRect.anchorMin = new Vector2(0.5f, 0.5f);
+        waterRect.anchorMax = new Vector2(0.5f, 0.5f);
+        waterRect.pivot = new Vector2(0.5f, 0.5f);
+        waterRect.sizeDelta = new Vector2(520f, 50f);
+        waterRect.anchoredPosition = new Vector2(0f, -14f);
+
+        _waterVictoryLabel = waterGO.AddComponent<TextMeshProUGUI>();
+        _waterVictoryLabel.alignment = TextAlignmentOptions.Center;
+        _waterVictoryLabel.fontSize = 30f;
+        _waterVictoryLabel.text = string.Empty;
+
+        GameObject buttonGO = new GameObject("RestartButton");
+        buttonGO.transform.SetParent(_victoryPanel.transform, false);
+        RectTransform buttonRect = buttonGO.AddComponent<RectTransform>();
+        buttonRect.anchorMin = new Vector2(0.5f, 0f);
+        buttonRect.anchorMax = new Vector2(0.5f, 0f);
+        buttonRect.pivot = new Vector2(0.5f, 0f);
+        buttonRect.sizeDelta = new Vector2(260f, 70f);
+        buttonRect.anchoredPosition = new Vector2(0f, 24f);
+
+        Image buttonBackground = buttonGO.AddComponent<Image>();
+        buttonBackground.color = new Color(0.25f, 0.45f, 0.9f, 1f);
+
+        _victoryRestartButton = buttonGO.AddComponent<Button>();
+        _victoryRestartButton.onClick.AddListener(OnVictoryRestartClicked);
+
+        GameObject buttonTextGO = new GameObject("Label");
+        buttonTextGO.transform.SetParent(buttonGO.transform, false);
+        RectTransform buttonTextRect = buttonTextGO.AddComponent<RectTransform>();
+        buttonTextRect.anchorMin = Vector2.zero;
+        buttonTextRect.anchorMax = Vector2.one;
+        buttonTextRect.offsetMin = Vector2.zero;
+        buttonTextRect.offsetMax = Vector2.zero;
+
+        TextMeshProUGUI buttonLabel = buttonTextGO.AddComponent<TextMeshProUGUI>();
+        buttonLabel.alignment = TextAlignmentOptions.Center;
+        buttonLabel.fontSize = 28f;
+        buttonLabel.text = "Restart";
+
+        _victoryPanel.SetActive(false);
+    }
+
+    private void ShowVictoryPanel()
+    {
+        if (!useVictoryPanel || _victoryPanel == null) return;
+
+        if (_fireVictoryLabel != null)
+        {
+            _fireVictoryLabel.text = $"Total Ember Tokens: {s_totalFireTokensCollected}";
+        }
+
+        if (_waterVictoryLabel != null)
+        {
+            _waterVictoryLabel.text = $"Total Aqua Tokens: {s_totalWaterTokensCollected}";
+        }
+
+        _victoryPanel.SetActive(true);
+    }
+
     private void ResetHearts()
     {
         int clampedHearts = Mathf.Max(0, startingHearts);
@@ -346,7 +480,7 @@ public class GameManager : MonoBehaviour
     private void UpdateHeartsUI()
     {
         if (_heartsLabel == null) return;
-        _heartsLabel.text = $"Fire Hearts: {_fireHearts};  Water Hearts: {_waterHearts}";
+        _heartsLabel.text = $"Ember Hearts: {_fireHearts};  Aqua Hearts: {_waterHearts}";
     }
 
     private void UpdateTokensUI()
@@ -355,7 +489,7 @@ public class GameManager : MonoBehaviour
 
         int fireTotal = Mathf.Max(_totalFireTokens, fireTokensCollected);
         int waterTotal = Mathf.Max(_totalWaterTokens, waterTokensCollected);
-        _tokensLabel.text = $"Fire Tokens: {fireTokensCollected}/{fireTotal};  Water Tokens: {waterTokensCollected}/{waterTotal}";
+        _tokensLabel.text = $"Ember Tokens: {fireTokensCollected}/{fireTotal};  Aqua Tokens: {waterTokensCollected}/{waterTotal}";
     }
 
     private void RecountTokensInScene()
@@ -447,6 +581,20 @@ public class GameManager : MonoBehaviour
         SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 
+    private void OnVictoryRestartClicked()
+    {
+        if (_reloadingScene) return;
+
+        _reloadingScene = true;
+        CancelNextSceneLoad();
+
+        string sceneToLoad = string.IsNullOrEmpty(victoryRestartSceneName)
+            ? SceneManager.GetActiveScene().name
+            : victoryRestartSceneName;
+
+        SceneManager.LoadScene(sceneToLoad);
+    }
+
     private void HandleVictory()
     {
         if (_gameFinished) return;
@@ -459,7 +607,9 @@ public class GameManager : MonoBehaviour
         UpdateStatus(levelVictoryMessage);
         FreezePlayers();
 
-        if (!string.IsNullOrEmpty(nextSceneName))
+        ShowVictoryPanel();
+
+        if (!useVictoryPanel && !string.IsNullOrEmpty(nextSceneName))
         {
             CancelNextSceneLoad();
             _loadNextSceneRoutine = StartCoroutine(LoadNextSceneAfterDelay());
@@ -506,5 +656,48 @@ public class GameManager : MonoBehaviour
 
         StopCoroutine(_loadNextSceneRoutine);
         _loadNextSceneRoutine = null;
+    }
+
+    private void OnDestroy()
+    {
+        if (_victoryRestartButton != null)
+        {
+            _victoryRestartButton.onClick.RemoveListener(OnVictoryRestartClicked);
+        }
+    }
+
+    private bool AreAllPlayersAtExit()
+    {
+        if (_players.Count == 0 || _playersAtExit.Count == 0) return false;
+
+        foreach (var player in _players)
+        {
+            if (player == null || !_playersAtExit.Contains(player))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private static string GetDisplayName(PlayerRole role)
+    {
+        return role == PlayerRole.Fireboy ? "Ember" : "Aqua";
+    }
+
+    private void NormalizeDisplayStrings()
+    {
+        levelIntroMessage = ReplaceLegacyNames(levelIntroMessage);
+        levelStartMessage = ReplaceLegacyNames(levelStartMessage);
+        levelVictoryMessage = ReplaceLegacyNames(levelVictoryMessage);
+        waitForPartnerMessage = ReplaceLegacyNames(waitForPartnerMessage);
+        exitReminderMessage = ReplaceLegacyNames(exitReminderMessage);
+    }
+
+    private static string ReplaceLegacyNames(string text)
+    {
+        if (string.IsNullOrEmpty(text)) return text;
+        return text.Replace("Fireboy", "Ember").Replace("Watergirl", "Aqua");
     }
 }
