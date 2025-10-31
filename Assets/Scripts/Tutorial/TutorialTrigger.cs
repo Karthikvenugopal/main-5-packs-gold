@@ -129,4 +129,21 @@ public class TutorialTrigger : MonoBehaviour
             yield return null; // Wait for the next frame
         }
     }
+
+    // Exposed API used by MazeBuilder_Tutorial
+    public void SetText(string message)
+    {
+        if (_textMesh == null && textElementToShow != null)
+        {
+            _textMesh = textElementToShow.GetComponent<TextMeshProUGUI>();
+        }
+
+        if (_textMesh == null)
+        {
+            Debug.LogError("TutorialTrigger: No TextMeshProUGUI component available to set text.", this);
+            return;
+        }
+
+        _textMesh.text = message ?? string.Empty;
+    }
 }
