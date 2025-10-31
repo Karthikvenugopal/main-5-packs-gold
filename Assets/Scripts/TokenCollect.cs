@@ -45,7 +45,7 @@ public class TokenCollect : MonoBehaviour
         // Fire player touching a fire token increments the fire count and removes the token.
         if (CompareTag(fireTokenTag) && other.CompareTag(firePlayerTag))
         {
-            _gameManager.fireTokensCollected++;
+            _gameManager.OnFireTokenCollected();
             Destroy(gameObject);
             return;
         }
@@ -53,7 +53,7 @@ public class TokenCollect : MonoBehaviour
         // Water player touching a water token increments the water count and removes the token.
         if (CompareTag(waterTokenTag) && other.CompareTag(waterPlayerTag))
         {
-            _gameManager.waterTokensCollected++;
+            _gameManager.OnWaterTokenCollected();
             Destroy(gameObject);
             return;
         }

@@ -33,9 +33,12 @@ public class GameManager : MonoBehaviour
 
     private Canvas _hudCanvas;
     private TextMeshProUGUI _heartsLabel;
+    private TextMeshProUGUI _tokensLabel;
     private int _fireHearts;
     private int _waterHearts;
     private bool _reloadingScene;
+    private int _totalFireTokens;
+    private int _totalWaterTokens;
 
     private readonly List<CoopPlayerController> _players = new();
     private readonly HashSet<CoopPlayerController> _playersAtExit = new();
@@ -50,6 +53,7 @@ public class GameManager : MonoBehaviour
     {
         EnsureHudCanvas();
         CreateHeartsUI();
+        CreateTokensUI();
 
         // --- MODIFICATION START ---
         if (!isTutorialMode)
@@ -57,6 +61,7 @@ public class GameManager : MonoBehaviour
             CreateStatusUI();
         }
         // --- MODIFICATION END ---
+        ResetTokenTracking();
         ResetHearts();
     }
 
@@ -91,6 +96,8 @@ public class GameManager : MonoBehaviour
             UpdateStatus(levelIntroMessage);
         }
         // --- MODIFICATION END ---
+        ResetTokenTracking();
+        RecountTokensInScene();
         if (_players.Count >= 2)
         {
             TryStartLevel();
@@ -156,6 +163,28 @@ public class GameManager : MonoBehaviour
     {
         if (player == null) return;
         DamagePlayer(player.Role, 1);
+    }
+
+    public void OnFireTokenCollected()
+    {
+        fireTokensCollected++;
+        if (_totalFireTokens < fireTokensCollected)
+        {
+            _totalFireTokens = fireTokensCollected;
+        }
+
+        UpdateTokensUI();
+    }
+
+    public void OnWaterTokenCollected()
+    {
+        waterTokensCollected++;
+        if (_totalWaterTokens < waterTokensCollected)
+        {
+            _totalWaterTokens = waterTokensCollected;
+        }
+
+        UpdateTokensUI();
     }
 
     public void OnExitReached()
@@ -253,6 +282,27 @@ public class GameManager : MonoBehaviour
         UpdateHeartsUI();
     }
 
+    private void CreateTokensUI()
+    {
+        if (_hudCanvas == null || _tokensLabel != null) return;
+
+        GameObject tokensGO = new GameObject("TokensLabel");
+        tokensGO.transform.SetParent(_hudCanvas.transform, false);
+
+        RectTransform rect = tokensGO.AddComponent<RectTransform>();
+        rect.anchorMin = new Vector2(0f, 1f);
+        rect.anchorMax = new Vector2(0f, 1f);
+        rect.pivot = new Vector2(0f, 1f);
+        rect.sizeDelta = new Vector2(520f, 60f);
+        rect.anchoredPosition = new Vector2(40f, -40f);
+
+        _tokensLabel = tokensGO.AddComponent<TextMeshProUGUI>();
+        _tokensLabel.alignment = TextAlignmentOptions.Left;
+        _tokensLabel.fontSize = 32f;
+        _tokensLabel.raycastTarget = false;
+        UpdateTokensUI();
+    }
+
     private void ResetHearts()
     {
         int clampedHearts = Mathf.Max(0, startingHearts);
@@ -261,10 +311,53 @@ public class GameManager : MonoBehaviour
         UpdateHeartsUI();
     }
 
+    private void ResetTokenTracking()
+    {
+        fireTokensCollected = 0;
+        waterTokensCollected = 0;
+        _totalFireTokens = 0;
+        _totalWaterTokens = 0;
+        UpdateTokensUI();
+    }
+
     private void UpdateHeartsUI()
     {
         if (_heartsLabel == null) return;
         _heartsLabel.text = $"Fire Hearts: {_fireHearts};  Water Hearts: {_waterHearts}";
+    }
+
+    private void UpdateTokensUI()
+    {
+        if (_tokensLabel == null) return;
+
+        int fireTotal = Mathf.Max(_totalFireTokens, fireTokensCollected);
+        int waterTotal = Mathf.Max(_totalWaterTokens, waterTokensCollected);
+        _tokensLabel.text = $"Fire Tokens: {fireTokensCollected}/{fireTotal};  Water Tokens: {waterTokensCollected}/{waterTotal}";
+    }
+
+    private void RecountTokensInScene()
+    {
+        int fireCount = 0;
+        int waterCount = 0;
+
+        TokenCollect[] tokens = FindObjectsOfType<TokenCollect>(includeInactive: true);
+        foreach (var token in tokens)
+        {
+            if (token == null) continue;
+
+            if (token.CompareTag("FireToken"))
+            {
+                fireCount++;
+            }
+            else if (token.CompareTag("WaterToken"))
+            {
+                waterCount++;
+            }
+        }
+
+        _totalFireTokens = fireCount;
+        _totalWaterTokens = waterCount;
+        UpdateTokensUI();
     }
 
     private void DamageBothPlayers(CoopPlayerController playerA, CoopPlayerController playerB)

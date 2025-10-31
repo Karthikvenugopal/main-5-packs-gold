@@ -179,7 +179,6 @@ public class CoopPlayerController : MonoBehaviour
 
             if (fireWall.TryExtinguish(_role))
             {
-                TryApplyHazardDamage(collider);
                 return true;
             }
         }
