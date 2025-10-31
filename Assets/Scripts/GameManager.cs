@@ -29,6 +29,26 @@ public class GameManager : MonoBehaviour
     [SerializeField] private string victoryRestartSceneName = "Level1Scene";
     [Header("Session Tracking")]
     [SerializeField] private bool resetGlobalTokenTotalsOnLoad = false;
+    [Header("Level Intro Instructions")]
+    [SerializeField] private bool showInstructionPanel = true;
+    [SerializeField] private string instructionPanelSceneName = "Level1Scene";
+    [SerializeField] private string[] instructionLines = new[]
+    {
+        "<b>Heads up</b>",
+        "Melt ice.",
+        "Cool fire.",
+        "Don't touch each other & lose a heart.",
+        "Touch wrong obstacle & lose a heart."
+    };
+    [SerializeField] private string instructionContinuePrompt = "Press Space to start";
+    [SerializeField] private string level2InstructionSceneName = "Level2Scene";
+    [SerializeField] private string[] level2InstructionLines = new[]
+    {
+        "<b>Stay sharp</b>",
+        "Opposites protect.",
+        "Stand in front of danger for your partner."
+    };
+    [SerializeField] private string level2InstructionContinuePrompt = "Press Space to start";
 
     // Keeps a visible record of how many fire tokens the team has picked up.
     public int fireTokensCollected = 0;
@@ -64,6 +84,10 @@ public class GameManager : MonoBehaviour
     private bool _gameActive;
     private bool _gameFinished;
     private Coroutine _loadNextSceneRoutine;
+    private GameObject _instructionPanel;
+    private bool _waitingForInstructionAck;
+    private bool _instructionPausedTime;
+    private float _previousTimeScale = 1f;
 
     private void Awake()
     {
@@ -90,10 +114,21 @@ public class GameManager : MonoBehaviour
         CreateStatusUI();
         // analytics code: ensure a LevelTimer exists in gameplay scenes
         EnsureLevelTimer();
+        CreateInstructionPanelIfNeeded();
     }
 
     private void Update()
     {
+        if (_waitingForInstructionAck)
+        {
+            if (Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.Return))
+            {
+                DismissInstructionPanel();
+            }
+
+            return;
+        }
+
         if (_gameFinished && Input.GetKeyDown(KeyCode.R))
         {
             CancelNextSceneLoad();
@@ -138,7 +173,7 @@ public class GameManager : MonoBehaviour
 
     private void TryStartLevel()
     {
-        if (_gameActive || _players.Count < 2) return;
+        if (_gameActive || _players.Count < 2 || _waitingForInstructionAck) return;
 
         _gameActive = true;
         _gameFinished = false;
@@ -289,6 +324,128 @@ public class GameManager : MonoBehaviour
         _statusLabel.alignment = TextAlignmentOptions.Center;
         _statusLabel.fontSize = 40f;
         _statusLabel.text = string.Empty;
+    }
+
+    private bool TryGetInstructionContentForScene(out string[] lines, out string prompt)
+    {
+        lines = null;
+        prompt = instructionContinuePrompt;
+
+        if (!showInstructionPanel) return false;
+
+        string currentScene = SceneManager.GetActiveScene().name;
+
+        if (!string.IsNullOrEmpty(instructionPanelSceneName) &&
+            currentScene == instructionPanelSceneName)
+        {
+            lines = instructionLines;
+            prompt = instructionContinuePrompt;
+        }
+        else if (!string.IsNullOrEmpty(level2InstructionSceneName) &&
+                 currentScene == level2InstructionSceneName)
+        {
+            lines = level2InstructionLines;
+            prompt = string.IsNullOrEmpty(level2InstructionContinuePrompt)
+                ? instructionContinuePrompt
+                : level2InstructionContinuePrompt;
+        }
+        else if (string.IsNullOrEmpty(instructionPanelSceneName))
+        {
+            lines = instructionLines;
+        }
+
+        return lines != null && lines.Length > 0;
+    }
+
+    private void CreateInstructionPanelIfNeeded()
+    {
+        if (_hudCanvas == null || _instructionPanel != null) return;
+
+        if (!TryGetInstructionContentForScene(out var lines, out var prompt)) return;
+
+        _instructionPanel = new GameObject("InstructionPanel");
+        _instructionPanel.transform.SetParent(_hudCanvas.transform, false);
+
+        RectTransform panelRect = _instructionPanel.AddComponent<RectTransform>();
+        panelRect.anchorMin = Vector2.zero;
+        panelRect.anchorMax = Vector2.one;
+        panelRect.offsetMin = Vector2.zero;
+        panelRect.offsetMax = Vector2.zero;
+
+        Image panelImage = _instructionPanel.AddComponent<Image>();
+        panelImage.color = new Color(0f, 0f, 0f, 0.78f);
+
+        GameObject instructionsGO = new GameObject("InstructionLines");
+        instructionsGO.transform.SetParent(_instructionPanel.transform, false);
+
+        RectTransform instructionsRect = instructionsGO.AddComponent<RectTransform>();
+        instructionsRect.anchorMin = new Vector2(0.5f, 0.5f);
+        instructionsRect.anchorMax = new Vector2(0.5f, 0.5f);
+        instructionsRect.pivot = new Vector2(0.5f, 0.5f);
+        instructionsRect.sizeDelta = new Vector2(900f, 500f);
+
+        TextMeshProUGUI instructionsLabel = instructionsGO.AddComponent<TextMeshProUGUI>();
+        instructionsLabel.alignment = TextAlignmentOptions.Center;
+        instructionsLabel.fontSize = 72f;
+        instructionsLabel.text = lines != null && lines.Length > 0
+            ? string.Join("\n", lines)
+            : string.Empty;
+        instructionsLabel.raycastTarget = false;
+
+        GameObject promptGO = new GameObject("InstructionPrompt");
+        promptGO.transform.SetParent(_instructionPanel.transform, false);
+
+        RectTransform promptRect = promptGO.AddComponent<RectTransform>();
+        promptRect.anchorMin = new Vector2(0.5f, 0f);
+        promptRect.anchorMax = new Vector2(0.5f, 0f);
+        promptRect.pivot = new Vector2(0.5f, 0f);
+        promptRect.anchoredPosition = new Vector2(0f, 60f);
+        promptRect.sizeDelta = new Vector2(700f, 80f);
+
+        TextMeshProUGUI promptLabel = promptGO.AddComponent<TextMeshProUGUI>();
+        promptLabel.alignment = TextAlignmentOptions.Center;
+        promptLabel.fontSize = 36f;
+        promptLabel.text = string.IsNullOrEmpty(prompt)
+            ? "Press Space to start"
+            : prompt;
+        promptLabel.raycastTarget = false;
+
+        _instructionPanel.transform.SetAsLastSibling();
+
+        _waitingForInstructionAck = true;
+
+        if (!_instructionPausedTime)
+        {
+            _previousTimeScale = Time.timeScale;
+            Time.timeScale = 0f;
+            _instructionPausedTime = true;
+        }
+    }
+
+    private void DismissInstructionPanel()
+    {
+        _waitingForInstructionAck = false;
+
+        if (_instructionPanel != null)
+        {
+            _instructionPanel.SetActive(false);
+        }
+
+        RestoreTimeScaleIfNeeded();
+
+        if (_levelReady)
+        {
+            TryStartLevel();
+        }
+    }
+
+    private void RestoreTimeScaleIfNeeded()
+    {
+        if (_instructionPausedTime)
+        {
+            Time.timeScale = _previousTimeScale;
+            _instructionPausedTime = false;
+        }
     }
 
     private void EnsureHudCanvas()
@@ -660,6 +817,8 @@ public class GameManager : MonoBehaviour
 
     private void OnDestroy()
     {
+        RestoreTimeScaleIfNeeded();
+
         if (_victoryRestartButton != null)
         {
             _victoryRestartButton.onClick.RemoveListener(OnVictoryRestartClicked);
