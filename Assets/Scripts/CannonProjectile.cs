@@ -15,10 +15,21 @@ public class CannonProjectile : MonoBehaviour
     private GameObject _hitEffectPrefab;
     private Collider2D _collider;
     private float _maxTravelDistance = float.PositiveInfinity;
+    private Color _impactColor = new Color(1f, 0.6f, 0.1f, 0.85f);
+    private CannonVariant _variant = CannonVariant.Fire;
 
     private static Sprite _fallbackEffectSprite;
 
-    public void Initialize(Vector2 direction, float speed, float lifetime, GameManager manager, float maxTravelDistance, GameObject hitEffectPrefab)
+    public void Initialize(
+        Vector2 direction,
+        float speed,
+        float lifetime,
+        GameManager manager,
+        float maxTravelDistance,
+        GameObject hitEffectPrefab,
+        Color impactColor,
+        CannonVariant variant
+    )
     {
         if (direction.sqrMagnitude > 0f)
         {
@@ -29,8 +40,10 @@ public class CannonProjectile : MonoBehaviour
         _lifetime = lifetime > 0f ? lifetime : _lifetime;
         _gameManager = manager;
         _hitEffectPrefab = hitEffectPrefab;
+        _impactColor = impactColor;
         _startPosition = transform.position;
         _maxTravelDistance = maxTravelDistance > 0f ? maxTravelDistance : float.PositiveInfinity;
+        _variant = variant;
     }
 
     private void Awake()
@@ -125,7 +138,10 @@ public class CannonProjectile : MonoBehaviour
 
         if (collider != null && collider.TryGetComponent(out CoopPlayerController player))
         {
-            _gameManager?.OnPlayerHitByEnemy(player);
+            if (ShouldAffectPlayer(player))
+            {
+                _gameManager?.OnPlayerHitByEnemy();
+            }
         }
 
         SpawnHitEffect(hitPoint);
@@ -159,7 +175,7 @@ public class CannonProjectile : MonoBehaviour
 
         SpriteRenderer renderer = effect.AddComponent<SpriteRenderer>();
         renderer.sprite = GetFallbackEffectSprite();
-        renderer.color = new Color(1f, 0.6f, 0.1f, 0.85f);
+        renderer.color = _impactColor;
         renderer.sortingOrder = 9;
 
         float baseScale = Mathf.Max(transform.localScale.y, 0.4f);
@@ -192,5 +208,22 @@ public class CannonProjectile : MonoBehaviour
         );
 
         return _fallbackEffectSprite;
+    }
+
+    private bool ShouldAffectPlayer(CoopPlayerController player)
+    {
+        if (player == null) return false;
+
+        if (_variant == CannonVariant.Fire && player.Role == PlayerRole.Watergirl)
+        {
+            return false;
+        }
+
+        if (_variant == CannonVariant.Ice && player.Role == PlayerRole.Fireboy)
+        {
+            return false;
+        }
+
+        return true;
     }
 }

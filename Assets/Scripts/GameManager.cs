@@ -43,6 +43,10 @@ public class GameManager : MonoBehaviour
     private readonly List<CoopPlayerController> _players = new();
     private readonly HashSet<CoopPlayerController> _playersAtExit = new();
 
+    // analytics code
+    [Header("Analytics")]
+    [SerializeField] private Analytics.LevelTimer levelTimer;
+
     private TextMeshProUGUI _statusLabel;
     private bool _levelReady;
     private bool _gameActive;
@@ -63,6 +67,9 @@ public class GameManager : MonoBehaviour
         // --- MODIFICATION END ---
         ResetTokenTracking();
         ResetHearts();
+        CreateStatusUI();
+        // analytics code: ensure a LevelTimer exists in gameplay scenes
+        EnsureLevelTimer();
     }
 
     private void Update()
@@ -129,6 +136,15 @@ public class GameManager : MonoBehaviour
     public void OnPlayersTouched(CoopPlayerController playerA, CoopPlayerController playerB)
     {
         DamageBothPlayers(playerA, playerB);
+        if (!_gameActive || _gameFinished) return;
+
+        _gameFinished = true;
+        _gameActive = false;
+        // analytics code
+        EnsureLevelTimer();
+        (levelTimer ?? FindAnyObjectByType<Analytics.LevelTimer>())?.MarkFailure();
+        UpdateStatus("They touched! Press R to restart.");
+        FreezePlayers();
     }
 
     public void OnPlayerEnteredExit(CoopPlayerController player)
@@ -185,6 +201,13 @@ public class GameManager : MonoBehaviour
         }
 
         UpdateTokensUI();
+        _gameFinished = true;
+        _gameActive = false;
+        // analytics code
+        EnsureLevelTimer();
+        (levelTimer ?? FindAnyObjectByType<Analytics.LevelTimer>())?.MarkFailure();
+        UpdateStatus("An enemy caught you! Press R to restart.");
+        FreezePlayers();
     }
 
     public void OnExitReached()
@@ -430,6 +453,9 @@ public class GameManager : MonoBehaviour
 
         _gameFinished = true;
         _gameActive = false;
+        // analytics code
+        EnsureLevelTimer();
+        (levelTimer ?? FindAnyObjectByType<Analytics.LevelTimer>())?.MarkSuccess();
         UpdateStatus(levelVictoryMessage);
         FreezePlayers();
 
@@ -438,6 +464,29 @@ public class GameManager : MonoBehaviour
             CancelNextSceneLoad();
             _loadNextSceneRoutine = StartCoroutine(LoadNextSceneAfterDelay());
         }
+    }
+
+    // analytics code
+    private void EnsureLevelTimer()
+    {
+        if (levelTimer != null) return;
+
+        var active = SceneManager.GetActiveScene().name;
+        if (string.Equals(active, "MainMenu", System.StringComparison.OrdinalIgnoreCase)) return;
+
+        var existing = FindAnyObjectByType<Analytics.LevelTimer>();
+        if (existing != null)
+        {
+            levelTimer = existing;
+            // Ensures abandon/quit attempts are captured
+            levelTimer.autoSendFailureOnDestroy = true;
+            return;
+        }
+
+        var go = new GameObject("LevelAnalytics");
+        levelTimer = go.AddComponent<Analytics.LevelTimer>();
+        levelTimer.autoSendFailureOnDestroy = true;
+
     }
 
     private IEnumerator LoadNextSceneAfterDelay()
