@@ -23,6 +23,12 @@ public class GameManager : MonoBehaviour
     [SerializeField] private string nextSceneName;
     [SerializeField] private float nextSceneDelaySeconds = 2f;
 
+    // Keeps a visible record of how many fire tokens the team has picked up.
+    public int fireTokensCollected = 0;
+
+    // Keeps a visible record of how many water tokens the team has picked up.
+    public int waterTokensCollected = 0;
+
     private readonly List<CoopPlayerController> _players = new();
     private readonly HashSet<CoopPlayerController> _playersAtExit = new();
 
