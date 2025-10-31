@@ -744,6 +744,9 @@ MonoBehaviour:
   exitReminderMessage: Both heroes must stand in the exit to finish.
   nextSceneName: Level2Scene
   nextSceneDelaySeconds: 2
+  useVictoryPanel: 0
+  victoryRestartSceneName: 
+  resetGlobalTokenTotalsOnLoad: 1
   fireTokensCollected: 0
   waterTokensCollected: 0
 --- !u!1 &2110000000000000000

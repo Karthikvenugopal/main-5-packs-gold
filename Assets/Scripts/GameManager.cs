@@ -27,12 +27,17 @@ public class GameManager : MonoBehaviour
     [Header("Victory Panel")]
     [SerializeField] private bool useVictoryPanel = false;
     [SerializeField] private string victoryRestartSceneName = "Level1Scene";
+    [Header("Session Tracking")]
+    [SerializeField] private bool resetGlobalTokenTotalsOnLoad = false;
 
     // Keeps a visible record of how many fire tokens the team has picked up.
     public int fireTokensCollected = 0;
 
     // Keeps a visible record of how many water tokens the team has picked up.
     public int waterTokensCollected = 0;
+
+    private static int s_totalFireTokensCollected;
+    private static int s_totalWaterTokensCollected;
 
     private Canvas _hudCanvas;
     private TextMeshProUGUI _heartsLabel;
@@ -66,6 +71,12 @@ public class GameManager : MonoBehaviour
         CreateHeartsUI();
         CreateTokensUI();
         CreateVictoryPanel();
+
+        if (resetGlobalTokenTotalsOnLoad)
+        {
+            s_totalFireTokensCollected = 0;
+            s_totalWaterTokensCollected = 0;
+        }
 
         // --- MODIFICATION START ---
         if (!isTutorialMode)
@@ -145,6 +156,13 @@ public class GameManager : MonoBehaviour
     {
         if (!_gameActive || _gameFinished) return;
 
+        bool playerAAtExit = playerA != null && _playersAtExit.Contains(playerA);
+        bool playerBAtExit = playerB != null && _playersAtExit.Contains(playerB);
+        if (playerAAtExit || playerBAtExit)
+        {
+            return;
+        }
+
         DamageBothPlayers(playerA, playerB);
         if (_gameFinished) return;
 
@@ -191,6 +209,7 @@ public class GameManager : MonoBehaviour
     public void OnFireTokenCollected()
     {
         fireTokensCollected++;
+        s_totalFireTokensCollected++;
         if (_totalFireTokens < fireTokensCollected)
         {
             _totalFireTokens = fireTokensCollected;
@@ -202,6 +221,7 @@ public class GameManager : MonoBehaviour
     public void OnWaterTokenCollected()
     {
         waterTokensCollected++;
+        s_totalWaterTokensCollected++;
         if (_totalWaterTokens < waterTokensCollected)
         {
             _totalWaterTokens = waterTokensCollected;
@@ -423,12 +443,12 @@ public class GameManager : MonoBehaviour
 
         if (_fireVictoryLabel != null)
         {
-            _fireVictoryLabel.text = $"Fire Tokens Collected: {fireTokensCollected}";
+            _fireVictoryLabel.text = $"Total Fire Tokens: {s_totalFireTokensCollected}";
         }
 
         if (_waterVictoryLabel != null)
         {
-            _waterVictoryLabel.text = $"Water Tokens Collected: {waterTokensCollected}";
+            _waterVictoryLabel.text = $"Total Water Tokens: {s_totalWaterTokensCollected}";
         }
 
         _victoryPanel.SetActive(true);

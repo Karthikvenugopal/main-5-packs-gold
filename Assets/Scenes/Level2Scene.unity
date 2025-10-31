@@ -621,6 +621,7 @@ MonoBehaviour:
   nextSceneDelaySeconds: 2
   useVictoryPanel: 1
   victoryRestartSceneName: Level1Scene
+  resetGlobalTokenTotalsOnLoad: 0
   fireTokensCollected: 0
   waterTokensCollected: 0
   levelTimer: {fileID: 0}
