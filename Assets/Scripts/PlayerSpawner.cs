@@ -29,7 +29,7 @@ public class PlayerSpawner : MonoBehaviour
 
         GameObject playerObject = Instantiate(playerPrefab, spawnMarker.transform.position, Quaternion.identity);
         playerObject.name = role.ToString();
-        playerObject.tag = "Player";
+        playerObject.tag = role == PlayerRole.Fireboy ? "FirePlayer" : "WaterPlayer";
 
         DisableLegacyComponents(playerObject);
         EnsurePhysicsConfiguration(playerObject);

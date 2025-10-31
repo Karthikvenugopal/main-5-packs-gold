@@ -15,6 +15,7 @@ public class MazeBuilder_Level1 : MonoBehaviour
 
     [Header("Dependencies")]
     public GameManager gameManager;
+    [SerializeField] private TokenPlacementManager tokenPlacementManager;
 
     private static readonly string[] Layout =
     {
@@ -36,6 +37,7 @@ public class MazeBuilder_Level1 : MonoBehaviour
     {
         BuildMaze(Layout);
         CenterMaze(Layout);
+        tokenPlacementManager?.SpawnTokens();
         gameManager?.OnLevelReady();
     }
 
