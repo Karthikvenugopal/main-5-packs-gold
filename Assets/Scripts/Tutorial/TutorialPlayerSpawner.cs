@@ -1,37 +1,40 @@
 using UnityEngine;
 
-public class PlayerSpawner : MonoBehaviour
+public class TutorialPlayerSpawner : MonoBehaviour
 {
+    [Header("Prefabs & Dependencies")]
     [SerializeField] private GameObject playerPrefab;
     [SerializeField] private GameManager gameManager;
 
+    [Header("Spawn Markers")]
+    [Tooltip("create an empty object as fireplayer spawn point, and drag it here")]
+    [SerializeField] private Transform fireboySpawnPoint;
+
+    [Tooltip("create an empty object as waterplayer spawn point, and drag it here")]
+    [SerializeField] private Transform watergirlSpawnPoint;
+
     private void Start()
     {
-        SpawnPlayer("FireboySpawn", PlayerRole.Fireboy);
-        SpawnPlayer("WatergirlSpawn", PlayerRole.Watergirl);
+        if (playerPrefab == null || gameManager == null || 
+            fireboySpawnPoint == null || watergirlSpawnPoint == null)
+        {
+            Debug.LogError("TutorialPlayerSpawner is missing necessary references. Please assign all fields in the Inspector.", this);
+            return;
+        }
+
+        SpawnPlayer(fireboySpawnPoint.position, PlayerRole.Fireboy);
+        SpawnPlayer(watergirlSpawnPoint.position, PlayerRole.Watergirl);
     }
 
-    private void SpawnPlayer(string spawnName, PlayerRole role)
+    private void SpawnPlayer(Vector3 spawnPosition, PlayerRole role)
     {
-        GameObject spawnMarker = GameObject.Find(spawnName);
-
-        if (spawnMarker == null)
-        {
-            Debug.LogWarning($"Spawn marker '{spawnName}' not found.");
-            return;
-        }
-
-        if (playerPrefab == null)
-        {
-            Debug.LogWarning("Player prefab is not assigned.");
-            return;
-        }
-
-        GameObject playerObject = Instantiate(playerPrefab, spawnMarker.transform.position, Quaternion.identity);
+        GameObject playerObject = Instantiate(playerPrefab, spawnPosition, Quaternion.identity);
         playerObject.name = role.ToString();
-        playerObject.tag = "Player";
-
-        DisableLegacyComponents(playerObject);
+        
+        // (注意：原始脚本中的其余配置逻辑应该复制到这里)
+        // 确保你的玩家有正确的物理配置等。
+        
+        // 示例：从你的原始脚本中复制过来的逻辑
         EnsurePhysicsConfiguration(playerObject);
 
         CoopPlayerController controller = playerObject.GetComponent<CoopPlayerController>();
@@ -40,18 +43,9 @@ public class PlayerSpawner : MonoBehaviour
             controller = playerObject.AddComponent<CoopPlayerController>();
         }
         controller.Initialize(role, gameManager);
-
-        spawnMarker.SetActive(false);
     }
 
-    private static void DisableLegacyComponents(GameObject playerObject)
-    {
-        if (playerObject.TryGetComponent<CircleCollider2D>(out var circleCollider))
-        {
-            Object.Destroy(circleCollider);
-        }
-    }
-
+    // (确保你也复制了原始脚本中的这个辅助方法)
     private static void EnsurePhysicsConfiguration(GameObject playerObject)
     {
         if (!playerObject.TryGetComponent(out Rigidbody2D body))

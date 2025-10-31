@@ -7,6 +7,11 @@ using UnityEngine.UI;
 
 public class GameManager : MonoBehaviour
 {
+    // --- MODIFICATION START ---
+    [Header("Tutorial Settings")]
+    [SerializeField] private bool isTutorialMode = false;
+    // --- MODIFICATION END ---
+
     [SerializeField] private Color messageBackground = new Color(0f, 0f, 0f, 0.55f);
     [Header("UI Messages")]
     [SerializeField] private string levelIntroMessage = "Work together: melt the ice, douse the fire, and reach the exit.";
@@ -29,7 +34,12 @@ public class GameManager : MonoBehaviour
 
     private void Awake()
     {
-        CreateStatusUI();
+        // --- MODIFICATION START ---
+        if (!isTutorialMode)
+        {
+            CreateStatusUI();
+        }
+        // --- MODIFICATION END ---
     }
 
     private void Update()
@@ -57,7 +67,12 @@ public class GameManager : MonoBehaviour
     public void OnLevelReady()
     {
         _levelReady = true;
-        UpdateStatus(levelIntroMessage);
+        // --- MODIFICATION START ---
+        if (!isTutorialMode)
+        {
+            UpdateStatus(levelIntroMessage);
+        }
+        // --- MODIFICATION END ---
         if (_players.Count >= 2)
         {
             TryStartLevel();
@@ -78,7 +93,12 @@ public class GameManager : MonoBehaviour
         }
 
         CancelNextSceneLoad();
-        UpdateStatus(levelStartMessage);
+        // --- MODIFICATION START ---
+        if (!isTutorialMode)
+        {
+            UpdateStatus(levelStartMessage);
+        }
+        // --- MODIFICATION END ---
     }
 
     public void OnPlayersTouched()
