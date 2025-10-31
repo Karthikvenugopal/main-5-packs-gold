@@ -98,6 +98,11 @@ public class GameManager : MonoBehaviour
             CancelNextSceneLoad();
             SceneManager.LoadScene(SceneManager.GetActiveScene().name);
         }
+
+        if (_gameActive && !_gameFinished && AreAllPlayersAtExit())
+        {
+            HandleVictory();
+        }
     }
 
     public void RegisterPlayer(CoopPlayerController player)
@@ -180,7 +185,7 @@ public class GameManager : MonoBehaviour
 
         if (!_gameActive || _gameFinished) return;
 
-        if (_playersAtExit.Count == _players.Count)
+        if (AreAllPlayersAtExit())
         {
             HandleVictory();
         }
@@ -658,5 +663,20 @@ public class GameManager : MonoBehaviour
         {
             _victoryRestartButton.onClick.RemoveListener(OnVictoryRestartClicked);
         }
+    }
+
+    private bool AreAllPlayersAtExit()
+    {
+        if (_players.Count == 0 || _playersAtExit.Count == 0) return false;
+
+        foreach (var player in _players)
+        {
+            if (player == null || !_playersAtExit.Contains(player))
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 }

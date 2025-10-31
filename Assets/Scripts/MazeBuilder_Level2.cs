@@ -216,7 +216,8 @@ public class MazeBuilder_Level2 : MonoBehaviour
 
         BoxCollider2D trigger = exit.AddComponent<BoxCollider2D>();
         trigger.isTrigger = true;
-        trigger.size = Vector2.one * cellSize * 0.7f;
+        trigger.size = new Vector2(cellSize * 2.6f, cellSize * 1.8f);
+        trigger.offset = Vector2.zero;
 
         ExitZone exitZone = exit.AddComponent<ExitZone>();
         exitZone.Initialize(gameManager);
@@ -227,7 +228,7 @@ public class MazeBuilder_Level2 : MonoBehaviour
 
         GameObject text = new GameObject("Label");
         text.transform.SetParent(exit.transform);
-        text.transform.localPosition = new Vector3(0f, 0.65f * cellSize, -0.1f);
+        text.transform.localPosition = new Vector3(0f, 1f * cellSize, -0.1f);
 
         TextMeshPro tmp = text.AddComponent<TextMeshPro>();
         tmp.text = "EXIT";

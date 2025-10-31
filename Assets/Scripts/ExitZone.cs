@@ -15,10 +15,7 @@ public class ExitZone : MonoBehaviour
     private void OnTriggerEnter2D(Collider2D other)
     {
         if (!other.TryGetComponent(out CoopPlayerController player)) return;
-        if (_occupants.Add(player))
-        {
-            _gameManager?.OnPlayerEnteredExit(player);
-        }
+        TryRegisterPlayer(player);
     }
 
     private void OnTriggerExit2D(Collider2D other)
@@ -27,6 +24,20 @@ public class ExitZone : MonoBehaviour
         if (_occupants.Remove(player))
         {
             _gameManager?.OnPlayerExitedExit(player);
+        }
+    }
+
+    private void OnTriggerStay2D(Collider2D other)
+    {
+        if (!other.TryGetComponent(out CoopPlayerController player)) return;
+        TryRegisterPlayer(player);
+    }
+
+    private void TryRegisterPlayer(CoopPlayerController player)
+    {
+        if (_occupants.Add(player))
+        {
+            _gameManager?.OnPlayerEnteredExit(player);
         }
     }
 }
