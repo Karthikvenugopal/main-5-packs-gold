@@ -4,9 +4,14 @@
 TagManager:
   serializedVersion: 3
   tags:
-  - Ingredient
   - Exit
   - RightWall
+  - FirePlayer
+  - WaterPlayer
+  - FireToken
+  - WaterToken
+  - IceWall
+  - FireWall
   layers:
   - Default
   - TransparentFX

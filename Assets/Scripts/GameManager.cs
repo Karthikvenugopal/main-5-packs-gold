@@ -1,763 +1,703 @@
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using TMPro;
 using UnityEngine;
-using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
-using System;
 using UnityEngine.UI;
-
 
 public class GameManager : MonoBehaviour
 {
-    [Header("Prefab to Spawn")]
-    public GameObject uiPrefab;
+    // --- MODIFICATION START ---
+    [Header("Tutorial Settings")]
+    [SerializeField] private bool isTutorialMode = false;
+    // --- MODIFICATION END ---
 
-    [Header("UI Sprites")]
-    public Sprite starFullSprite;
-    public Sprite starEmptySprite;
+    [SerializeField] private Color messageBackground = new Color(0f, 0f, 0f, 0.55f);
+    [Header("UI Messages")]
+    [SerializeField] private string levelIntroMessage = "Work together: melt the ice, douse the fire, and reach the exit.";
+    [SerializeField] private string levelStartMessage = "Work together. Ember melts ice; Aqua extinguishes fire.";
+    [SerializeField] private string levelVictoryMessage = "Victory! Both heroes reached safety. Press R to play again.";
+    [SerializeField] private string waitForPartnerMessage = "{0} made it. Wait for your partner!";
+    [SerializeField] private string exitReminderMessage = "Both heroes must stand in the exit to finish.";
+    [Header("Player Hearts")]
+    [SerializeField] private int startingHearts = 3;
+    [Header("Progression")]
+    [SerializeField] private string nextSceneName;
+    [SerializeField] private float nextSceneDelaySeconds = 2f;
+    [Header("Victory Panel")]
+    [SerializeField] private bool useVictoryPanel = false;
+    [SerializeField] private string victoryRestartSceneName = "Level1Scene";
+    [Header("Session Tracking")]
+    [SerializeField] private bool resetGlobalTokenTotalsOnLoad = false;
 
-    private UICanvas uiCanvas;
+    // Keeps a visible record of how many fire tokens the team has picked up.
+    public int fireTokensCollected = 0;
 
-    private float timeLimit = 90f;
-    private float currentTime;
-    private bool isGameActive = true;
-    private Dictionary<IngredientType, int> collectedIngredients = new Dictionary<IngredientType, int>();
-    private bool infoPanelVisible;
-    private bool infoPauseActive;
-    private float cachedTimeScale = 1f;
-    private GameObject infoPageInstance;
-    private bool isLoadingInfoPage;
-    private string targetInfoSceneName;
-    private string loadedInfoSceneName;
-    [SerializeField] private float lowTimeHighlightThreshold = 20f;
-    private bool lowTimeHighlightTriggered;
+    // Keeps a visible record of how many water tokens the team has picked up.
+    public int waterTokensCollected = 0;
 
-    
-    private string levelId;
-    private DateTime startedUtc;
+    private static int s_totalFireTokensCollected;
+    private static int s_totalWaterTokensCollected;
 
+    private Canvas _hudCanvas;
+    private TextMeshProUGUI _heartsLabel;
+    private TextMeshProUGUI _tokensLabel;
+    private int _fireHearts;
+    private int _waterHearts;
+    private bool _reloadingScene;
+    private int _totalFireTokens;
+    private int _totalWaterTokens;
+    private GameObject _victoryPanel;
+    private TextMeshProUGUI _fireVictoryLabel;
+    private TextMeshProUGUI _waterVictoryLabel;
+    private Button _victoryRestartButton;
 
+    private readonly List<CoopPlayerController> _players = new();
+    private readonly HashSet<CoopPlayerController> _playersAtExit = new();
 
-    void Awake()
+    // analytics code
+    [Header("Analytics")]
+    [SerializeField] private Analytics.LevelTimer levelTimer;
+
+    private TextMeshProUGUI _statusLabel;
+    private bool _levelReady;
+    private bool _gameActive;
+    private bool _gameFinished;
+    private Coroutine _loadNextSceneRoutine;
+
+    private void Awake()
     {
-        Time.timeScale = 1f;
-        if (uiPrefab != null)
+        NormalizeDisplayStrings();
+        EnsureHudCanvas();
+        CreateHeartsUI();
+        CreateTokensUI();
+        CreateVictoryPanel();
+
+        if (resetGlobalTokenTotalsOnLoad)
         {
-            GameObject uiInstance = Instantiate(uiPrefab);
-            uiCanvas = uiInstance.GetComponent<UICanvas>();
+            s_totalFireTokensCollected = 0;
+            s_totalWaterTokensCollected = 0;
         }
-        else
+
+        // --- MODIFICATION START ---
+        if (!isTutorialMode)
+        {
+            CreateStatusUI();
+        }
+        // --- MODIFICATION END ---
+        ResetTokenTracking();
+        ResetHearts();
+        CreateStatusUI();
+        // analytics code: ensure a LevelTimer exists in gameplay scenes
+        EnsureLevelTimer();
+    }
+
+    private void Update()
+    {
+        if (_gameFinished && Input.GetKeyDown(KeyCode.R))
+        {
+            CancelNextSceneLoad();
+            SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+        }
+
+        if (_gameActive && !_gameFinished && AreAllPlayersAtExit())
+        {
+            HandleVictory();
+        }
+    }
+
+    public void RegisterPlayer(CoopPlayerController player)
+    {
+        if (player == null || _players.Contains(player)) return;
+
+        _players.Add(player);
+        player.SetMovementEnabled(false);
+
+        if (_levelReady && _players.Count >= 2)
+        {
+            TryStartLevel();
+        }
+    }
+
+    public void OnLevelReady()
+    {
+        _levelReady = true;
+        // --- MODIFICATION START ---
+        if (!isTutorialMode)
+        {
+            UpdateStatus(levelIntroMessage);
+        }
+        // --- MODIFICATION END ---
+        ResetTokenTracking();
+        RecountTokensInScene();
+        if (_players.Count >= 2)
+        {
+            TryStartLevel();
+        }
+    }
+
+    private void TryStartLevel()
+    {
+        if (_gameActive || _players.Count < 2) return;
+
+        _gameActive = true;
+        _gameFinished = false;
+        _playersAtExit.Clear();
+
+        foreach (var player in _players)
+        {
+            player.SetMovementEnabled(true);
+        }
+
+        CancelNextSceneLoad();
+        // --- MODIFICATION START ---
+        if (!isTutorialMode)
+        {
+            UpdateStatus(levelStartMessage);
+        }
+        // --- MODIFICATION END ---
+    }
+
+    public void OnPlayersTouched(CoopPlayerController playerA, CoopPlayerController playerB)
+    {
+        if (!_gameActive || _gameFinished) return;
+
+        bool playerAAtExit = playerA != null && _playersAtExit.Contains(playerA);
+        bool playerBAtExit = playerB != null && _playersAtExit.Contains(playerB);
+        if (playerAAtExit || playerBAtExit)
         {
             return;
         }
 
-        EnsureLevelInfoUI();
+        DamageBothPlayers(playerA, playerB);
+        if (_gameFinished) return;
 
-        foreach (var button in uiCanvas.restartButtons)
+        if (!isTutorialMode)
         {
-            button.onClick.AddListener(RestartGame);
-            
-            
-            if (button != null)
-            {
-                
-                RectTransform restartRect = button.GetComponent<RectTransform>();
-                if (restartRect != null)
-                {
-                    restartRect.sizeDelta = new Vector2(150f, 50f);
-                }
-                
-                
-                if (button.TryGetComponent(out Image restartImage))
-                {
-                    restartImage.sprite = GetDefaultSprite();
-                    restartImage.type = Image.Type.Sliced;
-                    restartImage.color = new Color(0.16f, 0.18f, 0.22f, 0.95f);
-                }
-                
-                
-                UnityEngine.UI.Button restartButtonComponent = button.GetComponent<UnityEngine.UI.Button>();
-                if (restartButtonComponent != null)
-                {
-                    ColorBlock colors = restartButtonComponent.colors;
-                    colors.normalColor = new Color(0.16f, 0.18f, 0.22f, 0.95f);
-                    colors.highlightedColor = new Color(0.16f, 0.18f, 0.22f, 0.95f);
-                    colors.pressedColor = new Color(0.16f, 0.18f, 0.22f, 0.95f);
-                    colors.selectedColor = new Color(0.16f, 0.18f, 0.22f, 0.95f);
-                    colors.disabledColor = new Color(0.16f, 0.18f, 0.22f, 0.5f);
-                    restartButtonComponent.colors = colors;
-                }
-                
-                
-                TextMeshProUGUI restartLabel = button.GetComponentInChildren<TextMeshProUGUI>();
-                if (restartLabel != null)
-                {
-                    restartLabel.fontSize = 28f;
-                    restartLabel.alignment = TextAlignmentOptions.Center;
-                    restartLabel.color = Color.white;
-                    restartLabel.enableWordWrapping = false;
-                }
-            }
+            UpdateStatus("Careful! Keep your distance.");
         }
+    }
 
-        
-        if (uiCanvas.nextLevelButton != null)
+    public void OnPlayerEnteredExit(CoopPlayerController player)
+    {
+        if (player == null) return;
+
+        _playersAtExit.Add(player);
+
+        if (!_gameActive || _gameFinished) return;
+
+        if (AreAllPlayersAtExit())
         {
-            Debug.Log("NextLevel button found, adding listener");
-            uiCanvas.nextLevelButton.onClick.AddListener(LoadNextLevel);
+            HandleVictory();
         }
         else
         {
-            Debug.Log("NextLevel button is NULL - not assigned in UICanvas!");
+            UpdateStatus(string.Format(waitForPartnerMessage, GetDisplayName(player.Role)));
         }
-
-        
-        if (uiCanvas.mainMenuButton != null)
-        {
-            Debug.Log("MainMenu button found, adding listener");
-            uiCanvas.mainMenuButton.onClick.AddListener(LoadMainMenu);
-        }
-        else
-        {
-            Debug.Log("MainMenu button is NULL - not assigned in UICanvas!");
-        }
-
-        if (uiCanvas.infoButton != null)
-        {
-            uiCanvas.infoButton.onClick.RemoveAllListeners();
-            uiCanvas.infoButton.onClick.AddListener(OnInfoButtonClicked);
-        }
-
-        if (uiCanvas.infoCloseButton != null)
-        {
-            uiCanvas.infoCloseButton.onClick.RemoveAllListeners();
-            uiCanvas.infoCloseButton.onClick.AddListener(() => ToggleInfoPanelInternal(false));
-        }
-
-        HideInfoPanelImmediate();
     }
 
-    public void StartLevel(int totalIngredientCount)
+    public void OnPlayerExitedExit(CoopPlayerController player)
     {
-        isGameActive = true;
-        currentTime = timeLimit;
+        if (player == null) return;
 
-        uiCanvas.timerText.gameObject.SetActive(true);
-        uiCanvas.gameWonPanel.SetActive(false);
-        uiCanvas.gameOverPanel.SetActive(false);
-
-        collectedIngredients.Clear();
-
-        
-        levelId = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name; 
-        startedUtc = DateTime.UtcNow;
-    }
-
-    void Update()
-    {
-        if (!isGameActive) return;
-
-        currentTime -= Time.deltaTime;
-        currentTime = Mathf.Max(0, currentTime);
-        UpdateTimerUI();
-
-        if (!lowTimeHighlightTriggered &&
-            ShouldHighlightIngredients() &&
-            currentTime <= lowTimeHighlightThreshold)
+        if (_playersAtExit.Remove(player) && _gameActive && !_gameFinished)
         {
-            lowTimeHighlightTriggered = true;
-            HighlightRemainingIngredients();
-        }
-
-        if (currentTime <= 0)
-        {
-            LoseGame();
+            UpdateStatus(exitReminderMessage);
         }
     }
 
-    public void OnIngredientEaten(IngredientType type)
+    public void OnPlayerHitByEnemy(CoopPlayerController player)
     {
-        if (!isGameActive) return;
-
-        if (!collectedIngredients.ContainsKey(type))
-            collectedIngredients[type] = 0;
-
-        collectedIngredients[type] += 1;
-
-        Debug.Log($"Collected: {type}, total count = {collectedIngredients[type]}");
+        if (player == null) return;
+        DamagePlayer(player.Role, 1);
     }
 
+    public void OnFireTokenCollected()
+    {
+        fireTokensCollected++;
+        s_totalFireTokensCollected++;
+        if (_totalFireTokens < fireTokensCollected)
+        {
+            _totalFireTokens = fireTokensCollected;
+        }
+
+        UpdateTokensUI();
+    }
+
+    public void OnWaterTokenCollected()
+    {
+        waterTokensCollected++;
+        s_totalWaterTokensCollected++;
+        if (_totalWaterTokens < waterTokensCollected)
+        {
+            _totalWaterTokens = waterTokensCollected;
+        }
+
+        UpdateTokensUI();
+    }
 
     public void OnExitReached()
     {
-        if (!isGameActive) return;
+        HandleVictory();
+    }
 
-        Dictionary<IngredientType, int> requiredIngredients = new();
-
-        string currentScene = SceneManager.GetActiveScene().name;
-
-        if (currentScene.Contains("Level2Scene")) 
+    private void FreezePlayers()
+    {
+        foreach (var player in _players)
         {
-            requiredIngredients[IngredientType.Bread] = 2;
-            requiredIngredients[IngredientType.Butter] = 2;
-            requiredIngredients[IngredientType.Chili] = 2;
-        }
-        else 
-        {
-            requiredIngredients[IngredientType.Bread] = 2;
-            requiredIngredients[IngredientType.Butter] = 2;
-        }
-
-        List<string> missingList = new List<string>();
-        bool hasAll = true;
-
-        foreach (var kvp in requiredIngredients)
-        {
-            IngredientType type = kvp.Key;
-            int required = kvp.Value;
-            int collected = collectedIngredients.ContainsKey(type) ? collectedIngredients[type] : 0;
-
-            if (collected < required)
-            {
-                hasAll = false;
-                missingList.Add($"{type} ({collected}/{required})");
-            }
-        }
-
-        if (hasAll)
-        {
-            WinGame();
-        }
-        else
-        {
-            string reason = "Oops! You missed out on:\n" + string.Join(", ", missingList);
-            LoseGame(reason);
+            player.SetMovementEnabled(false);
         }
     }
 
-
-
-
-
-    private void WinGame()
+    private void UpdateStatus(string message)
     {
-        Debug.Log("WinGame called - showing game won panel");
-        isGameActive = false;
-        Time.timeScale = 0f;
-        uiCanvas.gameWonPanel.SetActive(true);
-
-        float timeTaken = timeLimit - currentTime;
-
-        
-        string levelId = SceneManager.GetActiveScene().name;
-        AnalyticsManager.I?.LogRow(levelId, success: true, timeSpentS: timeTaken);
-        AnalyticsSender.I?.SendLevelResult(levelId, true, timeTaken);
-
-
-
-        int starsEarned = CalculateStars(timeTaken);
-
-        for (int i = 0; i < uiCanvas.stars.Length; i++)
+        if (_statusLabel != null)
         {
-            uiCanvas.stars[i].sprite = (i < starsEarned)
-                ? starFullSprite
-                : starEmptySprite;
+            _statusLabel.text = message;
         }
 
+        Debug.Log(message);
     }
 
-    private void LoseGame(string reason = "")
+    private void CreateStatusUI()
     {
-        if (!isGameActive) return; 
+        if (_hudCanvas == null) return;
 
-        isGameActive = false;
-        Time.timeScale = 0f;
+        GameObject background = new GameObject("MessageBackground");
+        background.transform.SetParent(_hudCanvas.transform, false);
 
-        if (uiCanvas != null)
-            uiCanvas.gameOverPanel.SetActive(true);
+        RectTransform bgRect = background.AddComponent<RectTransform>();
+        bgRect.anchorMin = new Vector2(0.5f, 1f);
+        bgRect.anchorMax = new Vector2(0.5f, 1f);
+        bgRect.pivot = new Vector2(0.5f, 1f);
+        bgRect.sizeDelta = new Vector2(680f, 120f);
+        bgRect.anchoredPosition = new Vector2(0f, -40f);
 
-        if (uiCanvas != null && uiCanvas.loseReasonText != null)
-            uiCanvas.loseReasonText.text = reason;
+        Image image = background.AddComponent<Image>();
+        image.color = messageBackground;
 
-        Debug.Log("LoseGame() called: " + reason);
+        GameObject textGO = new GameObject("StatusLabel");
+        textGO.transform.SetParent(background.transform, false);
 
-        
-        float timeSpent = timeLimit - currentTime;
-        string levelId = SceneManager.GetActiveScene().name;
-        AnalyticsManager.I?.LogRow(levelId, success: false, timeSpentS: timeSpent);
-        AnalyticsSender.I?.SendLevelResult(levelId, false, timeSpent);
+        RectTransform textRect = textGO.AddComponent<RectTransform>();
+        textRect.anchorMin = Vector2.zero;
+        textRect.anchorMax = Vector2.one;
+        textRect.offsetMin = new Vector2(20f, 20f);
+        textRect.offsetMax = new Vector2(-20f, -20f);
 
-
+        _statusLabel = textGO.AddComponent<TextMeshProUGUI>();
+        _statusLabel.alignment = TextAlignmentOptions.Center;
+        _statusLabel.fontSize = 40f;
+        _statusLabel.text = string.Empty;
     }
 
-    private void EnsureLevelInfoUI()
+    private void EnsureHudCanvas()
     {
-        if (uiCanvas == null) return;
-        if (!(uiCanvas.transform is RectTransform canvasRect)) return;
+        if (_hudCanvas != null) return;
 
-        if (uiCanvas.infoButton == null)
-        {
-            uiCanvas.infoButton = CreateInfoButton(canvasRect);
-        }
+        GameObject canvasGO = new GameObject("MazeUI");
+        canvasGO.transform.SetParent(transform, false);
 
-        if (uiCanvas.infoButton != null)
-        {
-            RectTransform infoRect = uiCanvas.infoButton.GetComponent<RectTransform>();
-            if (infoRect != null)
-            {
-                infoRect.anchorMin = new Vector2(1f, 1f);
-                infoRect.anchorMax = new Vector2(1f, 1f);
-                infoRect.pivot = new Vector2(1f, 1f);
-                infoRect.sizeDelta = new Vector2(150f, 50f);
-                infoRect.anchoredPosition = new Vector2(-200f, -20f);
-            }
+        _hudCanvas = canvasGO.AddComponent<Canvas>();
+        _hudCanvas.renderMode = RenderMode.ScreenSpaceOverlay;
+        _hudCanvas.sortingOrder = 200;
 
-            if (uiCanvas.infoButton.TryGetComponent(out Image infoImage))
-            {
-                infoImage.sprite = GetDefaultSprite();
-                infoImage.type = Image.Type.Sliced;
-                infoImage.color = new Color(0.16f, 0.18f, 0.22f, 0.95f);
-            }
+        CanvasScaler scaler = canvasGO.AddComponent<CanvasScaler>();
+        scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+        scaler.referenceResolution = new Vector2(1920, 1080);
+        scaler.matchWidthOrHeight = 0.5f;
 
-            TextMeshProUGUI label = uiCanvas.infoButton.GetComponentInChildren<TextMeshProUGUI>();
-            if (label != null)
-            {
-                label.text = "Info";
-                label.fontSize = 32f;
-                label.alignment = TextAlignmentOptions.Center;
-                label.color = Color.white;
-                label.enableWordWrapping = false;
-            }
-        }
+        canvasGO.AddComponent<GraphicRaycaster>();
     }
 
-    private UnityEngine.UI.Button CreateInfoButton(RectTransform parent)
+    private void CreateHeartsUI()
     {
-        GameObject buttonGO = new GameObject("InfoButton", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(UnityEngine.UI.Button));
-        buttonGO.transform.SetParent(parent, false);
+        if (_hudCanvas == null || _heartsLabel != null) return;
 
-        RectTransform rect = buttonGO.GetComponent<RectTransform>();
+        GameObject heartsGO = new GameObject("HeartsLabel");
+        heartsGO.transform.SetParent(_hudCanvas.transform, false);
+
+        RectTransform rect = heartsGO.AddComponent<RectTransform>();
         rect.anchorMin = new Vector2(1f, 1f);
         rect.anchorMax = new Vector2(1f, 1f);
         rect.pivot = new Vector2(1f, 1f);
-        rect.sizeDelta = new Vector2(150f, 50f);
-        rect.anchoredPosition = new Vector2(-200f, -20f);
+        rect.sizeDelta = new Vector2(450f, 60f);
+        rect.anchoredPosition = new Vector2(-40f, -40f);
 
-        Image background = buttonGO.GetComponent<Image>();
-        background.sprite = GetDefaultSprite();
-        background.type = Image.Type.Sliced;
-        background.color = new Color(0.16f, 0.18f, 0.22f, 0.95f);
-
-        UnityEngine.UI.Button button = buttonGO.GetComponent<UnityEngine.UI.Button>();
-        button.targetGraphic = background;
-
-        GameObject labelGO = new GameObject("Label", typeof(RectTransform));
-        labelGO.transform.SetParent(rect, false);
-        RectTransform labelRect = labelGO.GetComponent<RectTransform>();
-        labelRect.anchorMin = Vector2.zero;
-        labelRect.anchorMax = Vector2.one;
-        labelRect.offsetMin = Vector2.zero;
-        labelRect.offsetMax = Vector2.zero;
-
-        TextMeshProUGUI label = labelGO.AddComponent<TextMeshProUGUI>();
-        label.text = "Info";
-        label.fontSize = 32f;
-        label.alignment = TextAlignmentOptions.Center;
-        label.color = Color.white;
-        label.enableWordWrapping = false;
-        ApplyDefaultFont(label);
-
-        return button;
+        _heartsLabel = heartsGO.AddComponent<TextMeshProUGUI>();
+        _heartsLabel.alignment = TextAlignmentOptions.Right;
+        _heartsLabel.fontSize = 32f;
+        _heartsLabel.raycastTarget = false;
+        UpdateHeartsUI();
     }
 
-    private IEnumerator ShowInfoPageRoutine()
+    private void CreateTokensUI()
     {
-        yield return EnsureInfoPageLoaded();
-        if (infoPageInstance == null) yield break;
-        ToggleInfoPanelInternal(true);
+        if (_hudCanvas == null || _tokensLabel != null) return;
+
+        GameObject tokensGO = new GameObject("TokensLabel");
+        tokensGO.transform.SetParent(_hudCanvas.transform, false);
+
+        RectTransform rect = tokensGO.AddComponent<RectTransform>();
+        rect.anchorMin = new Vector2(0f, 1f);
+        rect.anchorMax = new Vector2(0f, 1f);
+        rect.pivot = new Vector2(0f, 1f);
+        rect.sizeDelta = new Vector2(520f, 60f);
+        rect.anchoredPosition = new Vector2(40f, -40f);
+
+        _tokensLabel = tokensGO.AddComponent<TextMeshProUGUI>();
+        _tokensLabel.alignment = TextAlignmentOptions.Left;
+        _tokensLabel.fontSize = 32f;
+        _tokensLabel.raycastTarget = false;
+        UpdateTokensUI();
     }
 
-    private IEnumerator EnsureInfoPageLoaded()
+    private void CreateVictoryPanel()
     {
-        if (infoPageInstance != null) yield break;
-        if (isLoadingInfoPage)
+        if (!useVictoryPanel || _hudCanvas == null || _victoryPanel != null) return;
+
+        _victoryPanel = new GameObject("VictoryPanel");
+        _victoryPanel.transform.SetParent(_hudCanvas.transform, false);
+
+        RectTransform rect = _victoryPanel.AddComponent<RectTransform>();
+        rect.anchorMin = new Vector2(0.5f, 0.5f);
+        rect.anchorMax = new Vector2(0.5f, 0.5f);
+        rect.pivot = new Vector2(0.5f, 0.5f);
+        rect.sizeDelta = new Vector2(560f, 280f);
+        rect.anchoredPosition = Vector2.zero;
+
+        Image background = _victoryPanel.AddComponent<Image>();
+        background.color = new Color(0f, 0f, 0f, 0.78f);
+
+        GameObject titleGO = new GameObject("Title");
+        titleGO.transform.SetParent(_victoryPanel.transform, false);
+        RectTransform titleRect = titleGO.AddComponent<RectTransform>();
+        titleRect.anchorMin = new Vector2(0.5f, 1f);
+        titleRect.anchorMax = new Vector2(0.5f, 1f);
+        titleRect.pivot = new Vector2(0.5f, 1f);
+        titleRect.sizeDelta = new Vector2(520f, 60f);
+        titleRect.anchoredPosition = new Vector2(0f, -24f);
+
+        TextMeshProUGUI titleLabel = titleGO.AddComponent<TextMeshProUGUI>();
+        titleLabel.alignment = TextAlignmentOptions.Center;
+        titleLabel.fontSize = 38f;
+        titleLabel.fontStyle = FontStyles.Bold;
+        titleLabel.text = "Level Complete";
+
+        GameObject fireGO = new GameObject("FireSummary");
+        fireGO.transform.SetParent(_victoryPanel.transform, false);
+        RectTransform fireRect = fireGO.AddComponent<RectTransform>();
+        fireRect.anchorMin = new Vector2(0.5f, 0.5f);
+        fireRect.anchorMax = new Vector2(0.5f, 0.5f);
+        fireRect.pivot = new Vector2(0.5f, 0.5f);
+        fireRect.sizeDelta = new Vector2(520f, 50f);
+        fireRect.anchoredPosition = new Vector2(0f, 36f);
+
+        _fireVictoryLabel = fireGO.AddComponent<TextMeshProUGUI>();
+        _fireVictoryLabel.alignment = TextAlignmentOptions.Center;
+        _fireVictoryLabel.fontSize = 30f;
+        _fireVictoryLabel.text = string.Empty;
+
+        GameObject waterGO = new GameObject("WaterSummary");
+        waterGO.transform.SetParent(_victoryPanel.transform, false);
+        RectTransform waterRect = waterGO.AddComponent<RectTransform>();
+        waterRect.anchorMin = new Vector2(0.5f, 0.5f);
+        waterRect.anchorMax = new Vector2(0.5f, 0.5f);
+        waterRect.pivot = new Vector2(0.5f, 0.5f);
+        waterRect.sizeDelta = new Vector2(520f, 50f);
+        waterRect.anchoredPosition = new Vector2(0f, -14f);
+
+        _waterVictoryLabel = waterGO.AddComponent<TextMeshProUGUI>();
+        _waterVictoryLabel.alignment = TextAlignmentOptions.Center;
+        _waterVictoryLabel.fontSize = 30f;
+        _waterVictoryLabel.text = string.Empty;
+
+        GameObject buttonGO = new GameObject("RestartButton");
+        buttonGO.transform.SetParent(_victoryPanel.transform, false);
+        RectTransform buttonRect = buttonGO.AddComponent<RectTransform>();
+        buttonRect.anchorMin = new Vector2(0.5f, 0f);
+        buttonRect.anchorMax = new Vector2(0.5f, 0f);
+        buttonRect.pivot = new Vector2(0.5f, 0f);
+        buttonRect.sizeDelta = new Vector2(260f, 70f);
+        buttonRect.anchoredPosition = new Vector2(0f, 24f);
+
+        Image buttonBackground = buttonGO.AddComponent<Image>();
+        buttonBackground.color = new Color(0.25f, 0.45f, 0.9f, 1f);
+
+        _victoryRestartButton = buttonGO.AddComponent<Button>();
+        _victoryRestartButton.onClick.AddListener(OnVictoryRestartClicked);
+
+        GameObject buttonTextGO = new GameObject("Label");
+        buttonTextGO.transform.SetParent(buttonGO.transform, false);
+        RectTransform buttonTextRect = buttonTextGO.AddComponent<RectTransform>();
+        buttonTextRect.anchorMin = Vector2.zero;
+        buttonTextRect.anchorMax = Vector2.one;
+        buttonTextRect.offsetMin = Vector2.zero;
+        buttonTextRect.offsetMax = Vector2.zero;
+
+        TextMeshProUGUI buttonLabel = buttonTextGO.AddComponent<TextMeshProUGUI>();
+        buttonLabel.alignment = TextAlignmentOptions.Center;
+        buttonLabel.fontSize = 28f;
+        buttonLabel.text = "Restart";
+
+        _victoryPanel.SetActive(false);
+    }
+
+    private void ShowVictoryPanel()
+    {
+        if (!useVictoryPanel || _victoryPanel == null) return;
+
+        if (_fireVictoryLabel != null)
         {
-            while (isLoadingInfoPage) { yield return null; }
-            yield break;
+            _fireVictoryLabel.text = $"Total Ember Tokens: {s_totalFireTokensCollected}";
         }
 
-        if (string.IsNullOrEmpty(targetInfoSceneName))
+        if (_waterVictoryLabel != null)
         {
-            targetInfoSceneName = ResolveInfoSceneName();
+            _waterVictoryLabel.text = $"Total Aqua Tokens: {s_totalWaterTokensCollected}";
         }
 
-        if (string.IsNullOrEmpty(targetInfoSceneName))
+        _victoryPanel.SetActive(true);
+    }
+
+    private void ResetHearts()
+    {
+        int clampedHearts = Mathf.Max(0, startingHearts);
+        _fireHearts = clampedHearts;
+        _waterHearts = clampedHearts;
+        UpdateHeartsUI();
+    }
+
+    private void ResetTokenTracking()
+    {
+        fireTokensCollected = 0;
+        waterTokensCollected = 0;
+        _totalFireTokens = 0;
+        _totalWaterTokens = 0;
+        UpdateTokensUI();
+    }
+
+    private void UpdateHeartsUI()
+    {
+        if (_heartsLabel == null) return;
+        _heartsLabel.text = $"Ember Hearts: {_fireHearts};  Aqua Hearts: {_waterHearts}";
+    }
+
+    private void UpdateTokensUI()
+    {
+        if (_tokensLabel == null) return;
+
+        int fireTotal = Mathf.Max(_totalFireTokens, fireTokensCollected);
+        int waterTotal = Mathf.Max(_totalWaterTokens, waterTokensCollected);
+        _tokensLabel.text = $"Ember Tokens: {fireTokensCollected}/{fireTotal};  Aqua Tokens: {waterTokensCollected}/{waterTotal}";
+    }
+
+    private void RecountTokensInScene()
+    {
+        int fireCount = 0;
+        int waterCount = 0;
+
+        TokenCollect[] tokens = FindObjectsOfType<TokenCollect>(includeInactive: true);
+        foreach (var token in tokens)
         {
-            Debug.LogWarning("No info scene mapped for this level.");
-            yield break;
-        }
+            if (token == null) continue;
 
-        isLoadingInfoPage = true;
-
-        if (!Application.CanStreamedLevelBeLoaded(targetInfoSceneName))
-        {
-            Debug.LogWarning($"Info scene '{targetInfoSceneName}' not found; cannot display level info overlay.");
-            isLoadingInfoPage = false;
-            yield break;
-        }
-
-        AsyncOperation loadOp = SceneManager.LoadSceneAsync(targetInfoSceneName, LoadSceneMode.Additive);
-        if (loadOp == null)
-        {
-            isLoadingInfoPage = false;
-            yield break;
-        }
-
-        while (!loadOp.isDone)
-        {
-            yield return null;
-        }
-
-        Scene infoScene = SceneManager.GetSceneByName(targetInfoSceneName);
-        if (!infoScene.IsValid())
-        {
-            isLoadingInfoPage = false;
-            yield break;
-        }
-
-        GameObject[] roots = infoScene.GetRootGameObjects();
-
-        foreach (GameObject root in roots)
-        {
-            if (root.TryGetComponent<EventSystem>(out _))
+            if (token.CompareTag("FireToken"))
             {
-                Destroy(root);
+                fireCount++;
+            }
+            else if (token.CompareTag("WaterToken"))
+            {
+                waterCount++;
             }
         }
 
-        GameObject canvasRoot = roots.FirstOrDefault(go => go.name == "Canvas");
-
-        if (canvasRoot != null)
-        {
-            infoPageInstance = Instantiate(canvasRoot, uiCanvas.transform);
-            infoPageInstance.name = "LevelInfoOverlay";
-            ConfigureInfoOverlay(infoPageInstance);
-            infoPageInstance.SetActive(false);
-            uiCanvas.levelInfoPanel = infoPageInstance;
-            loadedInfoSceneName = targetInfoSceneName;
-        }
-        else
-        {
-            Debug.LogWarning($"Canvas not found in info scene '{targetInfoSceneName}' while preparing level info overlay.");
-        }
-
-        yield return SceneManager.UnloadSceneAsync(infoScene);
-
-        isLoadingInfoPage = false;
+        _totalFireTokens = fireCount;
+        _totalWaterTokens = waterCount;
+        UpdateTokensUI();
     }
 
-    private void ConfigureInfoOverlay(GameObject overlay)
+    private void DamageBothPlayers(CoopPlayerController playerA, CoopPlayerController playerB)
     {
-        if (overlay == null) return;
+        if (!_gameActive || _gameFinished) return;
+        if (playerA == null && playerB == null) return;
 
-        overlay.SetActive(true);
-        overlay.transform.SetAsLastSibling();
-
-        if (overlay.TryGetComponent(out RectTransform rectTransform))
+        if (playerA != null)
         {
-            rectTransform.anchorMin = Vector2.zero;
-            rectTransform.anchorMax = Vector2.one;
-            rectTransform.pivot = new Vector2(0.5f, 0.5f);
-            rectTransform.offsetMin = Vector2.zero;
-            rectTransform.offsetMax = Vector2.zero;
-            rectTransform.anchoredPosition = Vector2.zero;
-            rectTransform.localScale = Vector3.one * 0.78f;
+            ApplyDamage(playerA.Role, 1, suppressCheck: true);
         }
 
-        if (overlay.TryGetComponent(out Canvas overlayCanvas))
+        if (playerB != null)
         {
-            overlayCanvas.overrideSorting = true;
-            overlayCanvas.sortingOrder = 50;
+            ApplyDamage(playerB.Role, 1, suppressCheck: true);
         }
 
-        foreach (RectTransform childRect in overlay.GetComponentsInChildren<RectTransform>(true))
+        CheckForHeartDepletion();
+    }
+
+    public void DamagePlayer(PlayerRole role, int amount)
+    {
+        if (amount <= 0 || !_gameActive || _gameFinished) return;
+        ApplyDamage(role, amount, suppressCheck: false);
+    }
+
+    private void ApplyDamage(PlayerRole role, int amount, bool suppressCheck)
+    {
+        if (amount <= 0) return;
+
+        switch (role)
         {
-            childRect.localScale = Vector3.one;
+            case PlayerRole.Fireboy:
+                _fireHearts = Mathf.Max(0, _fireHearts - amount);
+                break;
+            case PlayerRole.Watergirl:
+                _waterHearts = Mathf.Max(0, _waterHearts - amount);
+                break;
         }
 
-        foreach (CanvasGroup group in overlay.GetComponentsInChildren<CanvasGroup>(true))
+        UpdateHeartsUI();
+
+        if (!suppressCheck)
         {
-            group.alpha = 1f;
-            group.interactable = true;
-            group.blocksRaycasts = true;
+            CheckForHeartDepletion();
+        }
+    }
+
+    private void CheckForHeartDepletion()
+    {
+        if (_fireHearts > 0 && _waterHearts > 0) return;
+        HandleOutOfHearts();
+    }
+
+    private void HandleOutOfHearts()
+    {
+        if (_reloadingScene) return;
+        _reloadingScene = true;
+
+        _gameFinished = true;
+        _gameActive = false;
+        FreezePlayers();
+        CancelNextSceneLoad();
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+    }
+
+    private void OnVictoryRestartClicked()
+    {
+        if (_reloadingScene) return;
+
+        _reloadingScene = true;
+        CancelNextSceneLoad();
+
+        string sceneToLoad = string.IsNullOrEmpty(victoryRestartSceneName)
+            ? SceneManager.GetActiveScene().name
+            : victoryRestartSceneName;
+
+        SceneManager.LoadScene(sceneToLoad);
+    }
+
+    private void HandleVictory()
+    {
+        if (_gameFinished) return;
+
+        _gameFinished = true;
+        _gameActive = false;
+        // analytics code
+        EnsureLevelTimer();
+        (levelTimer ?? FindAnyObjectByType<Analytics.LevelTimer>())?.MarkSuccess();
+        UpdateStatus(levelVictoryMessage);
+        FreezePlayers();
+
+        ShowVictoryPanel();
+
+        if (!useVictoryPanel && !string.IsNullOrEmpty(nextSceneName))
+        {
+            CancelNextSceneLoad();
+            _loadNextSceneRoutine = StartCoroutine(LoadNextSceneAfterDelay());
+        }
+    }
+
+    // analytics code
+    private void EnsureLevelTimer()
+    {
+        if (levelTimer != null) return;
+
+        var active = SceneManager.GetActiveScene().name;
+        if (string.Equals(active, "MainMenu", System.StringComparison.OrdinalIgnoreCase)) return;
+
+        var existing = FindAnyObjectByType<Analytics.LevelTimer>();
+        if (existing != null)
+        {
+            levelTimer = existing;
+            // Ensures abandon/quit attempts are captured
+            levelTimer.autoSendFailureOnDestroy = true;
+            return;
         }
 
-        foreach (var component in overlay.GetComponentsInChildren<InstructionsUI>(true))
+        var go = new GameObject("LevelAnalytics");
+        levelTimer = go.AddComponent<Analytics.LevelTimer>();
+        levelTimer.autoSendFailureOnDestroy = true;
+
+    }
+
+    private IEnumerator LoadNextSceneAfterDelay()
+    {
+        if (nextSceneDelaySeconds > 0f)
         {
-            Destroy(component);
+            yield return new WaitForSeconds(nextSceneDelaySeconds);
         }
 
-        foreach (var component in overlay.GetComponentsInChildren<InstructionsUI2>(true))
+        _loadNextSceneRoutine = null;
+        SceneManager.LoadScene(nextSceneName);
+    }
+
+    private void CancelNextSceneLoad()
+    {
+        if (_loadNextSceneRoutine == null) return;
+
+        StopCoroutine(_loadNextSceneRoutine);
+        _loadNextSceneRoutine = null;
+    }
+
+    private void OnDestroy()
+    {
+        if (_victoryRestartButton != null)
         {
-            Destroy(component);
+            _victoryRestartButton.onClick.RemoveListener(OnVictoryRestartClicked);
         }
+    }
 
-        Button resumeButton = null;
+    private bool AreAllPlayersAtExit()
+    {
+        if (_players.Count == 0 || _playersAtExit.Count == 0) return false;
 
-        foreach (Button button in overlay.GetComponentsInChildren<Button>(true))
+        foreach (var player in _players)
         {
-            button.onClick = new Button.ButtonClickedEvent();
-            TextMeshProUGUI label = button.GetComponentInChildren<TextMeshProUGUI>();
-            if (label == null) continue;
-
-            string text = label.text ?? string.Empty;
-            if (text.IndexOf("ready", System.StringComparison.OrdinalIgnoreCase) >= 0)
+            if (player == null || !_playersAtExit.Contains(player))
             {
-                label.text = "Resume";
-                resumeButton = button;
-            }
-            else if (text.IndexOf("next", System.StringComparison.OrdinalIgnoreCase) >= 0 ||
-                     text.IndexOf("continue", System.StringComparison.OrdinalIgnoreCase) >= 0)
-            {
-                label.text = "Resume";
-                resumeButton = button;
-            }
-            else if (text.IndexOf("back", System.StringComparison.OrdinalIgnoreCase) >= 0)
-            {
-                label.text = "Close";
-                resumeButton ??= button;
-            }
-        }
-
-        if (resumeButton == null)
-        {
-            resumeButton = overlay.GetComponentsInChildren<Button>(true).FirstOrDefault();
-        }
-
-        if (resumeButton != null)
-        {
-            resumeButton.onClick.AddListener(() => ToggleInfoPanelInternal(false));
-            uiCanvas.infoCloseButton = resumeButton;
-        }
-    }
-
-    private static Sprite cachedDefaultSprite;
-
-    private static Sprite GetDefaultSprite()
-    {
-        if (cachedDefaultSprite == null)
-        {
-            cachedDefaultSprite = Resources.GetBuiltinResource<Sprite>("UISprite.psd");
-        }
-
-        return cachedDefaultSprite;
-    }
-
-    private static void ApplyDefaultFont(TextMeshProUGUI text)
-    {
-        if (text == null) return;
-        if (TMP_Settings.defaultFontAsset != null)
-        {
-            text.font = TMP_Settings.defaultFontAsset;
-        }
-    }
-
-    private void OnInfoButtonClicked()
-    {
-        if (infoPanelVisible)
-        {
-            ToggleInfoPanelInternal(false);
-        }
-        else
-        {
-            StartCoroutine(ShowInfoPageRoutine());
-        }
-    }
-
-    private void ToggleInfoPanelInternal(bool show)
-    {
-        infoPanelVisible = show;
-
-        if (infoPageInstance != null)
-        {
-            infoPageInstance.SetActive(show);
-        }
-
-        uiCanvas?.ShowLevelInfo(show);
-
-        if (show)
-        {
-            cachedTimeScale = Time.timeScale;
-            Time.timeScale = 0f;
-            infoPauseActive = true;
-        }
-        else if (infoPauseActive)
-        {
-            infoPauseActive = false;
-            if (isGameActive)
-            {
-                Time.timeScale = cachedTimeScale > 0f ? cachedTimeScale : 1f;
-            }
-        }
-    }
-
-    private void HideInfoPanelImmediate()
-    {
-        if (infoPauseActive)
-        {
-            infoPauseActive = false;
-            if (isGameActive)
-            {
-                Time.timeScale = cachedTimeScale > 0f ? cachedTimeScale : 1f;
+                return false;
             }
         }
-
-        infoPanelVisible = false;
-        if (infoPageInstance != null)
-        {
-            infoPageInstance.SetActive(false);
-        }
-        uiCanvas?.ShowLevelInfo(false);
-    }
-
-    private void HighlightRemainingIngredients()
-    {
-        IngredientPickup[] pickups = FindObjectsOfType<IngredientPickup>();
-        foreach (var pickup in pickups)
-        {
-            if (pickup != null && pickup.gameObject.activeInHierarchy)
-            {
-                pickup.EnableHighlight();
-            }
-        }
-    }
-
-    private bool ShouldHighlightIngredients()
-    {
-        string sceneName = SceneManager.GetActiveScene().name;
-        if (string.IsNullOrEmpty(sceneName)) return false;
-
-        if (sceneName.IndexOf("Instruction", System.StringComparison.OrdinalIgnoreCase) >= 0) return false;
-        if (sceneName.IndexOf("Tutorial", System.StringComparison.OrdinalIgnoreCase) >= 0) return false;
-        if (sceneName.IndexOf("Demo", System.StringComparison.OrdinalIgnoreCase) >= 0) return false;
 
         return true;
     }
 
-    private string ResolveInfoSceneName()
+    private static string GetDisplayName(PlayerRole role)
     {
-        string levelScene = SceneManager.GetActiveScene().name;
-        if (string.IsNullOrEmpty(levelScene))
-        {
-            return "InstructionScene";
-        }
-
-        if (levelScene.IndexOf("Level2Scene", System.StringComparison.OrdinalIgnoreCase) >= 0)
-        {
-            return "InstructionsScene2";
-        }
-
-        if (levelScene.IndexOf("Level1", System.StringComparison.OrdinalIgnoreCase) >= 0 ||
-            levelScene.IndexOf("Tutorial", System.StringComparison.OrdinalIgnoreCase) >= 0 ||
-            levelScene.IndexOf("Demo", System.StringComparison.OrdinalIgnoreCase) >= 0)
-        {
-            return "InstructionScene";
-        }
-
-        return "InstructionScene";
+        return role == PlayerRole.Fireboy ? "Ember" : "Aqua";
     }
 
-
-
-    public void OnPlayerHitByEnemy()
+    private void NormalizeDisplayStrings()
     {
-        if (!isGameActive) return;
-
-        isGameActive = false;
-        Time.timeScale = 0f;
-
-        if (uiCanvas != null && uiCanvas.gameOverPanel != null)
-            uiCanvas.gameOverPanel.SetActive(true);
-
-        if (uiCanvas != null && uiCanvas.loseReasonText != null)
-            uiCanvas.loseReasonText.text = "Oops! You got hit!";
-
-        
-        float timeSpent = timeLimit - currentTime;  
-        string levelId  = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
-
-        
-        AnalyticsManager.I?.LogRow(levelId, success: false, timeSpentS: timeSpent);
-
-        
-        AnalyticsSender.I?.SendLevelResult(levelId, false, timeSpent);
+        levelIntroMessage = ReplaceLegacyNames(levelIntroMessage);
+        levelStartMessage = ReplaceLegacyNames(levelStartMessage);
+        levelVictoryMessage = ReplaceLegacyNames(levelVictoryMessage);
+        waitForPartnerMessage = ReplaceLegacyNames(waitForPartnerMessage);
+        exitReminderMessage = ReplaceLegacyNames(exitReminderMessage);
     }
 
-    private void UpdateTimerUI()
+    private static string ReplaceLegacyNames(string text)
     {
-        int minutes = Mathf.FloorToInt(currentTime / 60);
-        int seconds = Mathf.FloorToInt(currentTime % 60);
-        int milliseconds = Mathf.FloorToInt((currentTime * 100) % 100);
-        uiCanvas.timerText.text = $"Time left: {minutes:00}:{seconds:00}:{milliseconds:00}";
+        if (string.IsNullOrEmpty(text)) return text;
+        return text.Replace("Fireboy", "Ember").Replace("Watergirl", "Aqua");
     }
-
-    public void RestartGame()
-    {
-        Time.timeScale = 1f;
-        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
-    }
-
-    public void LoadNextLevel()
-    {
-        Debug.Log("LoadNextLevel called - navigating to InstructionsScene2");
-        Time.timeScale = 1f;
-        
-        
-        if (Application.CanStreamedLevelBeLoaded("InstructionsScene2"))
-        {
-            Debug.Log("InstructionsScene2 exists, loading...");
-            SceneManager.LoadScene("InstructionsScene2");
-        }
-        else
-        {
-            Debug.LogError("InstructionsScene2 scene not found! Available scenes:");
-            for (int i = 0; i < SceneManager.sceneCountInBuildSettings; i++)
-            {
-                string scenePath = SceneManager.GetSceneByBuildIndex(i).path;
-                Debug.Log($"Scene {i}: {scenePath}");
-            }
-        }
-    }
-
-    public void LoadMainMenu()
-    {
-        Debug.Log("LoadMainMenu called - navigating to MainMenu");
-        Time.timeScale = 1f;
-        SceneManager.LoadScene("MainMenu");
-    }
-
-    public void ShowRestartPanel()
-    {
-        Time.timeScale = 0f;
-
-        if (uiCanvas != null)
-        {
-            uiCanvas.gameOverPanel.SetActive(true);     
-            if (uiCanvas.loseReasonText != null)
-                uiCanvas.loseReasonText.text = "";      
-        }
-    }
-
-
-    private int CalculateStars(float time)
-    {
-        if (time <= 18f) return 5;
-        if (time <= 36f) return 4;
-        if (time <= 54f) return 3;
-        if (time <= 72f) return 2;
-        return 1;
-    }
-
 }

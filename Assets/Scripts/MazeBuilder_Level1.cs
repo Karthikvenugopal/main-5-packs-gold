@@ -1,402 +1,180 @@
 using UnityEngine;
-using UnityEngine.Serialization;
 using TMPro;
 
 public class MazeBuilder_Level1 : MonoBehaviour
 {
     [Header("Maze Settings")]
+    [Min(0.1f)]
     public float cellSize = 1f;
 
     [Header("Prefabs")]
     public GameObject wallPrefab;
     public GameObject floorPrefab;
-    [Header("Ingredient Prefabs")]
-    public GameObject chiliPickupPrefab;
-    public GameObject butterPickupPrefab;
-    public GameObject breadPickupPrefab;
-    [Header("Enemies")]
-    public GameObject rollingPinPrefab;
-    [Header("Obstacle Prefabs")]
     public GameObject iceWallPrefab;
-    public GameObject stickyZonePrefab;
-    [FormerlySerializedAs("peanutButterPatchPrefab")] public GameObject jamPatchPrefab;
-    [Header("Ability Durations")]
-    public float chiliDurationSeconds = 0f;
-    public float butterDurationSeconds = 6f;
+    public GameObject fireWallPrefab;
 
     [Header("Dependencies")]
     public GameManager gameManager;
+    [SerializeField] private TokenPlacementManager tokenPlacementManager;
 
-    void Start()
+    private static readonly string[] Layout =
     {
-        string[] maze =
-        {   
-            "#########################",
-            "#S#######################",
-            "#............#####......#",
-            "##..######.........#...B#",
-            "#........#.^.####..#.^.##",
-            "#...R....#.....##.......#",
-            "#.......####~~~~~~~#....#",
-            "#.......#...~~~~~~~#....#",
-            "#####..###..####...#....#",
-            "#.....W............#....#",
-            "#########..#R.....#######",
-            "#..........######......##",
-            "#.B........###......#####",
-            "#####~~~~~~.#..######..##",
-            "#....~~~~~~..W.#.......##",
-            "#......#####.....########",
-            "#......#.......P........#",
-            "#######################E#"
-        };
+        "###################",
+        "#F........H......E#",
+        "###.######.########",
+        "###.######.########",
+        "###.##...#.########",
+        "###I##...#.########",
+        "###.##...#I########",
+        "#W.........########",
+        "###################"
+    };
 
-        BuildMaze(maze);
-        
-        int ingredientCount = GameObject.FindGameObjectsWithTag("Ingredient").Length;
+    private const string FireboySpawnName = "FireboySpawn";
+    private const string WatergirlSpawnName = "WatergirlSpawn";
 
-        if (gameManager != null)
-        {
-            gameManager.StartLevel(ingredientCount);
-        }
+    private void Start()
+    {
+        BuildMaze(Layout);
+        CenterMaze(Layout);
+        tokenPlacementManager?.SpawnTokens();
+        gameManager?.OnLevelReady();
     }
 
-    void BuildMaze(string[] layout)
+    private void BuildMaze(string[] layout)
     {
         for (int y = 0; y < layout.Length; y++)
         {
-            string line = layout[y];
-            for (int x = 0; x < line.Length; x++)
+            string row = layout[y];
+            for (int x = 0; x < row.Length; x++)
             {
-                char c = line[x];
-                Vector2 pos = new Vector2(x * cellSize, -y * cellSize);
+                char cell = row[x];
+                Vector2 cellPosition = new Vector2(x * cellSize, -y * cellSize);
 
-                switch (c)
+                switch (cell)
                 {
                     case '#':
-                        SpawnWall(pos);
-                        break;
-
-                    case 'S':
-                        SpawnFloor(pos);
-                        CreateSpawnMarker(pos);
-                        break;
-
-                    case 'C':
-                        SpawnFloor(pos);
-                        SpawnIngredient(pos, IngredientType.Chili, chiliDurationSeconds);
-                        break;
-
-                    case 'B':
-                        SpawnFloor(pos);
-                        SpawnIngredient(pos, IngredientType.Butter, butterDurationSeconds);
-                        break;
-
-                    case 'I':
-                        SpawnFloor(pos);
-                        SpawnIceWall(pos);
-                        break;
-
-                    case 'W': 
-                        SpawnFloor(pos);
-                        SpawnJamPatch(pos);
-                        break;
-
-                    case 'R': 
-                        SpawnFloor(pos);
-                        SpawnIngredient(pos, IngredientType.Bread, 0f);
-                        break;
-
-                    case '~':
-                        SpawnFloor(pos);
-                        SpawnStickyZone(pos);
-                        break;
-
-                    case 'E':
-                        SpawnFloor(pos);
-                        SpawnExit(pos);
-                        break;
-
-                    case 'P': 
-                        SpawnFloor(pos);
-                        SpawnRollingPin(pos, Vector2.right);
-                        break;
-                    case 'p': 
-                        SpawnFloor(pos);
-                        SpawnRollingPin(pos, Vector2.left);
-                        break;
-                    case '^':
-                        SpawnFloor(pos);
-                        SpawnRollingPin(pos, Vector2.up);
-                        break;
-                    case 'v':
-                        SpawnFloor(pos);
-                        SpawnRollingPin(pos, Vector2.down);
+                        SpawnWall(cellPosition);
                         break;
 
                     case '.':
-                    case ' ':
+                        SpawnFloor(cellPosition);
+                        break;
+
+                    case 'F':
+                        SpawnFloor(cellPosition);
+                        CreateSpawnMarker(cellPosition, FireboySpawnName);
+                        break;
+
+                    case 'W':
+                        SpawnFloor(cellPosition);
+                        CreateSpawnMarker(cellPosition, WatergirlSpawnName);
+                        break;
+
+                    case 'I':
+                        SpawnFloor(cellPosition);
+                        SpawnIceWall(cellPosition);
+                        break;
+
+                    case 'H':
+                        SpawnFloor(cellPosition);
+                        SpawnFireWall(cellPosition);
+                        break;
+
+                    case 'E':
+                        SpawnFloor(cellPosition);
+                        SpawnExit(cellPosition);
+                        break;
+
                     default:
-                        SpawnFloor(pos);
+                        SpawnFloor(cellPosition);
                         break;
                 }
             }
         }
-        CenterMaze(layout);
     }
 
-    void SpawnWall(Vector2 position)
+    private void SpawnWall(Vector2 position)
     {
         if (wallPrefab == null) return;
         GameObject wall = Instantiate(wallPrefab, position, Quaternion.identity, transform);
         wall.layer = LayerMask.NameToLayer("Wall");
     }
 
-    void SpawnFloor(Vector2 position)
+    private void SpawnFloor(Vector2 position)
     {
         if (floorPrefab == null) return;
         Instantiate(floorPrefab, position, Quaternion.identity, transform);
     }
 
-    void SpawnExit(Vector2 position)
+    private void SpawnIceWall(Vector2 position)
+    {
+        GameObject prefab = iceWallPrefab != null ? iceWallPrefab : wallPrefab;
+        if (prefab == null) return;
+
+        GameObject iceWall = Instantiate(prefab, position, Quaternion.identity, transform);
+        iceWall.layer = LayerMask.NameToLayer("Wall");
+
+        if (!iceWall.TryGetComponent(out IceWall component))
+        {
+            component = iceWall.AddComponent<IceWall>();
+        }
+    }
+
+    private void SpawnFireWall(Vector2 position)
+    {
+        if (fireWallPrefab == null)
+        {
+            Debug.LogWarning("Fire wall prefab is not assigned.");
+            return;
+        }
+
+        GameObject fireWall = Instantiate(fireWallPrefab, position, Quaternion.identity, transform);
+        fireWall.layer = LayerMask.NameToLayer("Wall");
+    }
+
+    private void SpawnExit(Vector2 position)
     {
         GameObject exit = new GameObject("Exit");
-
-        exit.transform.position = position + new Vector2(0.6f, -0.6f);  
+        exit.transform.position = position + new Vector2(0.5f * cellSize, -0.5f * cellSize);
         exit.transform.SetParent(transform);
 
-        BoxCollider2D col = exit.AddComponent<BoxCollider2D>();
-        col.isTrigger = true;
+        BoxCollider2D trigger = exit.AddComponent<BoxCollider2D>();
+        trigger.isTrigger = true;
+        trigger.size = new Vector2(cellSize * 1.8f, cellSize * 1.4f);
+        trigger.offset = Vector2.zero;
 
-        col.size = new Vector2(0.6f, 0.6f);
-        col.offset = Vector2.zero;
+        ExitZone exitZone = exit.AddComponent<ExitZone>();
+        exitZone.Initialize(gameManager);
 
-        exit.tag = "Exit";
-        exit.AddComponent<ExitTrigger>();
+        SpriteRenderer renderer = exit.AddComponent<SpriteRenderer>();
+        renderer.color = new Color(0.9f, 0.8f, 0.2f, 0.85f);
+        renderer.sortingOrder = 4;
 
-        
-        SpriteRenderer sr = exit.AddComponent<SpriteRenderer>();
-        sr.color = new Color(0.6f, 0.3f, 0.1f, 0.8f); 
-        sr.sortingOrder = 5;
+        GameObject text = new GameObject("Label");
+        text.transform.SetParent(exit.transform);
+        text.transform.localPosition = new Vector3(0f, 0.85f * cellSize, -0.1f);
 
-        GameObject textObject = new GameObject("ExitText");
-        textObject.transform.SetParent(exit.transform);
-        textObject.transform.localPosition = Vector3.zero;
-
-        TextMeshPro textMeshPro = textObject.AddComponent<TextMeshPro>();
-        textMeshPro.text = "EXIT";
-        textMeshPro.fontSize = 7;
-        textMeshPro.color = Color.white;
-        textMeshPro.alignment = TextAlignmentOptions.Center;
-        
-        textMeshPro.fontStyle = FontStyles.Bold;
-        textMeshPro.enableWordWrapping = false;
-        textMeshPro.overflowMode = TextOverflowModes.Overflow;
-        textMeshPro.margin = new Vector4(0, 0, 0, 0);
-
-        textObject.transform.localPosition = new Vector3(-1f, 0.1f, -0.1f);
+        TextMeshPro tmp = text.AddComponent<TextMeshPro>();
+        tmp.text = "EXIT";
+        tmp.color = Color.black;
+        tmp.fontSize = 6;
+        tmp.alignment = TextAlignmentOptions.Center;
+        tmp.fontStyle = FontStyles.Bold;
+        tmp.enableWordWrapping = false;
     }
 
-
-
-
-    void SpawnIngredient(Vector2 position, IngredientType type, float durationSeconds)
+    private void CreateSpawnMarker(Vector2 position, string name)
     {
-        GameObject prefab = null;
-
-        switch (type)
-        {
-            case IngredientType.Chili:
-                prefab = chiliPickupPrefab;
-                break;
-
-            case IngredientType.Butter:
-                prefab = butterPickupPrefab;
-                break;
-
-            case IngredientType.Bread:
-                prefab = breadPickupPrefab;
-                break;
-        }
-
-        GameObject ingredient = prefab != null
-            ? Instantiate(prefab, position, Quaternion.identity, transform)
-            : CreateRuntimeIngredient(type, position);
-
-        ingredient.tag = "Ingredient";
-
-        ConfigureIngredientObject(ingredient, type);
-
-        if (!ingredient.TryGetComponent(out IngredientPickup pickup))
-        {
-            pickup = ingredient.AddComponent<IngredientPickup>();
-        }
-
-        pickup.Configure(type, durationSeconds);
-    }
-    void SpawnRollingPin(Vector2 position, Vector2 direction)
-    {
-        if (rollingPinPrefab == null) return;
-        GameObject pin = Instantiate(rollingPinPrefab, position, Quaternion.identity, transform);
-        RollingPinEnemy enemy = pin.GetComponent<RollingPinEnemy>();
-        if (enemy != null) enemy.SetInitialDirection(direction);
+        GameObject marker = new GameObject(name);
+        marker.transform.position = position + new Vector2(0.5f * cellSize, -0.5f * cellSize);
+        marker.transform.SetParent(transform);
     }
 
-
-
-
-    void SpawnJamPatch(Vector2 position)
+    private void CenterMaze(string[] layout)
     {
-        GameObject source = jamPatchPrefab != null ? jamPatchPrefab : wallPrefab;
-        if (source == null) return;
+        if (layout == null || layout.Length == 0) return;
 
-        GameObject smear = Instantiate(source, position + Vector2.down * 0.55f, Quaternion.identity, transform);
-
-
-        if (smear.TryGetComponent(out SpriteRenderer sr))
-        {
-            sr.color = new Color(0.75f, 0.13f, 0.28f, 0.85f);
-        }
-
-        if (!smear.TryGetComponent(out JamPatch patch))
-        {
-            patch = smear.AddComponent<JamPatch>();
-        }
-
-        smear.layer = LayerMask.NameToLayer("Wall");
-    }
-
-
-    GameObject CreateRuntimeIngredient(IngredientType type, Vector2 position)
-    {
-        GameObject ingredient = new GameObject($"{type}Pickup");
-        ingredient.transform.SetParent(transform);
-        ingredient.transform.position = position;
-
-        ingredient.AddComponent<SpriteRenderer>();
-
-        return ingredient;
-    }
-
-    void ConfigureIngredientObject(GameObject ingredient, IngredientType type)
-    {
-        if (ingredient == null) return;
-
-        SpriteRenderer sr = ingredient.GetComponent<SpriteRenderer>();
-        if (sr == null)
-        {
-            sr = ingredient.GetComponentInChildren<SpriteRenderer>();
-        }
-
-        if (sr != null)
-        {
-            sr.sortingOrder = 1;
-
-            Sprite customSprite = IngredientVisualFactory.GetSprite(type);
-            if (customSprite != null)
-            {
-                sr.sprite = customSprite;
-                sr.color = Color.white;
-            }
-            else if (floorPrefab != null && floorPrefab.TryGetComponent(out SpriteRenderer floorSR))
-            {
-                sr.sprite = floorSR.sprite;
-                sr.color = type switch
-                {
-                    IngredientType.Chili => new Color(0.88f, 0.24f, 0.16f, 1f),
-                    IngredientType.Butter => new Color(0.99f, 0.91f, 0.47f, 1f),
-                    IngredientType.Bread => new Color(0.74f, 0.47f, 0.27f, 1f),
-                    IngredientType.Garlic => new Color(0.9f, 0.92f, 0.82f, 1f),
-                    IngredientType.Chocolate => new Color(0.46f, 0.28f, 0.16f, 1f),
-                    _ => sr.color
-                };
-            }
-        }
-
-        float pickupScale = Mathf.Max(0.1f, cellSize * 1.2f);
-        Vector3 targetScale = IngredientVisualFactory.GetScale(type, pickupScale);
-        ingredient.transform.localScale = targetScale;
-
-        CircleCollider2D circleCollider = ingredient.GetComponent<CircleCollider2D>();
-        if (circleCollider == null)
-        {
-            circleCollider = ingredient.AddComponent<CircleCollider2D>();
-        }
-
-        circleCollider.isTrigger = true;
-
-        float maxScale = Mathf.Max(targetScale.x, targetScale.y);
-        float minScale = Mathf.Min(targetScale.x, targetScale.y);
-        if (maxScale > 0f)
-        {
-            float desiredWorldRadius = minScale * 0.5f;
-            circleCollider.radius = desiredWorldRadius / maxScale;
-        }
-    }
-
-    void SpawnIceWall(Vector2 position)
-    {
-        GameObject source = iceWallPrefab != null ? iceWallPrefab : wallPrefab;
-        if (source == null) return;
-
-        GameObject ice = Instantiate(source, position, Quaternion.identity, transform);
-
-        if (ice.TryGetComponent(out SpriteRenderer sr))
-        {
-            sr.color = new Color(0.62f, 0.84f, 1f, 1f);
-        }
-
-        if (!ice.TryGetComponent(out IceWall iceWall))
-        {
-            iceWall = ice.AddComponent<IceWall>();
-        }
-
-        ice.layer = LayerMask.NameToLayer("Wall");
-    }
-
-    void SpawnStickyZone(Vector2 position)
-    {
-        GameObject zone = stickyZonePrefab != null ? Instantiate(stickyZonePrefab, position, Quaternion.identity, transform) : CreateRuntimeStickyZone(position);
-        if (!zone.TryGetComponent<StickyZone>(out _))
-        {
-            zone.AddComponent<StickyZone>();
-        }
-
-        float zoneScale = Mathf.Max(0.1f, cellSize);
-        zone.transform.localScale = new Vector3(zoneScale, zoneScale, 1f);
-    }
-
-    GameObject CreateRuntimeStickyZone(Vector2 position)
-    {
-        GameObject zone = new GameObject("StickyZone");
-        zone.transform.SetParent(transform);
-        zone.transform.position = position;
-
-        SpriteRenderer sr = zone.AddComponent<SpriteRenderer>();
-        sr.sortingOrder = 0;
-
-        if (floorPrefab != null && floorPrefab.TryGetComponent(out SpriteRenderer floorSR))
-        {
-            sr.sprite = floorSR.sprite;
-        }
-
-        sr.color = new Color(0.98f, 0.8f, 0.2f, 0.65f);
-
-        BoxCollider2D collider = zone.AddComponent<BoxCollider2D>();
-        collider.isTrigger = true;
-
-        return zone;
-    }
-
-    void CreateSpawnMarker(Vector2 position)
-    {
-        GameObject spawnMarker = new GameObject("PlayerSpawn");
-        spawnMarker.transform.position = position;
-        spawnMarker.transform.SetParent(transform);
-    }
-
-    void CenterMaze(string[] layout)
-    {
         float width = layout[0].Length * cellSize;
         float height = layout.Length * cellSize;
 

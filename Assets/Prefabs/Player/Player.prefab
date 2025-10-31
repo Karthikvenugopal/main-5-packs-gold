@@ -12,9 +12,6 @@ GameObject:
   - component: {fileID: 6441851134911288539}
   - component: {fileID: 1557306749652676932}
   - component: {fileID: 772786837209400136}
-  - component: {fileID: 4546365854680405702}
-  - component: {fileID: 3415578073558345749}
-  - component: {fileID: 4930644394812652910}
   - component: {fileID: -2899828019193919791}
   m_Layer: 0
   m_Name: Player
@@ -169,57 +166,6 @@ BoxCollider2D:
   m_AutoTiling: 0
   m_Size: {x: 0.8, y: 0.8}
   m_EdgeRadius: 0.05
---- !u!114 &4546365854680405702
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7307446650723487989}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3cb27ae61a9d4b8ab915aad390d05fcd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  baseSpeed: 4
-  butterSpeedMultiplier: 1.4
-  stickySlowMultiplier: 0.35
-  broadcastAbilityChanged: 1
---- !u!114 &3415578073558345749
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7307446650723487989}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c8a1deb7bf9dcac459c495930d3f9149, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PlayerController2D
-  moveSpeed: 5
-  wallLayer:
-    serializedVersion: 2
-    m_Bits: 64
---- !u!114 &4930644394812652910
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7307446650723487989}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8414bfedc17b94773bf49613082c06de, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PlayerColorController
-  noneColor: {r: 0.0627451, g: 0.7137255, b: 0.17254902, a: 1}
-  chiliColor: {r: 0.95, g: 0.25, b: 0.15, a: 1}
-  butterColor: {r: 0.98, g: 0.92, b: 0.5, a: 1}
-  breadColor: {r: 0.5450981, g: 0.2705882, b: 0.07450981, a: 1}
-  garlicColor: {r: 0.95, g: 0.93, b: 0.86, a: 1}
-  chocolateColor: {r: 0.45, g: 0.3, b: 0.18, a: 1}
-  lerpTime: 0.08
 --- !u!58 &-2899828019193919791
 CircleCollider2D:
   m_ObjectHideFlags: 0
