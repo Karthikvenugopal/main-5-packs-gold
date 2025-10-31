@@ -19,6 +19,8 @@ public class GameManager : MonoBehaviour
     [SerializeField] private string levelVictoryMessage = "Victory! Both heroes reached safety. Press R to play again.";
     [SerializeField] private string waitForPartnerMessage = "{0} made it. Wait for your partner!";
     [SerializeField] private string exitReminderMessage = "Both heroes must stand in the exit to finish.";
+    [Header("Player Hearts")]
+    [SerializeField] private int startingHearts = 3;
     [Header("Progression")]
     [SerializeField] private string nextSceneName;
     [SerializeField] private float nextSceneDelaySeconds = 2f;
@@ -28,6 +30,12 @@ public class GameManager : MonoBehaviour
 
     // Keeps a visible record of how many water tokens the team has picked up.
     public int waterTokensCollected = 0;
+
+    private Canvas _hudCanvas;
+    private TextMeshProUGUI _heartsLabel;
+    private int _fireHearts;
+    private int _waterHearts;
+    private bool _reloadingScene;
 
     private readonly List<CoopPlayerController> _players = new();
     private readonly HashSet<CoopPlayerController> _playersAtExit = new();
@@ -40,12 +48,16 @@ public class GameManager : MonoBehaviour
 
     private void Awake()
     {
+        EnsureHudCanvas();
+        CreateHeartsUI();
+
         // --- MODIFICATION START ---
         if (!isTutorialMode)
         {
             CreateStatusUI();
         }
         // --- MODIFICATION END ---
+        ResetHearts();
     }
 
     private void Update()
@@ -107,14 +119,9 @@ public class GameManager : MonoBehaviour
         // --- MODIFICATION END ---
     }
 
-    public void OnPlayersTouched()
+    public void OnPlayersTouched(CoopPlayerController playerA, CoopPlayerController playerB)
     {
-        if (!_gameActive || _gameFinished) return;
-
-        _gameFinished = true;
-        _gameActive = false;
-        UpdateStatus("They touched! Press R to restart.");
-        FreezePlayers();
+        DamageBothPlayers(playerA, playerB);
     }
 
     public void OnPlayerEnteredExit(CoopPlayerController player)
@@ -145,14 +152,10 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    public void OnPlayerHitByEnemy()
+    public void OnPlayerHitByEnemy(CoopPlayerController player)
     {
-        if (!_gameActive || _gameFinished) return;
-
-        _gameFinished = true;
-        _gameActive = false;
-        UpdateStatus("An enemy caught you! Press R to restart.");
-        FreezePlayers();
+        if (player == null) return;
+        DamagePlayer(player.Role, 1);
     }
 
     public void OnExitReached()
@@ -180,22 +183,10 @@ public class GameManager : MonoBehaviour
 
     private void CreateStatusUI()
     {
-        GameObject canvasGO = new GameObject("MazeUI");
-        canvasGO.transform.SetParent(transform, false);
-
-        Canvas canvas = canvasGO.AddComponent<Canvas>();
-        canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-        canvas.sortingOrder = 200;
-
-        CanvasScaler scaler = canvasGO.AddComponent<CanvasScaler>();
-        scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-        scaler.referenceResolution = new Vector2(1920, 1080);
-        scaler.matchWidthOrHeight = 0.5f;
-
-        canvasGO.AddComponent<GraphicRaycaster>();
+        if (_hudCanvas == null) return;
 
         GameObject background = new GameObject("MessageBackground");
-        background.transform.SetParent(canvas.transform, false);
+        background.transform.SetParent(_hudCanvas.transform, false);
 
         RectTransform bgRect = background.AddComponent<RectTransform>();
         bgRect.anchorMin = new Vector2(0.5f, 1f);
@@ -220,6 +211,124 @@ public class GameManager : MonoBehaviour
         _statusLabel.alignment = TextAlignmentOptions.Center;
         _statusLabel.fontSize = 40f;
         _statusLabel.text = string.Empty;
+    }
+
+    private void EnsureHudCanvas()
+    {
+        if (_hudCanvas != null) return;
+
+        GameObject canvasGO = new GameObject("MazeUI");
+        canvasGO.transform.SetParent(transform, false);
+
+        _hudCanvas = canvasGO.AddComponent<Canvas>();
+        _hudCanvas.renderMode = RenderMode.ScreenSpaceOverlay;
+        _hudCanvas.sortingOrder = 200;
+
+        CanvasScaler scaler = canvasGO.AddComponent<CanvasScaler>();
+        scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+        scaler.referenceResolution = new Vector2(1920, 1080);
+        scaler.matchWidthOrHeight = 0.5f;
+
+        canvasGO.AddComponent<GraphicRaycaster>();
+    }
+
+    private void CreateHeartsUI()
+    {
+        if (_hudCanvas == null || _heartsLabel != null) return;
+
+        GameObject heartsGO = new GameObject("HeartsLabel");
+        heartsGO.transform.SetParent(_hudCanvas.transform, false);
+
+        RectTransform rect = heartsGO.AddComponent<RectTransform>();
+        rect.anchorMin = new Vector2(1f, 1f);
+        rect.anchorMax = new Vector2(1f, 1f);
+        rect.pivot = new Vector2(1f, 1f);
+        rect.sizeDelta = new Vector2(450f, 60f);
+        rect.anchoredPosition = new Vector2(-40f, -40f);
+
+        _heartsLabel = heartsGO.AddComponent<TextMeshProUGUI>();
+        _heartsLabel.alignment = TextAlignmentOptions.Right;
+        _heartsLabel.fontSize = 32f;
+        _heartsLabel.raycastTarget = false;
+        UpdateHeartsUI();
+    }
+
+    private void ResetHearts()
+    {
+        int clampedHearts = Mathf.Max(0, startingHearts);
+        _fireHearts = clampedHearts;
+        _waterHearts = clampedHearts;
+        UpdateHeartsUI();
+    }
+
+    private void UpdateHeartsUI()
+    {
+        if (_heartsLabel == null) return;
+        _heartsLabel.text = $"Fire Hearts: {_fireHearts};  Water Hearts: {_waterHearts}";
+    }
+
+    private void DamageBothPlayers(CoopPlayerController playerA, CoopPlayerController playerB)
+    {
+        if (!_gameActive || _gameFinished) return;
+        if (playerA == null && playerB == null) return;
+
+        if (playerA != null)
+        {
+            ApplyDamage(playerA.Role, 1, suppressCheck: true);
+        }
+
+        if (playerB != null)
+        {
+            ApplyDamage(playerB.Role, 1, suppressCheck: true);
+        }
+
+        CheckForHeartDepletion();
+    }
+
+    public void DamagePlayer(PlayerRole role, int amount)
+    {
+        if (amount <= 0 || !_gameActive || _gameFinished) return;
+        ApplyDamage(role, amount, suppressCheck: false);
+    }
+
+    private void ApplyDamage(PlayerRole role, int amount, bool suppressCheck)
+    {
+        if (amount <= 0) return;
+
+        switch (role)
+        {
+            case PlayerRole.Fireboy:
+                _fireHearts = Mathf.Max(0, _fireHearts - amount);
+                break;
+            case PlayerRole.Watergirl:
+                _waterHearts = Mathf.Max(0, _waterHearts - amount);
+                break;
+        }
+
+        UpdateHeartsUI();
+
+        if (!suppressCheck)
+        {
+            CheckForHeartDepletion();
+        }
+    }
+
+    private void CheckForHeartDepletion()
+    {
+        if (_fireHearts > 0 && _waterHearts > 0) return;
+        HandleOutOfHearts();
+    }
+
+    private void HandleOutOfHearts()
+    {
+        if (_reloadingScene) return;
+        _reloadingScene = true;
+
+        _gameFinished = true;
+        _gameActive = false;
+        FreezePlayers();
+        CancelNextSceneLoad();
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 
     private void HandleVictory()

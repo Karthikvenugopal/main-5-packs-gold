@@ -10,6 +10,8 @@ TagManager:
   - WaterPlayer
   - FireToken
   - WaterToken
+  - IceWall
+  - FireWall
   layers:
   - Default
   - TransparentFX

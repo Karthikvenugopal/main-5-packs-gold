@@ -125,7 +125,7 @@ public class CannonProjectile : MonoBehaviour
 
         if (collider != null && collider.TryGetComponent(out CoopPlayerController player))
         {
-            _gameManager?.OnPlayerHitByEnemy();
+            _gameManager?.OnPlayerHitByEnemy(player);
         }
 
         SpawnHitEffect(hitPoint);

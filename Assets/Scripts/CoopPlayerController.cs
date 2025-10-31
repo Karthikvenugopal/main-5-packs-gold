@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 public enum PlayerRole
@@ -19,12 +20,17 @@ public class CoopPlayerController : MonoBehaviour
     [SerializeField] private Color fireboyColor = new Color(0.93f, 0.39f, 0.18f);
     [SerializeField] private Color watergirlColor = new Color(0.2f, 0.45f, 0.95f);
 
+    [Header("Hazard Damage")]
+    [SerializeField] private float hazardDamageCooldown = 0.5f;
+
     private Rigidbody2D _rigidbody;
     private Collider2D _collider;
     private GameManager _gameManager;
     private PlayerRole _role;
     private Vector2 _moveInput;
     private bool _movementEnabled;
+
+    private readonly Dictionary<int, float> _lastHazardDamageTimes = new();
 
     public PlayerRole Role => _role;
 
@@ -150,12 +156,32 @@ public class CoopPlayerController : MonoBehaviour
 
         if (collider.TryGetComponent(out IceWall iceWall))
         {
-            return iceWall.TryMelt(_role);
+            if (_role == PlayerRole.Fireboy && iceWall.TryMelt(_role))
+            {
+                return true;
+            }
+
+            if (_role == PlayerRole.Watergirl)
+            {
+                TryApplyHazardDamage(collider);
+            }
+
+            return false;
         }
 
         if (collider.TryGetComponent(out FireWall fireWall))
         {
-            return fireWall.TryExtinguish(_role);
+            if (_role == PlayerRole.Fireboy)
+            {
+                TryApplyHazardDamage(collider);
+                return false;
+            }
+
+            if (fireWall.TryExtinguish(_role))
+            {
+                TryApplyHazardDamage(collider);
+                return true;
+            }
         }
 
         return false;
@@ -189,6 +215,29 @@ public class CoopPlayerController : MonoBehaviour
         if (!collision.collider.TryGetComponent(out CoopPlayerController other)) return;
         if (other == this) return;
 
-        _gameManager.OnPlayersTouched();
+        if (GetInstanceID() < other.GetInstanceID())
+        {
+            _gameManager.OnPlayersTouched(this, other);
+        }
+    }
+
+    private bool TryApplyHazardDamage(Collider2D hazard)
+    {
+        if (hazard == null || _gameManager == null) return false;
+
+        int hazardId = hazard.GetInstanceID();
+        float now = Time.time;
+
+        if (_lastHazardDamageTimes.TryGetValue(hazardId, out float lastTime))
+        {
+            if (now - lastTime < Mathf.Max(0f, hazardDamageCooldown))
+            {
+                return false;
+            }
+        }
+
+        _lastHazardDamageTimes[hazardId] = now;
+        _gameManager.DamagePlayer(_role, 1);
+        return true;
     }
 }
