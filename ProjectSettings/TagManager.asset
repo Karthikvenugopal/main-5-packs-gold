@@ -6,6 +6,12 @@ TagManager:
   tags:
   - Exit
   - RightWall
+  - FirePlayer
+  - WaterPlayer
+  - FireToken
+  - WaterToken
+  - IceWall
+  - FireWall
   layers:
   - Default
   - TransparentFX
