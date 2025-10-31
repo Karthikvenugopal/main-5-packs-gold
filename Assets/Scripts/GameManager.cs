@@ -143,16 +143,15 @@ public class GameManager : MonoBehaviour
 
     public void OnPlayersTouched(CoopPlayerController playerA, CoopPlayerController playerB)
     {
-        DamageBothPlayers(playerA, playerB);
         if (!_gameActive || _gameFinished) return;
 
-        _gameFinished = true;
-        _gameActive = false;
-        // analytics code
-        EnsureLevelTimer();
-        (levelTimer ?? FindAnyObjectByType<Analytics.LevelTimer>())?.MarkFailure();
-        UpdateStatus("They touched! Press R to restart.");
-        FreezePlayers();
+        DamageBothPlayers(playerA, playerB);
+        if (_gameFinished) return;
+
+        if (!isTutorialMode)
+        {
+            UpdateStatus("Careful! Keep your distance.");
+        }
     }
 
     public void OnPlayerEnteredExit(CoopPlayerController player)
