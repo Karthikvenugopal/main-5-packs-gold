@@ -1,7 +1,7 @@
 using UnityEngine;
 using TMPro;
 
-public class MazeBuilder_Level2 : MonoBehaviour
+public class MazeBuilder_Tutorial : MonoBehaviour
 {
     [Header("Maze Settings")]
     [Min(0.1f)]
@@ -12,37 +12,24 @@ public class MazeBuilder_Level2 : MonoBehaviour
     public GameObject floorPrefab;
     public GameObject iceWallPrefab;
     public GameObject fireWallPrefab;
-    public GameObject cannonPrefab;
-    public GameObject fireCannonPrefab;
-    public GameObject iceCannonPrefab;
-    public GameObject cannonProjectilePrefab;
-    public GameObject fireProjectilePrefab;
-    public GameObject iceProjectilePrefab;
-    public GameObject cannonHitEffectPrefab;
-    public GameObject fireHitEffectPrefab;
-    public GameObject iceHitEffectPrefab;
+    
+    // (新) 添加对教程 Prefab 的引用
+    [Header("Tutorial")]
+    public GameObject tutorialTriggerPrefab; 
 
     [Header("Dependencies")]
     public GameManager gameManager;
-    [SerializeField] private TokenPlacementManager tokenPlacementManager;
 
+    // (修改) 在布局中添加了 '1' 和 '2'
     private static readonly string[] Layout =
     {
-        "###########################",
-        "#F........##############.W#",
-        "#.###.###I##############..#",
-        "#...#.#.........I....H....#",
-        "###.#.######H##########.###",
-        "#.#.#.#...#..##########.###",
-        "#.#.###.I...###########.###",
-        "#.#.....#........H..I....##",
-        "#.########H################",
-        "#..I..H.....##.###.##....##",
-        "#.############.###.##.....#",
-        "#.........................#",
-        "#.........................#",
-        "#.1111..2222..1111..2222.E#",
-        "###########################"
+        "############",
+        "#F....I...E#", 
+        "###.#1#.####", 
+        "#...#...H..#", 
+        "###.#.##2###", 
+        "#..W#......#",
+        "############"
     };
 
     private const string FireboySpawnName = "FireboySpawn";
@@ -52,7 +39,6 @@ public class MazeBuilder_Level2 : MonoBehaviour
     {
         BuildMaze(Layout);
         CenterMaze(Layout);
-        tokenPlacementManager?.SpawnTokens();
         gameManager?.OnLevelReady();
     }
 
@@ -96,24 +82,16 @@ public class MazeBuilder_Level2 : MonoBehaviour
                         SpawnFireWall(cellPosition);
                         break;
 
-                    case 'C':
-                        SpawnFloor(cellPosition);
-                        SpawnCannon(cellPosition, CannonVariant.Fire);
-                        break;
-
-                    case '1':
-                        SpawnFloor(cellPosition);
-                        SpawnCannon(cellPosition, CannonVariant.Fire);
-                        break;
-
-                    case '2':
-                        SpawnFloor(cellPosition);
-                        SpawnCannon(cellPosition, CannonVariant.Ice);
-                        break;
-
                     case 'E':
                         SpawnFloor(cellPosition);
                         SpawnExit(cellPosition);
+                        break;
+
+                    case '1':
+                    case '2':
+                    // 你可以添加 '3', '4' 等
+                        SpawnFloor(cellPosition); 
+                        SpawnTutorialTrigger(cellPosition, cell);
                         break;
 
                     default:
@@ -121,6 +99,46 @@ public class MazeBuilder_Level2 : MonoBehaviour
                         break;
                 }
             }
+        }
+    }
+
+    // (新) 用于生成教程触发器的方法
+    private void SpawnTutorialTrigger(Vector2 position, char triggerId)
+    {
+        if (tutorialTriggerPrefab == null)
+        {
+            Debug.LogWarning("Tutorial Trigger Prefab is not assigned in the Inspector.");
+            return;
+        }
+
+        // 调整位置，使其居中于单元格
+        Vector2 spawnPosition = position + new Vector2(0.5f * cellSize, -0.5f * cellSize);
+        GameObject triggerObj = Instantiate(tutorialTriggerPrefab, spawnPosition, Quaternion.identity, transform);
+
+        // 获取触发器脚本并设置文本
+        TutorialTrigger trigger = triggerObj.GetComponent<TutorialTrigger>();
+        if (trigger != null)
+        {
+            trigger.SetText(GetTutorialText(triggerId));
+        }
+        else
+        {
+            Debug.LogError("Tutorial Trigger Prefab does not have a TutorialTrigger component.");
+        }
+    }
+
+    // (新) 辅助方法，根据 ID 获取教程文本
+    private string GetTutorialText(char triggerId)
+    {
+        switch (triggerId)
+        {
+            case '1':
+                return "Work together. Ember melts ice.";
+            case '2':
+                return "Aqua extinguishes fire.";
+            // 在这里为 '3', '4' 等添加更多文本
+            default:
+                return "Default tutorial text.";
         }
     }
 
@@ -163,51 +181,6 @@ public class MazeBuilder_Level2 : MonoBehaviour
         fireWall.layer = LayerMask.NameToLayer("Wall");
     }
 
-    private void SpawnCannon(Vector2 position, CannonVariant variant)
-    {
-        Vector3 worldPosition = new Vector3(
-            position.x + 0.5f * cellSize,
-            position.y - 0.5f * cellSize,
-            0f
-        );
-
-        GameObject selectedPrefab = variant == CannonVariant.Fire ? fireCannonPrefab : iceCannonPrefab;
-        if (selectedPrefab == null)
-        {
-            selectedPrefab = cannonPrefab;
-        }
-
-        GameObject cannon = selectedPrefab != null
-            ? Instantiate(selectedPrefab, worldPosition, Quaternion.identity, transform)
-            : new GameObject(variant == CannonVariant.Fire ? "FireCannon" : "IceCannon");
-
-        if (cannon.transform.parent != transform)
-        {
-            cannon.transform.SetParent(transform);
-        }
-
-        cannon.transform.position = worldPosition;
-
-        if (!cannon.TryGetComponent(out CannonHazard hazard))
-        {
-            hazard = cannon.AddComponent<CannonHazard>();
-        }
-
-        GameObject selectedProjectile = variant == CannonVariant.Fire ? fireProjectilePrefab : iceProjectilePrefab;
-        if (selectedProjectile == null)
-        {
-            selectedProjectile = cannonProjectilePrefab;
-        }
-
-        GameObject selectedHitEffect = variant == CannonVariant.Fire ? fireHitEffectPrefab : iceHitEffectPrefab;
-        if (selectedHitEffect == null)
-        {
-            selectedHitEffect = cannonHitEffectPrefab;
-        }
-
-        hazard.Initialize(gameManager, cellSize, variant, selectedProjectile, selectedHitEffect);
-    }
-
     private void SpawnExit(Vector2 position)
     {
         GameObject exit = new GameObject("Exit");
@@ -216,7 +189,7 @@ public class MazeBuilder_Level2 : MonoBehaviour
 
         BoxCollider2D trigger = exit.AddComponent<BoxCollider2D>();
         trigger.isTrigger = true;
-        trigger.size = new Vector2(cellSize * 2.6f, cellSize * 1.8f);
+        trigger.size = new Vector2(cellSize * 1.8f, cellSize * 1.4f);
         trigger.offset = Vector2.zero;
 
         ExitZone exitZone = exit.AddComponent<ExitZone>();
@@ -228,7 +201,7 @@ public class MazeBuilder_Level2 : MonoBehaviour
 
         GameObject text = new GameObject("Label");
         text.transform.SetParent(exit.transform);
-        text.transform.localPosition = new Vector3(0f, 1f * cellSize, -0.1f);
+        text.transform.localPosition = new Vector3(0f, 0.85f * cellSize, -0.1f);
 
         TextMeshPro tmp = text.AddComponent<TextMeshPro>();
         tmp.text = "EXIT";
