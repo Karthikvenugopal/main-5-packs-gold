@@ -253,7 +253,6 @@ public class GameManager : MonoBehaviour
     {
         if (levelTimer != null) return;
 
-        // Don't create analytics in MainMenu
         var active = SceneManager.GetActiveScene().name;
         if (string.Equals(active, "MainMenu", System.StringComparison.OrdinalIgnoreCase)) return;
 
@@ -261,12 +260,15 @@ public class GameManager : MonoBehaviour
         if (existing != null)
         {
             levelTimer = existing;
+            // Ensures abandon/quit attempts are captured
+            levelTimer.autoSendFailureOnDestroy = true;
             return;
         }
 
         var go = new GameObject("LevelAnalytics");
         levelTimer = go.AddComponent<Analytics.LevelTimer>();
-        // Scene-local analytics object so timer resets per level
+        levelTimer.autoSendFailureOnDestroy = true;
+
     }
 
     private IEnumerator LoadNextSceneAfterDelay()

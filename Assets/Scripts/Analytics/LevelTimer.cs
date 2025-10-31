@@ -10,7 +10,7 @@ namespace Analytics
         public string overrideLevelId;
 
         [Tooltip("If enabled, sends a failure event when the object is destroyed before success is marked.")]
-        public bool autoSendFailureOnDestroy = false;
+        public bool autoSendFailureOnDestroy = true;
 
         private float _startTime;
         private bool _sent;
