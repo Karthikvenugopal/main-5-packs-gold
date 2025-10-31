@@ -13,8 +13,14 @@ public class MazeBuilder_Level2 : MonoBehaviour
     public GameObject iceWallPrefab;
     public GameObject fireWallPrefab;
     public GameObject cannonPrefab;
+    public GameObject fireCannonPrefab;
+    public GameObject iceCannonPrefab;
     public GameObject cannonProjectilePrefab;
+    public GameObject fireProjectilePrefab;
+    public GameObject iceProjectilePrefab;
     public GameObject cannonHitEffectPrefab;
+    public GameObject fireHitEffectPrefab;
+    public GameObject iceHitEffectPrefab;
 
     [Header("Dependencies")]
     public GameManager gameManager;
@@ -24,17 +30,17 @@ public class MazeBuilder_Level2 : MonoBehaviour
         "###########################",
         "#F..........###########..W#",
         "#.###...#I##############..#",
-        "#...#.#.......I..I..H.....#",
+        "#...#.#.......I.....H.....#",
         "###.#.######H##########.###",
         "#.#.#.#...#..##########.###",
         "#.#.###.I...###########.###",
-        "#.#.....#...#.H..H..I.....#",
+        "#.#.....#...#....H..I.....#",
         "#.########H############.###",
         "#...........##.###.##....##",
         "#.#.##H##.####.###.##.....#",
-        "#.#...#...#...I..I.H..I...#",
-        "...........................",
-        "....C.....C.....C.....C..E.",
+        "#.........................#",
+        "#.........................#",
+        "#.1111..2222..1111..2222.E#",
         "###########################"
     };
 
@@ -90,7 +96,17 @@ public class MazeBuilder_Level2 : MonoBehaviour
 
                     case 'C':
                         SpawnFloor(cellPosition);
-                        SpawnCannon(cellPosition);
+                        SpawnCannon(cellPosition, CannonVariant.Fire);
+                        break;
+
+                    case '1':
+                        SpawnFloor(cellPosition);
+                        SpawnCannon(cellPosition, CannonVariant.Fire);
+                        break;
+
+                    case '2':
+                        SpawnFloor(cellPosition);
+                        SpawnCannon(cellPosition, CannonVariant.Ice);
                         break;
 
                     case 'E':
@@ -145,7 +161,7 @@ public class MazeBuilder_Level2 : MonoBehaviour
         fireWall.layer = LayerMask.NameToLayer("Wall");
     }
 
-    private void SpawnCannon(Vector2 position)
+    private void SpawnCannon(Vector2 position, CannonVariant variant)
     {
         Vector3 worldPosition = new Vector3(
             position.x + 0.5f * cellSize,
@@ -153,9 +169,15 @@ public class MazeBuilder_Level2 : MonoBehaviour
             0f
         );
 
-        GameObject cannon = cannonPrefab != null
-            ? Instantiate(cannonPrefab, worldPosition, Quaternion.identity, transform)
-            : new GameObject("Cannon");
+        GameObject selectedPrefab = variant == CannonVariant.Fire ? fireCannonPrefab : iceCannonPrefab;
+        if (selectedPrefab == null)
+        {
+            selectedPrefab = cannonPrefab;
+        }
+
+        GameObject cannon = selectedPrefab != null
+            ? Instantiate(selectedPrefab, worldPosition, Quaternion.identity, transform)
+            : new GameObject(variant == CannonVariant.Fire ? "FireCannon" : "IceCannon");
 
         if (cannon.transform.parent != transform)
         {
@@ -169,7 +191,19 @@ public class MazeBuilder_Level2 : MonoBehaviour
             hazard = cannon.AddComponent<CannonHazard>();
         }
 
-        hazard.Initialize(gameManager, cannonProjectilePrefab, cellSize, cannonHitEffectPrefab);
+        GameObject selectedProjectile = variant == CannonVariant.Fire ? fireProjectilePrefab : iceProjectilePrefab;
+        if (selectedProjectile == null)
+        {
+            selectedProjectile = cannonProjectilePrefab;
+        }
+
+        GameObject selectedHitEffect = variant == CannonVariant.Fire ? fireHitEffectPrefab : iceHitEffectPrefab;
+        if (selectedHitEffect == null)
+        {
+            selectedHitEffect = cannonHitEffectPrefab;
+        }
+
+        hazard.Initialize(gameManager, cellSize, variant, selectedProjectile, selectedHitEffect);
     }
 
     private void SpawnExit(Vector2 position)
