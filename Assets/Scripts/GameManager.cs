@@ -766,7 +766,9 @@ public class GameManager : MonoBehaviour
 
         ShowVictoryPanel();
 
-        if (!useVictoryPanel && !string.IsNullOrEmpty(nextSceneName))
+        bool shouldAutoAdvance = (!useVictoryPanel || isTutorialMode) && !string.IsNullOrEmpty(nextSceneName);
+
+        if (shouldAutoAdvance)
         {
             CancelNextSceneLoad();
             _loadNextSceneRoutine = StartCoroutine(LoadNextSceneAfterDelay());
