@@ -1996,22 +1996,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1001 &1567067175
-  m_GameObject: {fileID: 1746984131}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 72bba14dcf2e74822ae6734bd9595d83, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::GameManager
-  messageBackground: {r: 0, g: 0, b: 0, a: 0.55}
-  levelIntroMessage: "Tutorial \u2013 Learn how Ember and Aqua solve hazards
-    together."
-  levelStartMessage: Work together. Ember melts ice; Aqua extinguishes fire.
-  levelVictoryMessage: Victory! Both heroes reached safety. Press R to play again.
-  waitForPartnerMessage: '{0} made it. Wait for your partner!'
-  exitReminderMessage: Both heroes must stand in the exit to finish.
-  nextSceneName: Level1Scene
-  nextSceneDelaySeconds: 2
 --- !u!1001 &2017286013
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -2262,14 +2246,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::GameManager
   isTutorialMode: 1
   messageBackground: {r: 0, g: 0, b: 0, a: 0.55}
-  levelIntroMessage: 'Work together: melt the ice, douse the fire, and reach the
-    exit.'
-  levelStartMessage: Work together. Fireboy melts ice; Watergirl extinguishes fire.
+  levelIntroMessage: "Tutorial \u2013 Learn how Ember and Aqua solve hazards together."
+  levelStartMessage: Work together. Ember melts ice; Aqua extinguishes fire.
   levelVictoryMessage: Victory! Both heroes reached safety. Press R to play again.
   waitForPartnerMessage: '{0} made it. Wait for your partner!'
   exitReminderMessage: Both heroes must stand in the exit to finish.
   startingHearts: 3
-  nextSceneName: 
+  nextSceneName: Level1Scene
   nextSceneDelaySeconds: 2
   fireTokensCollected: 0
   waterTokensCollected: 0
@@ -3051,7 +3034,6 @@ SceneRoots:
   m_Roots:
   - {fileID: 254453107}
   - {fileID: 284783329}
-  - {fileID: 1567067175}
   - {fileID: 1167910935}
   - {fileID: 1204116549}
   - {fileID: 717138757}
