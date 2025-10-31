@@ -26,6 +26,10 @@ public class GameManager : MonoBehaviour
     private readonly List<CoopPlayerController> _players = new();
     private readonly HashSet<CoopPlayerController> _playersAtExit = new();
 
+    // analytics code
+    [Header("Analytics")]
+    [SerializeField] private Analytics.LevelTimer levelTimer;
+
     private TextMeshProUGUI _statusLabel;
     private bool _levelReady;
     private bool _gameActive;
@@ -40,6 +44,9 @@ public class GameManager : MonoBehaviour
             CreateStatusUI();
         }
         // --- MODIFICATION END ---
+        CreateStatusUI();
+        // analytics code: ensure a LevelTimer exists in gameplay scenes
+        EnsureLevelTimer();
     }
 
     private void Update()
@@ -107,6 +114,9 @@ public class GameManager : MonoBehaviour
 
         _gameFinished = true;
         _gameActive = false;
+        // analytics code
+        EnsureLevelTimer();
+        (levelTimer ?? FindAnyObjectByType<Analytics.LevelTimer>())?.MarkFailure();
         UpdateStatus("They touched! Press R to restart.");
         FreezePlayers();
     }
@@ -145,6 +155,9 @@ public class GameManager : MonoBehaviour
 
         _gameFinished = true;
         _gameActive = false;
+        // analytics code
+        EnsureLevelTimer();
+        (levelTimer ?? FindAnyObjectByType<Analytics.LevelTimer>())?.MarkFailure();
         UpdateStatus("An enemy caught you! Press R to restart.");
         FreezePlayers();
     }
@@ -222,6 +235,9 @@ public class GameManager : MonoBehaviour
 
         _gameFinished = true;
         _gameActive = false;
+        // analytics code
+        EnsureLevelTimer();
+        (levelTimer ?? FindAnyObjectByType<Analytics.LevelTimer>())?.MarkSuccess();
         UpdateStatus(levelVictoryMessage);
         FreezePlayers();
 
@@ -230,6 +246,27 @@ public class GameManager : MonoBehaviour
             CancelNextSceneLoad();
             _loadNextSceneRoutine = StartCoroutine(LoadNextSceneAfterDelay());
         }
+    }
+
+    // analytics code
+    private void EnsureLevelTimer()
+    {
+        if (levelTimer != null) return;
+
+        // Don't create analytics in MainMenu
+        var active = SceneManager.GetActiveScene().name;
+        if (string.Equals(active, "MainMenu", System.StringComparison.OrdinalIgnoreCase)) return;
+
+        var existing = FindAnyObjectByType<Analytics.LevelTimer>();
+        if (existing != null)
+        {
+            levelTimer = existing;
+            return;
+        }
+
+        var go = new GameObject("LevelAnalytics");
+        levelTimer = go.AddComponent<Analytics.LevelTimer>();
+        // Scene-local analytics object so timer resets per level
     }
 
     private IEnumerator LoadNextSceneAfterDelay()
