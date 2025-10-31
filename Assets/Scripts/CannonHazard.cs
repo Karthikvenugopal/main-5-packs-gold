@@ -1,5 +1,11 @@
 using UnityEngine;
 
+public enum CannonVariant
+{
+    Fire = 0,
+    Ice = 1
+}
+
 public class CannonHazard : MonoBehaviour
 {
     [SerializeField] private float fireInterval = 1.25f;
@@ -10,10 +16,28 @@ public class CannonHazard : MonoBehaviour
     [SerializeField] private GameObject hitEffectPrefab;
     [SerializeField] private float projectileTravelHeight = 1.8f;
 
+    [Header("Fire Variant")]
+    [SerializeField] private Color fireBodyColor = new Color(0.35f, 0.18f, 0.12f);
+    [SerializeField] private Color fireBarrelColor = new Color(0.78f, 0.32f, 0.18f);
+    [SerializeField] private Color fireProjectileColor = new Color(0.86f, 0.2f, 0.2f);
+    [SerializeField] private Color fireImpactColor = new Color(1f, 0.6f, 0.1f, 0.85f);
+
+    [Header("Ice Variant")]
+    [SerializeField] private Color iceBodyColor = new Color(0.18f, 0.28f, 0.45f);
+    [SerializeField] private Color iceBarrelColor = new Color(0.4f, 0.7f, 0.95f);
+    [SerializeField] private Color iceProjectileColor = new Color(0.55f, 0.85f, 1f);
+    [SerializeField] private Color iceImpactColor = new Color(0.6f, 0.9f, 1f, 0.85f);
+
     private GameManager _gameManager;
     private float _timer;
     private float _cellSize = 1f;
-    private GameObject _hitEffectPrefab;
+    private CannonVariant _variant = CannonVariant.Fire;
+    private GameObject _projectilePrefabToUse;
+    private GameObject _hitEffectPrefabToUse;
+    private Color _projectileColor;
+    private Color _impactColor;
+    private SpriteRenderer _bodyRenderer;
+    private SpriteRenderer _barrelRenderer;
 
     private static Sprite _fallbackSprite;
 
@@ -35,37 +59,33 @@ public class CannonHazard : MonoBehaviour
         }
     }
 
-    public void Initialize(GameManager manager, GameObject overrideProjectilePrefab, float cellSize, GameObject overrideHitEffectPrefab)
+    public void Initialize(GameManager manager, float cellSize, CannonVariant variant, GameObject projectileOverride, GameObject hitEffectOverride)
     {
         _gameManager = manager;
-
-        if (overrideProjectilePrefab != null)
-        {
-            projectilePrefab = overrideProjectilePrefab;
-        }
 
         if (cellSize > 0f)
         {
             _cellSize = cellSize;
         }
 
-        if (overrideHitEffectPrefab != null)
-        {
-            hitEffectPrefab = overrideHitEffectPrefab;
-        }
+        _variant = variant;
+        _projectilePrefabToUse = projectileOverride != null ? projectileOverride : projectilePrefab;
+        _hitEffectPrefabToUse = hitEffectOverride != null ? hitEffectOverride : hitEffectPrefab;
 
-        _hitEffectPrefab = hitEffectPrefab;
+        _projectileColor = variant == CannonVariant.Fire ? fireProjectileColor : iceProjectileColor;
+        _impactColor = variant == CannonVariant.Fire ? fireImpactColor : iceImpactColor;
 
         ApplySizing();
+        ApplyVariantStyling();
     }
 
     private void Fire()
     {
         GameObject projectileGO;
 
-        if (projectilePrefab != null)
+        if (_projectilePrefabToUse != null)
         {
-            projectileGO = Instantiate(projectilePrefab, transform.position, Quaternion.identity, transform.parent);
+            projectileGO = Instantiate(_projectilePrefabToUse, transform.position, Quaternion.identity, transform.parent);
         }
         else
         {
@@ -81,17 +101,26 @@ public class CannonHazard : MonoBehaviour
         }
 
         float travelDistance = Mathf.Max(_cellSize * projectileTravelHeight, _cellSize);
-        projectile.Initialize(Vector2.up, projectileSpeed, projectileLifetime, _gameManager, travelDistance, _hitEffectPrefab);
+        projectile.Initialize(
+            Vector2.up,
+            projectileSpeed,
+            projectileLifetime,
+            _gameManager,
+            travelDistance,
+            _hitEffectPrefabToUse,
+            _impactColor,
+            _variant
+        );
     }
 
     private GameObject CreateFallbackProjectile()
     {
-        GameObject projectile = new GameObject("CannonProjectile");
+        GameObject projectile = new GameObject(_variant == CannonVariant.Fire ? "FireProjectile" : "IceProjectile");
         projectile.transform.SetParent(transform.parent, false);
 
         SpriteRenderer renderer = projectile.AddComponent<SpriteRenderer>();
         renderer.sprite = GetFallbackSprite();
-        renderer.color = new Color(0.86f, 0.2f, 0.2f);
+        renderer.color = _projectileColor;
         renderer.sortingOrder = 8;
 
         BoxCollider2D collider = projectile.AddComponent<BoxCollider2D>();
@@ -107,29 +136,32 @@ public class CannonHazard : MonoBehaviour
 
     private void EnsureVisuals()
     {
-        SpriteRenderer renderer = GetComponent<SpriteRenderer>();
-        if (renderer == null)
+        _bodyRenderer = GetComponent<SpriteRenderer>();
+        if (_bodyRenderer == null)
         {
-            renderer = gameObject.AddComponent<SpriteRenderer>();
+            _bodyRenderer = gameObject.AddComponent<SpriteRenderer>();
         }
 
-        renderer.sprite = GetFallbackSprite();
-        renderer.color = new Color(0.2f, 0.2f, 0.2f);
-        renderer.sortingOrder = 6;
+        _bodyRenderer.sprite = GetFallbackSprite();
+        _bodyRenderer.sortingOrder = 6;
 
-        if (transform.Find("Barrel") == null)
+        Transform barrelTransform = transform.Find("Barrel");
+        if (barrelTransform == null)
         {
-            GameObject barrel = new GameObject("Barrel");
-            barrel.transform.SetParent(transform, false);
-            barrel.transform.localPosition = new Vector3(0f, 0.25f, 0f);
-
-            SpriteRenderer barrelRenderer = barrel.AddComponent<SpriteRenderer>();
-            barrelRenderer.sprite = GetFallbackSprite();
-            barrelRenderer.color = new Color(0.4f, 0.4f, 0.4f);
-            barrelRenderer.sortingOrder = 7;
-
-            barrel.transform.localScale = new Vector3(0.25f, 1.1f, 1f);
+            GameObject barrelGO = new GameObject("Barrel");
+            barrelGO.transform.SetParent(transform, false);
+            barrelGO.transform.localPosition = new Vector3(0f, 0.25f, 0f);
+            barrelTransform = barrelGO.transform;
         }
+
+        _barrelRenderer = barrelTransform.GetComponent<SpriteRenderer>();
+        if (_barrelRenderer == null)
+        {
+            _barrelRenderer = barrelTransform.gameObject.AddComponent<SpriteRenderer>();
+        }
+
+        _barrelRenderer.sprite = GetFallbackSprite();
+        _barrelRenderer.sortingOrder = 7;
     }
 
     private void ApplySizing()
@@ -141,6 +173,22 @@ public class CannonHazard : MonoBehaviour
         {
             barrel.localPosition = new Vector3(0f, _cellSize * 0.25f, 0f);
             barrel.localScale = new Vector3(_cellSize * 0.25f, _cellSize * 1.1f, 1f);
+        }
+    }
+
+    private void ApplyVariantStyling()
+    {
+        Color bodyColor = _variant == CannonVariant.Fire ? fireBodyColor : iceBodyColor;
+        Color barrelColor = _variant == CannonVariant.Fire ? fireBarrelColor : iceBarrelColor;
+
+        if (_bodyRenderer != null)
+        {
+            _bodyRenderer.color = bodyColor;
+        }
+
+        if (_barrelRenderer != null)
+        {
+            _barrelRenderer.color = barrelColor;
         }
     }
 
