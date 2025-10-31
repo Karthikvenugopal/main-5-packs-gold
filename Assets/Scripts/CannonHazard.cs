@@ -125,11 +125,11 @@ public class CannonHazard : MonoBehaviour
 
         BoxCollider2D collider = projectile.AddComponent<BoxCollider2D>();
         collider.isTrigger = true;
-        Vector2 colliderSize = new Vector2(_cellSize * 0.25f, _cellSize * 0.7f);
+        Vector2 colliderSize = new Vector2(_cellSize * 0.14f, _cellSize * 0.45f);
         collider.size = colliderSize;
         collider.offset = new Vector2(0f, colliderSize.y * 0.5f);
 
-        projectile.transform.localScale = new Vector3(_cellSize * 0.25f, _cellSize * 0.7f, 1f);
+        projectile.transform.localScale = new Vector3(_cellSize * 0.14f, _cellSize * 0.45f, 1f);
 
         return projectile;
     }
