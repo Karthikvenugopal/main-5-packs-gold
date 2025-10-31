@@ -133,9 +133,9 @@ public class MazeBuilder_Tutorial : MonoBehaviour
         switch (triggerId)
         {
             case '1':
-                return "Work together. Fireboy melts ice.";
+                return "Work together. Ember melts ice.";
             case '2':
-                return "Watergirl extinguishes fire.";
+                return "Aqua extinguishes fire.";
             // 在这里为 '3', '4' 等添加更多文本
             default:
                 return "Default tutorial text.";

@@ -737,8 +737,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::GameManager
   isTutorialMode: 0
   messageBackground: {r: 0, g: 0, b: 0, a: 0.55}
-  levelIntroMessage: 
-  levelStartMessage: Work together. Fireboy melts ice; Watergirl extinguishes fire.
+  levelIntroMessage: 'Work together: Ember melts ice; Aqua extinguishes fire.'
+  levelStartMessage: Work together. Ember melts ice; Aqua extinguishes fire.
   levelVictoryMessage: Victory! Both heroes reached safety. Press R to play again.
   waitForPartnerMessage: '{0} made it. Wait for your partner!'
   exitReminderMessage: Both heroes must stand in the exit to finish.

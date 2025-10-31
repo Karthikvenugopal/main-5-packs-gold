@@ -15,7 +15,7 @@ public class GameManager : MonoBehaviour
     [SerializeField] private Color messageBackground = new Color(0f, 0f, 0f, 0.55f);
     [Header("UI Messages")]
     [SerializeField] private string levelIntroMessage = "Work together: melt the ice, douse the fire, and reach the exit.";
-    [SerializeField] private string levelStartMessage = "Work together. Fireboy melts ice; Watergirl extinguishes fire.";
+    [SerializeField] private string levelStartMessage = "Work together. Ember melts ice; Aqua extinguishes fire.";
     [SerializeField] private string levelVictoryMessage = "Victory! Both heroes reached safety. Press R to play again.";
     [SerializeField] private string waitForPartnerMessage = "{0} made it. Wait for your partner!";
     [SerializeField] private string exitReminderMessage = "Both heroes must stand in the exit to finish.";
@@ -67,6 +67,7 @@ public class GameManager : MonoBehaviour
 
     private void Awake()
     {
+        NormalizeDisplayStrings();
         EnsureHudCanvas();
         CreateHeartsUI();
         CreateTokensUI();
@@ -191,7 +192,7 @@ public class GameManager : MonoBehaviour
         }
         else
         {
-            UpdateStatus(string.Format(waitForPartnerMessage, player.Role));
+            UpdateStatus(string.Format(waitForPartnerMessage, GetDisplayName(player.Role)));
         }
     }
 
@@ -448,12 +449,12 @@ public class GameManager : MonoBehaviour
 
         if (_fireVictoryLabel != null)
         {
-            _fireVictoryLabel.text = $"Total Fire Tokens: {s_totalFireTokensCollected}";
+            _fireVictoryLabel.text = $"Total Ember Tokens: {s_totalFireTokensCollected}";
         }
 
         if (_waterVictoryLabel != null)
         {
-            _waterVictoryLabel.text = $"Total Water Tokens: {s_totalWaterTokensCollected}";
+            _waterVictoryLabel.text = $"Total Aqua Tokens: {s_totalWaterTokensCollected}";
         }
 
         _victoryPanel.SetActive(true);
@@ -479,7 +480,7 @@ public class GameManager : MonoBehaviour
     private void UpdateHeartsUI()
     {
         if (_heartsLabel == null) return;
-        _heartsLabel.text = $"Fire Hearts: {_fireHearts};  Water Hearts: {_waterHearts}";
+        _heartsLabel.text = $"Ember Hearts: {_fireHearts};  Aqua Hearts: {_waterHearts}";
     }
 
     private void UpdateTokensUI()
@@ -488,7 +489,7 @@ public class GameManager : MonoBehaviour
 
         int fireTotal = Mathf.Max(_totalFireTokens, fireTokensCollected);
         int waterTotal = Mathf.Max(_totalWaterTokens, waterTokensCollected);
-        _tokensLabel.text = $"Fire Tokens: {fireTokensCollected}/{fireTotal};  Water Tokens: {waterTokensCollected}/{waterTotal}";
+        _tokensLabel.text = $"Ember Tokens: {fireTokensCollected}/{fireTotal};  Aqua Tokens: {waterTokensCollected}/{waterTotal}";
     }
 
     private void RecountTokensInScene()
@@ -678,5 +679,25 @@ public class GameManager : MonoBehaviour
         }
 
         return true;
+    }
+
+    private static string GetDisplayName(PlayerRole role)
+    {
+        return role == PlayerRole.Fireboy ? "Ember" : "Aqua";
+    }
+
+    private void NormalizeDisplayStrings()
+    {
+        levelIntroMessage = ReplaceLegacyNames(levelIntroMessage);
+        levelStartMessage = ReplaceLegacyNames(levelStartMessage);
+        levelVictoryMessage = ReplaceLegacyNames(levelVictoryMessage);
+        waitForPartnerMessage = ReplaceLegacyNames(waitForPartnerMessage);
+        exitReminderMessage = ReplaceLegacyNames(exitReminderMessage);
+    }
+
+    private static string ReplaceLegacyNames(string text)
+    {
+        if (string.IsNullOrEmpty(text)) return text;
+        return text.Replace("Fireboy", "Ember").Replace("Watergirl", "Aqua");
     }
 }
