@@ -106,7 +106,7 @@ public class GameManager : MonoBehaviour
         // --- MODIFICATION START ---
         if (!isTutorialMode)
         {
-            CreateStatusUI();
+            CreateStatusUI(); 
         }
         // --- MODIFICATION END ---
         ResetTokenTracking();
