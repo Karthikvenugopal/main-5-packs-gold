@@ -21,27 +21,30 @@ public class Level3Manager : MonoBehaviour
 
     private static readonly string[] Layout =
     {
-        "###############",
-        "#S....#....I..#",
-        "#.###.#.#####.#",
-        "#...#.#.....#.#",
-        "###.#.###.#.#.#",
-        "#...#I....#.#.#",
-        "#.#.#####.#.#.#",
-        "#.#...#.#.#...#",
-        "#.#.###.#.###.#",
-        "#.#.....#...#.#",
-        "#.#####.###.#.#",
-        "#F....#.#...#.#",
-        "###.###.###.#.#",
-        "#W..E..F..#...#",
-        "###############"
+        "#################",
+        "#S....###.#######",
+        "#.#######.#######",
+        "#.......I.....###",
+        "#.#.#########.###",
+        "#.#.#......I.F.E#",
+        "#.#.#.###.###.###",
+        "#.#......F#.#.###",
+        "#.#.#.#.#.#.#.###",
+        "#.#.#.#.#.......#",
+        "#.###.#.#.###.#.#",
+        "#.###.#..I....#.#",
+        "#.###.###.#####.#",
+        "#....F###.......#",
+        "#.###############",
+        "#W###############",
+        "#################"
     };
 
     private static readonly ChainPairDefinition[] ChainPairs =
     {
-        new ChainPairDefinition(new Vector2Int(5, 5), new Vector2Int(1, 11)),
-        new ChainPairDefinition(new Vector2Int(11, 1), new Vector2Int(7, 13))
+        new ChainPairDefinition(new Vector2Int(8, 3), new Vector2Int(9, 7)),
+        new ChainPairDefinition(new Vector2Int(11, 5), new Vector2Int(13, 5)),
+        new ChainPairDefinition(new Vector2Int(9, 11), new Vector2Int(5, 13))
     };
 
     private const string FireSpawnName = "FireboySpawn";
