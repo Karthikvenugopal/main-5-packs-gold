@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -24,9 +25,17 @@ public class GameManager : MonoBehaviour
     [Header("Progression")]
     [SerializeField] private string nextSceneName;
     [SerializeField] private float nextSceneDelaySeconds = 2f;
+    [SerializeField] private string mainMenuSceneName = "MainMenu";
     [Header("Victory Panel")]
-    [SerializeField] private bool useVictoryPanel = false;
-    [SerializeField] private string victoryRestartSceneName = "Level1Scene";
+    [SerializeField] private bool useVictoryPanel = true;
+    [SerializeField] private string victoryTitleText = "Level Complete";
+    [SerializeField] private string victoryBodyText = "Choose where to go next.";
+    [SerializeField] private string defeatTitleText = "Out of Hearts";
+    [SerializeField] private string defeatBodyText = "You ran out of hearts. Try again?";
+    [SerializeField] private string nextLevelButtonText = "Next Level";
+    [SerializeField] private string restartButtonText = "Restart";
+    [SerializeField] private string mainMenuButtonText = "Main Menu";
+    [SerializeField] private string levelDefeatMessage = "Out of hearts! Choose an option.";
     [Header("Session Tracking")]
     [SerializeField] private bool resetGlobalTokenTotalsOnLoad = false;
     [Header("Level Intro Instructions")]
@@ -68,9 +77,15 @@ public class GameManager : MonoBehaviour
     private int _totalFireTokens;
     private int _totalWaterTokens;
     private GameObject _victoryPanel;
+    private TextMeshProUGUI _victoryTitleLabel;
+    private TextMeshProUGUI _victoryBodyLabel;
     private TextMeshProUGUI _fireVictoryLabel;
     private TextMeshProUGUI _waterVictoryLabel;
+    private GameObject _fireSummaryRoot;
+    private GameObject _waterSummaryRoot;
     private Button _victoryRestartButton;
+    private Button _victoryMainMenuButton;
+    private Button _victoryNextLevelButton;
 
     private readonly List<CoopPlayerController> _players = new();
     private readonly HashSet<CoopPlayerController> _playersAtExit = new();
@@ -92,6 +107,11 @@ public class GameManager : MonoBehaviour
     private void Awake()
     {
         NormalizeDisplayStrings();
+        if (!useVictoryPanel)
+        {
+            Debug.LogWarning("Victory panel was disabled; enabling it so end-of-level choices appear.", this);
+            useVictoryPanel = true;
+        }
         EnsureHudCanvas();
         CreateHeartsUI();
         CreateTokensUI();
@@ -513,14 +533,14 @@ public class GameManager : MonoBehaviour
     {
         if (!useVictoryPanel || _hudCanvas == null || _victoryPanel != null) return;
 
-        _victoryPanel = new GameObject("VictoryPanel");
+        _victoryPanel = new GameObject("EndOfLevelPanel");
         _victoryPanel.transform.SetParent(_hudCanvas.transform, false);
 
         RectTransform rect = _victoryPanel.AddComponent<RectTransform>();
         rect.anchorMin = new Vector2(0.5f, 0.5f);
         rect.anchorMax = new Vector2(0.5f, 0.5f);
         rect.pivot = new Vector2(0.5f, 0.5f);
-        rect.sizeDelta = new Vector2(560f, 280f);
+        rect.sizeDelta = new Vector2(620f, 360f);
         rect.anchoredPosition = Vector2.zero;
 
         Image background = _victoryPanel.AddComponent<Image>();
@@ -532,89 +552,237 @@ public class GameManager : MonoBehaviour
         titleRect.anchorMin = new Vector2(0.5f, 1f);
         titleRect.anchorMax = new Vector2(0.5f, 1f);
         titleRect.pivot = new Vector2(0.5f, 1f);
-        titleRect.sizeDelta = new Vector2(520f, 60f);
-        titleRect.anchoredPosition = new Vector2(0f, -24f);
+        titleRect.sizeDelta = new Vector2(560f, 70f);
+        titleRect.anchoredPosition = new Vector2(0f, -28f);
 
-        TextMeshProUGUI titleLabel = titleGO.AddComponent<TextMeshProUGUI>();
-        titleLabel.alignment = TextAlignmentOptions.Center;
-        titleLabel.fontSize = 38f;
-        titleLabel.fontStyle = FontStyles.Bold;
-        titleLabel.text = "Level Complete";
+        _victoryTitleLabel = titleGO.AddComponent<TextMeshProUGUI>();
+        _victoryTitleLabel.alignment = TextAlignmentOptions.Center;
+        _victoryTitleLabel.fontSize = 42f;
+        _victoryTitleLabel.fontStyle = FontStyles.Bold;
+        _victoryTitleLabel.text = victoryTitleText;
 
-        GameObject fireGO = new GameObject("FireSummary");
-        fireGO.transform.SetParent(_victoryPanel.transform, false);
-        RectTransform fireRect = fireGO.AddComponent<RectTransform>();
+        GameObject bodyGO = new GameObject("Body");
+        bodyGO.transform.SetParent(_victoryPanel.transform, false);
+        RectTransform bodyRect = bodyGO.AddComponent<RectTransform>();
+        bodyRect.anchorMin = new Vector2(0.5f, 1f);
+        bodyRect.anchorMax = new Vector2(0.5f, 1f);
+        bodyRect.pivot = new Vector2(0.5f, 1f);
+        bodyRect.sizeDelta = new Vector2(560f, 60f);
+        bodyRect.anchoredPosition = new Vector2(0f, -110f);
+
+        _victoryBodyLabel = bodyGO.AddComponent<TextMeshProUGUI>();
+        _victoryBodyLabel.alignment = TextAlignmentOptions.Center;
+        _victoryBodyLabel.fontSize = 28f;
+        _victoryBodyLabel.text = victoryBodyText;
+
+        _fireSummaryRoot = new GameObject("FireSummary");
+        _fireSummaryRoot.transform.SetParent(_victoryPanel.transform, false);
+        RectTransform fireRect = _fireSummaryRoot.AddComponent<RectTransform>();
         fireRect.anchorMin = new Vector2(0.5f, 0.5f);
         fireRect.anchorMax = new Vector2(0.5f, 0.5f);
         fireRect.pivot = new Vector2(0.5f, 0.5f);
-        fireRect.sizeDelta = new Vector2(520f, 50f);
-        fireRect.anchoredPosition = new Vector2(0f, 36f);
+        fireRect.sizeDelta = new Vector2(560f, 50f);
+        fireRect.anchoredPosition = new Vector2(0f, 48f);
 
-        _fireVictoryLabel = fireGO.AddComponent<TextMeshProUGUI>();
+        _fireVictoryLabel = _fireSummaryRoot.AddComponent<TextMeshProUGUI>();
         _fireVictoryLabel.alignment = TextAlignmentOptions.Center;
         _fireVictoryLabel.fontSize = 30f;
         _fireVictoryLabel.text = string.Empty;
 
-        GameObject waterGO = new GameObject("WaterSummary");
-        waterGO.transform.SetParent(_victoryPanel.transform, false);
-        RectTransform waterRect = waterGO.AddComponent<RectTransform>();
+        _waterSummaryRoot = new GameObject("WaterSummary");
+        _waterSummaryRoot.transform.SetParent(_victoryPanel.transform, false);
+        RectTransform waterRect = _waterSummaryRoot.AddComponent<RectTransform>();
         waterRect.anchorMin = new Vector2(0.5f, 0.5f);
         waterRect.anchorMax = new Vector2(0.5f, 0.5f);
         waterRect.pivot = new Vector2(0.5f, 0.5f);
-        waterRect.sizeDelta = new Vector2(520f, 50f);
-        waterRect.anchoredPosition = new Vector2(0f, -14f);
+        waterRect.sizeDelta = new Vector2(560f, 50f);
+        waterRect.anchoredPosition = new Vector2(0f, 0f);
 
-        _waterVictoryLabel = waterGO.AddComponent<TextMeshProUGUI>();
+        _waterVictoryLabel = _waterSummaryRoot.AddComponent<TextMeshProUGUI>();
         _waterVictoryLabel.alignment = TextAlignmentOptions.Center;
         _waterVictoryLabel.fontSize = 30f;
         _waterVictoryLabel.text = string.Empty;
 
-        GameObject buttonGO = new GameObject("RestartButton");
-        buttonGO.transform.SetParent(_victoryPanel.transform, false);
-        RectTransform buttonRect = buttonGO.AddComponent<RectTransform>();
-        buttonRect.anchorMin = new Vector2(0.5f, 0f);
-        buttonRect.anchorMax = new Vector2(0.5f, 0f);
-        buttonRect.pivot = new Vector2(0.5f, 0f);
-        buttonRect.sizeDelta = new Vector2(260f, 70f);
-        buttonRect.anchoredPosition = new Vector2(0f, 24f);
+        GameObject buttonRow = new GameObject("Buttons");
+        buttonRow.transform.SetParent(_victoryPanel.transform, false);
+        RectTransform buttonRowRect = buttonRow.AddComponent<RectTransform>();
+        buttonRowRect.anchorMin = new Vector2(0.5f, 0f);
+        buttonRowRect.anchorMax = new Vector2(0.5f, 0f);
+        buttonRowRect.pivot = new Vector2(0.5f, 0f);
+        buttonRowRect.sizeDelta = new Vector2(560f, 90f);
+        buttonRowRect.anchoredPosition = new Vector2(0f, 32f);
 
-        Image buttonBackground = buttonGO.AddComponent<Image>();
-        buttonBackground.color = new Color(0.25f, 0.45f, 0.9f, 1f);
+        HorizontalLayoutGroup layoutGroup = buttonRow.AddComponent<HorizontalLayoutGroup>();
+        layoutGroup.childAlignment = TextAnchor.MiddleCenter;
+        layoutGroup.spacing = 24f;
+        layoutGroup.padding = new RectOffset(10, 10, 10, 10);
+        layoutGroup.childForceExpandHeight = false;
+        layoutGroup.childForceExpandWidth = false;
 
-        _victoryRestartButton = buttonGO.AddComponent<Button>();
-        _victoryRestartButton.onClick.AddListener(OnVictoryRestartClicked);
+        _victoryNextLevelButton = CreateEndPanelButton("NextLevelButton", buttonRow.transform, nextLevelButtonText);
+        if (_victoryNextLevelButton != null)
+        {
+            _victoryNextLevelButton.onClick.AddListener(OnVictoryNextLevelClicked);
+        }
 
-        GameObject buttonTextGO = new GameObject("Label");
-        buttonTextGO.transform.SetParent(buttonGO.transform, false);
-        RectTransform buttonTextRect = buttonTextGO.AddComponent<RectTransform>();
-        buttonTextRect.anchorMin = Vector2.zero;
-        buttonTextRect.anchorMax = Vector2.one;
-        buttonTextRect.offsetMin = Vector2.zero;
-        buttonTextRect.offsetMax = Vector2.zero;
+        _victoryRestartButton = CreateEndPanelButton("RestartButton", buttonRow.transform, restartButtonText);
+        if (_victoryRestartButton != null)
+        {
+            _victoryRestartButton.onClick.AddListener(OnVictoryRestartClicked);
+        }
 
-        TextMeshProUGUI buttonLabel = buttonTextGO.AddComponent<TextMeshProUGUI>();
-        buttonLabel.alignment = TextAlignmentOptions.Center;
-        buttonLabel.fontSize = 28f;
-        buttonLabel.text = "Restart";
+        _victoryMainMenuButton = CreateEndPanelButton("MainMenuButton", buttonRow.transform, mainMenuButtonText);
+        if (_victoryMainMenuButton != null)
+        {
+            _victoryMainMenuButton.onClick.AddListener(OnVictoryMainMenuClicked);
+        }
 
         _victoryPanel.SetActive(false);
     }
 
-    private void ShowVictoryPanel()
+    private Button CreateEndPanelButton(string name, Transform parent, string labelText)
+    {
+        GameObject buttonGO = new GameObject(name);
+        buttonGO.transform.SetParent(parent, false);
+
+        RectTransform rect = buttonGO.AddComponent<RectTransform>();
+        rect.sizeDelta = new Vector2(220f, 60f);
+
+        Image background = buttonGO.AddComponent<Image>();
+        background.color = new Color(0.25f, 0.45f, 0.9f, 1f);
+
+        Button button = buttonGO.AddComponent<Button>();
+
+        LayoutElement layout = buttonGO.AddComponent<LayoutElement>();
+        layout.preferredWidth = 220f;
+        layout.preferredHeight = 60f;
+        layout.flexibleWidth = 0f;
+        layout.flexibleHeight = 0f;
+
+        GameObject labelGO = new GameObject("Label");
+        labelGO.transform.SetParent(buttonGO.transform, false);
+        RectTransform labelRect = labelGO.AddComponent<RectTransform>();
+        labelRect.anchorMin = Vector2.zero;
+        labelRect.anchorMax = Vector2.one;
+        labelRect.offsetMin = Vector2.zero;
+        labelRect.offsetMax = Vector2.zero;
+
+        TextMeshProUGUI label = labelGO.AddComponent<TextMeshProUGUI>();
+        label.alignment = TextAlignmentOptions.Center;
+        label.fontSize = 28f;
+        label.text = labelText;
+
+        return button;
+    }
+
+    private void SetButtonLabel(Button button, string text)
+    {
+        if (button == null) return;
+
+        TextMeshProUGUI label = button.GetComponentInChildren<TextMeshProUGUI>();
+        if (label == null) return;
+
+        label.text = text;
+    }
+
+    private bool TryGetNextSceneName(out string sceneName)
+    {
+        if (!string.IsNullOrEmpty(nextSceneName))
+        {
+            sceneName = nextSceneName;
+            return true;
+        }
+
+        Scene activeScene = SceneManager.GetActiveScene();
+        int nextIndex = activeScene.buildIndex + 1;
+
+        if (nextIndex >= SceneManager.sceneCountInBuildSettings)
+        {
+            sceneName = null;
+            return false;
+        }
+
+        string path = SceneUtility.GetScenePathByBuildIndex(nextIndex);
+        if (string.IsNullOrEmpty(path))
+        {
+            sceneName = null;
+            return false;
+        }
+
+        sceneName = Path.GetFileNameWithoutExtension(path);
+        return !string.IsNullOrEmpty(sceneName);
+    }
+
+    private void ShowEndPanel(EndGameState state)
     {
         if (!useVictoryPanel || _victoryPanel == null) return;
 
-        if (_fireVictoryLabel != null)
+        bool isVictory = state == EndGameState.Victory;
+
+        if (_victoryTitleLabel != null)
         {
-            _fireVictoryLabel.text = $"Total Ember Tokens: {s_totalFireTokensCollected}";
+            _victoryTitleLabel.text = isVictory ? victoryTitleText : defeatTitleText;
         }
 
-        if (_waterVictoryLabel != null)
+        if (_victoryBodyLabel != null)
         {
-            _waterVictoryLabel.text = $"Total Aqua Tokens: {s_totalWaterTokensCollected}";
+            _victoryBodyLabel.text = isVictory ? victoryBodyText : defeatBodyText;
+        }
+
+        if (_fireSummaryRoot != null)
+        {
+            _fireSummaryRoot.SetActive(isVictory);
+        }
+
+        if (_waterSummaryRoot != null)
+        {
+            _waterSummaryRoot.SetActive(isVictory);
+        }
+
+        SetButtonLabel(_victoryNextLevelButton, nextLevelButtonText);
+        SetButtonLabel(_victoryRestartButton, restartButtonText);
+        SetButtonLabel(_victoryMainMenuButton, mainMenuButtonText);
+
+        bool hasNextScene = TryGetNextSceneName(out _);
+        if (isVictory)
+        {
+            if (_fireVictoryLabel != null)
+            {
+                _fireVictoryLabel.text = $"Total Ember Tokens: {s_totalFireTokensCollected}";
+            }
+
+            if (_waterVictoryLabel != null)
+            {
+                _waterVictoryLabel.text = $"Total Aqua Tokens: {s_totalWaterTokensCollected}";
+            }
+        }
+
+        bool canAdvance = isVictory && hasNextScene;
+
+        if (_victoryNextLevelButton != null)
+        {
+            _victoryNextLevelButton.gameObject.SetActive(canAdvance);
+        }
+
+        if (_victoryRestartButton != null)
+        {
+            bool showRestart = !isVictory || !canAdvance;
+            _victoryRestartButton.gameObject.SetActive(showRestart);
+        }
+
+        if (_victoryMainMenuButton != null)
+        {
+            bool showMainMenu = !string.IsNullOrEmpty(mainMenuSceneName);
+            _victoryMainMenuButton.gameObject.SetActive(showMainMenu);
         }
 
         _victoryPanel.SetActive(true);
+    }
+
+    private enum EndGameState
+    {
+        Victory,
+        Defeat
     }
 
     private void ResetHearts()
@@ -728,14 +896,14 @@ public class GameManager : MonoBehaviour
 
     private void HandleOutOfHearts()
     {
-        if (_reloadingScene) return;
-        _reloadingScene = true;
+        if (_gameFinished) return;
 
         _gameFinished = true;
         _gameActive = false;
         FreezePlayers();
         CancelNextSceneLoad();
-        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+        UpdateStatus(levelDefeatMessage);
+        ShowEndPanel(EndGameState.Defeat);
     }
 
     private void OnVictoryRestartClicked()
@@ -745,11 +913,26 @@ public class GameManager : MonoBehaviour
         _reloadingScene = true;
         CancelNextSceneLoad();
 
-        string sceneToLoad = string.IsNullOrEmpty(victoryRestartSceneName)
-            ? SceneManager.GetActiveScene().name
-            : victoryRestartSceneName;
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+    }
 
+    private void OnVictoryNextLevelClicked()
+    {
+        if (_reloadingScene) return;
+        if (!TryGetNextSceneName(out string sceneToLoad)) return;
+
+        _reloadingScene = true;
+        CancelNextSceneLoad();
         SceneManager.LoadScene(sceneToLoad);
+    }
+
+    private void OnVictoryMainMenuClicked()
+    {
+        if (_reloadingScene || string.IsNullOrEmpty(mainMenuSceneName)) return;
+
+        _reloadingScene = true;
+        CancelNextSceneLoad();
+        SceneManager.LoadScene(mainMenuSceneName);
     }
 
     private void HandleVictory()
@@ -763,16 +946,8 @@ public class GameManager : MonoBehaviour
         (levelTimer ?? FindAnyObjectByType<Analytics.LevelTimer>())?.MarkSuccess();
         UpdateStatus(levelVictoryMessage);
         FreezePlayers();
-
-        ShowVictoryPanel();
-
-        bool shouldAutoAdvance = (!useVictoryPanel || isTutorialMode) && !string.IsNullOrEmpty(nextSceneName);
-
-        if (shouldAutoAdvance)
-        {
-            CancelNextSceneLoad();
-            _loadNextSceneRoutine = StartCoroutine(LoadNextSceneAfterDelay());
-        }
+        CancelNextSceneLoad();
+        ShowEndPanel(EndGameState.Victory);
     }
 
     // analytics code
@@ -800,13 +975,18 @@ public class GameManager : MonoBehaviour
 
     private IEnumerator LoadNextSceneAfterDelay()
     {
+        if (!TryGetNextSceneName(out string sceneToLoad))
+        {
+            yield break;
+        }
+
         if (nextSceneDelaySeconds > 0f)
         {
             yield return new WaitForSeconds(nextSceneDelaySeconds);
         }
 
         _loadNextSceneRoutine = null;
-        SceneManager.LoadScene(nextSceneName);
+        SceneManager.LoadScene(sceneToLoad);
     }
 
     private void CancelNextSceneLoad()
@@ -824,6 +1004,16 @@ public class GameManager : MonoBehaviour
         if (_victoryRestartButton != null)
         {
             _victoryRestartButton.onClick.RemoveListener(OnVictoryRestartClicked);
+        }
+
+        if (_victoryNextLevelButton != null)
+        {
+            _victoryNextLevelButton.onClick.RemoveListener(OnVictoryNextLevelClicked);
+        }
+
+        if (_victoryMainMenuButton != null)
+        {
+            _victoryMainMenuButton.onClick.RemoveListener(OnVictoryMainMenuClicked);
         }
     }
 
@@ -852,8 +1042,16 @@ public class GameManager : MonoBehaviour
         levelIntroMessage = ReplaceLegacyNames(levelIntroMessage);
         levelStartMessage = ReplaceLegacyNames(levelStartMessage);
         levelVictoryMessage = ReplaceLegacyNames(levelVictoryMessage);
+        levelDefeatMessage = ReplaceLegacyNames(levelDefeatMessage);
         waitForPartnerMessage = ReplaceLegacyNames(waitForPartnerMessage);
         exitReminderMessage = ReplaceLegacyNames(exitReminderMessage);
+        victoryTitleText = ReplaceLegacyNames(victoryTitleText);
+        defeatTitleText = ReplaceLegacyNames(defeatTitleText);
+        victoryBodyText = ReplaceLegacyNames(victoryBodyText);
+        defeatBodyText = ReplaceLegacyNames(defeatBodyText);
+        nextLevelButtonText = ReplaceLegacyNames(nextLevelButtonText);
+        restartButtonText = ReplaceLegacyNames(restartButtonText);
+        mainMenuButtonText = ReplaceLegacyNames(mainMenuButtonText);
     }
 
     private static string ReplaceLegacyNames(string text)
