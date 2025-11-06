@@ -75,6 +75,46 @@ namespace Analytics
             CoroutineHost.Run(SendFormUrlEncoded(_webAppUrl, data));
         }
 
+        public static void SendFailureHotspot(
+            string levelId,
+            Vector3 worldPosition,
+            float timeSpentSeconds,
+            int heartsRemaining,
+            int fireTokensCollected,
+            int waterTokensCollected,
+            float cellSize = 1f)
+        {
+            if (string.IsNullOrWhiteSpace(_webAppUrl))
+            {
+                Debug.LogWarning("[Analytics] Cannot send analytics: Web App URL is empty.");
+                return;
+            }
+
+            if (string.IsNullOrEmpty(levelId))
+            {
+                levelId = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
+            }
+
+            if (cellSize <= 0f) cellSize = 1f;
+            int gridX = Mathf.FloorToInt(worldPosition.x / cellSize);
+            int gridY = Mathf.FloorToInt(worldPosition.y / cellSize);
+
+            var data = new System.Collections.Generic.Dictionary<string, string>
+            {
+                { "event", "fail" },
+                { "session_id", _sessionId },
+                { "level_id", levelId },
+                { "grid_x", gridX.ToString() },
+                { "grid_y", gridY.ToString() },
+                { "time_spent_s", Mathf.RoundToInt(timeSpentSeconds).ToString() },
+                { "hearts_remaining", Mathf.Max(0, heartsRemaining).ToString() },
+                { "fire_tokens", Mathf.Max(0, fireTokensCollected).ToString() },
+                { "water_tokens", Mathf.Max(0, waterTokensCollected).ToString() }
+            };
+
+            CoroutineHost.Run(SendFormUrlEncoded(_webAppUrl, data));
+        }
+
         private static IEnumerator SendFormUrlEncoded(string url, System.Collections.Generic.Dictionary<string, string> data)
         {
             using (var req = UnityWebRequest.Post(url, data))
