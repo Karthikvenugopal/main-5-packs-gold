@@ -1,0 +1,98 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &8844507415564467767
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1320424588882643016}
+  - component: {fileID: 7474636569264673309}
+  - component: {fileID: 777697172324581036}
+  m_Layer: 0
+  m_Name: GameManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1320424588882643016
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8844507415564467767}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &7474636569264673309
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8844507415564467767}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 112b4de80065e8f49906f7186a32798d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerSpawner
+  playerPrefab: {fileID: 7307446650723487989, guid: 44964639595521e40aa2d28dda0ba7bd, type: 3}
+  gameManager: {fileID: 777697172324581036}
+--- !u!114 &777697172324581036
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8844507415564467767}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 72bba14dcf2e74822ae6734bd9595d83, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GameManager
+  isTutorialMode: 0
+  messageBackground: {r: 0, g: 0, b: 0, a: 0.55}
+  levelIntroMessage: 'Work together: Ember melts ice; Aqua extinguishes fire.'
+  levelStartMessage: Work together. Ember melts ice; Aqua extinguishes fire.
+  levelVictoryMessage: Victory! Both heroes reached safety. Press R to play again.
+  waitForPartnerMessage: '{0} made it. Wait for your partner!'
+  exitReminderMessage: Both heroes must stand in the exit to finish.
+  startingHearts: 3
+  nextSceneName: Level2Scene
+  nextSceneDelaySeconds: 2
+  useVictoryPanel: 0
+  victoryRestartSceneName: 
+  resetGlobalTokenTotalsOnLoad: 1
+  showInstructionPanel: 1
+  instructionPanelSceneName: Level1Scene
+  instructionLines:
+  - <b>Heads up</b>
+  - Melt ice.
+  - Cool fire.
+  - Don't touch each other & lose a heart.
+  - Touch wrong obstacle & lose a heart.
+  instructionContinuePrompt: Press Space to start
+  level2InstructionSceneName: Level2Scene
+  level2InstructionLines:
+  - <b>Stay sharp</b>
+  - Opposites protect.
+  - Stand in front of danger for your partner.
+  level2InstructionContinuePrompt: Press Space to start
+  heartFullSprite: {fileID: 0}
+  heartEmptySprite: {fileID: 0}
+  fireTokenCollectedSprite: {fileID: 0}
+  fireTokenEmptySprite: {fileID: 0}
+  waterTokenCollectedSprite: {fileID: 0}
+  waterTokenEmptySprite: {fileID: 0}
+  fireTokensCollected: 0
+  waterTokensCollected: 0
+  levelTimer: {fileID: 0}

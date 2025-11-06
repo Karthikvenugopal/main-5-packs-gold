@@ -1,5 +1,4 @@
 using System;
-using System.Collections;
 using UnityEngine;
 using UnityEngine.Networking;
 
@@ -72,49 +71,44 @@ namespace Analytics
                 { "time_spent_s", Mathf.RoundToInt(timeSpentSeconds).ToString() }
             };
 
-            CoroutineHost.Run(SendFormUrlEncoded(_webAppUrl, data));
+            SendFormUrlEncoded(_webAppUrl, data);
         }
 
-        private static IEnumerator SendFormUrlEncoded(string url, System.Collections.Generic.Dictionary<string, string> data)
+        private static void SendFormUrlEncoded(string url, System.Collections.Generic.Dictionary<string, string> data)
         {
-            using (var req = UnityWebRequest.Post(url, data))
+            var request = UnityWebRequest.Post(url, data);
+            var asyncOperation = request.SendWebRequest();
+
+            asyncOperation.completed += _ =>
             {
-                yield return req.SendWebRequest();
-
-                if (req.result != UnityWebRequest.Result.Success)
+                try
                 {
-                    Debug.LogWarning($"[Analytics] Post failed: {(int)req.responseCode} {req.result} {req.error}");
+#if UNITY_2020_2_OR_NEWER
+                    if (request.result != UnityWebRequest.Result.Success)
+                    {
+                        Debug.LogWarning($"[Analytics] Post failed: {(int)request.responseCode} {request.result} {request.error}");
+                    }
+                    else
+#else
+                    if (request.isNetworkError || request.isHttpError)
+                    {
+                        Debug.LogWarning($"[Analytics] Post failed: {(int)request.responseCode} {request.error}");
+                    }
+                    else
+#endif
+                    {
+                        var body = request.downloadHandler != null ? request.downloadHandler.text : string.Empty;
+                        if (!string.IsNullOrEmpty(body))
+                        {
+                            Debug.Log($"[Analytics] Post ok: {body}");
+                        }
+                    }
                 }
-                else
+                finally
                 {
-                    var body = req.downloadHandler != null ? req.downloadHandler.text : string.Empty;
-                    if (!string.IsNullOrEmpty(body))
-                        Debug.Log($"[Analytics] Post ok: {body}");
+                    request.Dispose();
                 }
-            }
-        }
-
-        private class CoroutineHost : MonoBehaviour
-        {
-            private static CoroutineHost _instance;
-
-            [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
-            private static void Ensure()
-            {
-                if (_instance != null) return;
-                var go = new GameObject("__AnalyticsCoroutineHost");
-                UnityEngine.Object.DontDestroyOnLoad(go);
-                _instance = go.AddComponent<CoroutineHost>();
-            }
-
-            public static void Run(IEnumerator routine)
-            {
-                if (_instance == null)
-                {
-                    Ensure();
-                }
-                _instance.StartCoroutine(routine);
-            }
+            };
         }
     }
 }
