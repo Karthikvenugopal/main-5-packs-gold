@@ -43,19 +43,22 @@ public class GameManager : MonoBehaviour
     [SerializeField] private string instructionPanelSceneName = "Level1Scene";
     [SerializeField] private string[] instructionLines = new[]
     {
-        "<b>Heads up</b>",
-        "Melt ice.",
-        "Cool fire.",
-        "Don't touch each other & lose a heart.",
-        "Touch wrong obstacle & lose a heart."
+        "<b>Level 1</b>",
+        "",
+        "Collect maximum number of tokens and exit",
+        "",
+        "Remember: Ember melts ice; Aqua extinguishes fire.",
+        "Caution: Touch each other -> lose a heart.",
+        "Caution: Touch wrong obstacle -> lose a heart.",
+        "Work together but never collide!"
     };
     [SerializeField] private string instructionContinuePrompt = "Press Space to start";
     [SerializeField] private string level2InstructionSceneName = "Level2Scene";
     [SerializeField] private string[] level2InstructionLines = new[]
     {
-        "<b>Stay sharp</b>",
-        "Opposites protect.",
-        "Stand in front of danger for your partner."
+        "<b>Level 2</b>",
+        "",
+        "Tip: Opposites protect. Shield your partner from danger."
     };
     [SerializeField] private string level2InstructionContinuePrompt = "Press Space to start";
 
@@ -393,7 +396,7 @@ public class GameManager : MonoBehaviour
         panelRect.offsetMax = Vector2.zero;
 
         Image panelImage = _instructionPanel.AddComponent<Image>();
-        panelImage.color = new Color(0f, 0f, 0f, 0.78f);
+        panelImage.color = new Color(0f, 0f, 0f, 252f / 255f);
 
         GameObject instructionsGO = new GameObject("InstructionLines");
         instructionsGO.transform.SetParent(_instructionPanel.transform, false);
@@ -402,11 +405,11 @@ public class GameManager : MonoBehaviour
         instructionsRect.anchorMin = new Vector2(0.5f, 0.5f);
         instructionsRect.anchorMax = new Vector2(0.5f, 0.5f);
         instructionsRect.pivot = new Vector2(0.5f, 0.5f);
-        instructionsRect.sizeDelta = new Vector2(900f, 500f);
+        instructionsRect.sizeDelta = new Vector2(1900f, 500f);
 
         TextMeshProUGUI instructionsLabel = instructionsGO.AddComponent<TextMeshProUGUI>();
         instructionsLabel.alignment = TextAlignmentOptions.Center;
-        instructionsLabel.fontSize = 72f;
+        instructionsLabel.fontSize = 60f;
         instructionsLabel.text = lines != null && lines.Length > 0
             ? string.Join("\n", lines)
             : string.Empty;
