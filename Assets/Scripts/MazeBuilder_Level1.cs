@@ -157,7 +157,7 @@ public class MazeBuilder_Level1 : MonoBehaviour
 
         TextMeshPro tmp = text.AddComponent<TextMeshPro>();
         tmp.text = "EXIT";
-        tmp.color = Color.black;
+        tmp.color = new Color(238f / 255f, 221f / 255f, 130f / 255f, 150f / 255f);
         tmp.fontSize = 6;
         tmp.alignment = TextAlignmentOptions.Center;
         tmp.fontStyle = FontStyles.Bold;

@@ -3,64 +3,40 @@ using System.Collections.Generic;
 using System.IO;
 using TMPro;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
-public class GameManager : MonoBehaviour
+/// <summary>
+/// Tutorial-specific GameManager. Similar to GameManager but designed for tutorial customization.
+/// Can be extended with dynamic tutorial instructions and tutorial-specific behavior.
+/// </summary>
+public class GameManagerTutorial : MonoBehaviour
 {
-    // --- MODIFICATION START ---
-    [Header("Tutorial Settings")]
-    [SerializeField] private bool isTutorialMode = false;
-    // --- MODIFICATION END ---
-
+    // Event fired when any player enters the exit
+    public static event System.Action<CoopPlayerController> OnPlayerEnteredExitEvent;
     [SerializeField] private Color messageBackground = new Color(0f, 0f, 0f, 0.55f);
     [Header("UI Messages")]
-    [SerializeField] private string levelIntroMessage = "Work together: melt the ice, douse the fire, and reach the exit.";
-    [SerializeField] private string levelStartMessage = "Work together. Ember melts ice; Aqua extinguishes fire.";
-    [SerializeField] private string levelVictoryMessage = "Victory! Both heroes reached safety. Press R to play again.";
+    [SerializeField] private string tutorialStartMessage = "Welcome! Follow Instructions on the screen to complete the tutorial.";
+    [SerializeField] private string levelVictoryMessage = "Tutorial Complete! Press R to play again or continue to Level 1.";
     [SerializeField] private string waitForPartnerMessage = "{0} made it. Wait for your partner!";
     [SerializeField] private string exitReminderMessage = "Both heroes must stand in the exit to finish.";
     [Header("Player Hearts")]
     [SerializeField] private int startingHearts = 3;
     [Header("Progression")]
-    [SerializeField] private string nextSceneName;
+    [SerializeField] private string nextSceneName = "Level1Scene";
     [SerializeField] private float nextSceneDelaySeconds = 2f;
     [SerializeField] private string mainMenuSceneName = "MainMenu";
     [Header("Victory Panel")]
     [SerializeField] private bool useVictoryPanel = true;
-    [SerializeField] private string victoryTitleText = "Level Complete";
-    [SerializeField] private string victoryBodyText = "Choose where to go next.";
+    [SerializeField] private string victoryTitleText = "Tutorial Complete";
+    [SerializeField] private string victoryBodyText = "Ready for the real challenge?";
     [SerializeField] private string defeatTitleText = "Out of Hearts";
-    [SerializeField] private string defeatBodyText = "You ran out of hearts. Try again?";
-    [SerializeField] private string nextLevelButtonText = "Next Level";
-    [SerializeField] private string restartButtonText = "Restart";
+    [SerializeField] private string defeatBodyText = "Don't worry! Try again.";
+    [SerializeField] private string nextLevelButtonText = "Continue to Level 1";
+    [SerializeField] private string restartButtonText = "Restart Tutorial";
     [SerializeField] private string mainMenuButtonText = "Main Menu";
-    [SerializeField] private string levelDefeatMessage = "Out of hearts! Choose an option.";
-    [Header("Session Tracking")]
-    [SerializeField] private bool resetGlobalTokenTotalsOnLoad = false;
-    [Header("Level Intro Instructions")]
-    [SerializeField] private bool showInstructionPanel = true;
-    [SerializeField] private string instructionPanelSceneName = "Level1Scene";
-    [SerializeField] private string[] instructionLines = new[]
-    {
-        "<b>Level 1</b>",
-        "",
-        "Collect maximum number of tokens and exit",
-        "",
-        "Remember: Ember melts ice; Aqua extinguishes fire.",
-        "Caution: Touch each other -> lose a heart.",
-        "Caution: Touch wrong obstacle -> lose a heart.",
-        "Work together but never collide!"
-    };
-    [SerializeField] private string instructionContinuePrompt = "Press Space to start";
-    [SerializeField] private string level2InstructionSceneName = "Level2Scene";
-    [SerializeField] private string[] level2InstructionLines = new[]
-    {
-        "<b>Level 2</b>",
-        "",
-        "Tip: Opposites protect. Shield your partner from danger."
-    };
-    [SerializeField] private string level2InstructionContinuePrompt = "Press Space to start";
+    [SerializeField] private string levelDefeatMessage = "Out of hearts! Try again?";
 
     // Keeps a visible record of how many fire tokens the team has picked up.
     public int fireTokensCollected = 0;
@@ -98,14 +74,11 @@ public class GameManager : MonoBehaviour
     [SerializeField] private Analytics.LevelTimer levelTimer;
 
     private TextMeshProUGUI _statusLabel;
+    private GameObject _statusBackground;
     private bool _levelReady;
     private bool _gameActive;
     private bool _gameFinished;
     private Coroutine _loadNextSceneRoutine;
-    private GameObject _instructionPanel;
-    private bool _waitingForInstructionAck;
-    private bool _instructionPausedTime;
-    private float _previousTimeScale = 1f;
 
     private void Awake()
     {
@@ -117,41 +90,16 @@ public class GameManager : MonoBehaviour
         }
         EnsureHudCanvas();
         CreateHeartsUI();
-        CreateTokensUI();
+        // CreateTokensUI(); // Removed: Tutorial scene doesn't have tokens
         CreateVictoryPanel();
-
-        if (resetGlobalTokenTotalsOnLoad)
-        {
-            s_totalFireTokensCollected = 0;
-            s_totalWaterTokensCollected = 0;
-        }
-
-        // --- MODIFICATION START ---
-        if (!isTutorialMode)
-        {
-            CreateStatusUI();
-        }
-        // --- MODIFICATION END ---
+        CreateStatusUI();
         ResetTokenTracking();
         ResetHearts();
-        CreateStatusUI();
-        // analytics code: ensure a LevelTimer exists in gameplay scenes
         EnsureLevelTimer();
-        CreateInstructionPanelIfNeeded();
     }
 
     private void Update()
     {
-        if (_waitingForInstructionAck)
-        {
-            if (Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.Return))
-            {
-                DismissInstructionPanel();
-            }
-
-            return;
-        }
-
         if (_gameFinished && Input.GetKeyDown(KeyCode.R))
         {
             CancelNextSceneLoad();
@@ -180,12 +128,6 @@ public class GameManager : MonoBehaviour
     public void OnLevelReady()
     {
         _levelReady = true;
-        // --- MODIFICATION START ---
-        if (!isTutorialMode)
-        {
-            UpdateStatus(levelIntroMessage);
-        }
-        // --- MODIFICATION END ---
         ResetTokenTracking();
         RecountTokensInScene();
         if (_players.Count >= 2)
@@ -196,7 +138,7 @@ public class GameManager : MonoBehaviour
 
     private void TryStartLevel()
     {
-        if (_gameActive || _players.Count < 2 || _waitingForInstructionAck) return;
+        if (_gameActive || _players.Count < 2) return;
 
         _gameActive = true;
         _gameFinished = false;
@@ -208,12 +150,7 @@ public class GameManager : MonoBehaviour
         }
 
         CancelNextSceneLoad();
-        // --- MODIFICATION START ---
-        if (!isTutorialMode)
-        {
-            UpdateStatus(levelStartMessage);
-        }
-        // --- MODIFICATION END ---
+        UpdateStatus(tutorialStartMessage);
     }
 
     public void OnPlayersTouched(CoopPlayerController playerA, CoopPlayerController playerB)
@@ -229,11 +166,7 @@ public class GameManager : MonoBehaviour
 
         DamageBothPlayers(playerA, playerB);
         if (_gameFinished) return;
-
-        if (!isTutorialMode)
-        {
-            UpdateStatus("Careful! Keep your distance.");
-        }
+        UpdateStatus("Careful! Keep your distance.");
     }
 
     public void OnPlayerEnteredExit(CoopPlayerController player)
@@ -241,6 +174,9 @@ public class GameManager : MonoBehaviour
         if (player == null) return;
 
         _playersAtExit.Add(player);
+
+        // Fire event for other scripts to listen to
+        OnPlayerEnteredExitEvent?.Invoke(player);
 
         if (!_gameActive || _gameFinished) return;
 
@@ -307,7 +243,10 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    private void UpdateStatus(string message)
+    /// <summary>
+    /// Updates the status message. Can be overridden or extended for tutorial-specific instructions.
+    /// </summary>
+    protected virtual void UpdateStatus(string message)
     {
         if (_statusLabel != null)
         {
@@ -328,11 +267,14 @@ public class GameManager : MonoBehaviour
         bgRect.anchorMin = new Vector2(0.5f, 1f);
         bgRect.anchorMax = new Vector2(0.5f, 1f);
         bgRect.pivot = new Vector2(0.5f, 1f);
-        bgRect.sizeDelta = new Vector2(680f, 120f);
+        bgRect.sizeDelta = new Vector2(680f, 80f);
         bgRect.anchoredPosition = new Vector2(0f, -40f);
 
         Image image = background.AddComponent<Image>();
         image.color = messageBackground;
+
+        // Store reference to background for hiding later
+        _statusBackground = background;
 
         GameObject textGO = new GameObject("StatusLabel");
         textGO.transform.SetParent(background.transform, false);
@@ -345,130 +287,8 @@ public class GameManager : MonoBehaviour
 
         _statusLabel = textGO.AddComponent<TextMeshProUGUI>();
         _statusLabel.alignment = TextAlignmentOptions.Center;
-        _statusLabel.fontSize = 40f;
+        _statusLabel.fontSize = 32f;
         _statusLabel.text = string.Empty;
-    }
-
-    private bool TryGetInstructionContentForScene(out string[] lines, out string prompt)
-    {
-        lines = null;
-        prompt = instructionContinuePrompt;
-
-        if (!showInstructionPanel) return false;
-
-        string currentScene = SceneManager.GetActiveScene().name;
-
-        if (!string.IsNullOrEmpty(instructionPanelSceneName) &&
-            currentScene == instructionPanelSceneName)
-        {
-            lines = instructionLines;
-            prompt = instructionContinuePrompt;
-        }
-        else if (!string.IsNullOrEmpty(level2InstructionSceneName) &&
-                 currentScene == level2InstructionSceneName)
-        {
-            lines = level2InstructionLines;
-            prompt = string.IsNullOrEmpty(level2InstructionContinuePrompt)
-                ? instructionContinuePrompt
-                : level2InstructionContinuePrompt;
-        }
-        else if (string.IsNullOrEmpty(instructionPanelSceneName))
-        {
-            lines = instructionLines;
-        }
-
-        return lines != null && lines.Length > 0;
-    }
-
-    private void CreateInstructionPanelIfNeeded()
-    {
-        if (_hudCanvas == null || _instructionPanel != null) return;
-
-        if (!TryGetInstructionContentForScene(out var lines, out var prompt)) return;
-
-        _instructionPanel = new GameObject("InstructionPanel");
-        _instructionPanel.transform.SetParent(_hudCanvas.transform, false);
-
-        RectTransform panelRect = _instructionPanel.AddComponent<RectTransform>();
-        panelRect.anchorMin = Vector2.zero;
-        panelRect.anchorMax = Vector2.one;
-        panelRect.offsetMin = Vector2.zero;
-        panelRect.offsetMax = Vector2.zero;
-
-        Image panelImage = _instructionPanel.AddComponent<Image>();
-        panelImage.color = new Color(0f, 0f, 0f, 252f / 255f);
-
-        GameObject instructionsGO = new GameObject("InstructionLines");
-        instructionsGO.transform.SetParent(_instructionPanel.transform, false);
-
-        RectTransform instructionsRect = instructionsGO.AddComponent<RectTransform>();
-        instructionsRect.anchorMin = new Vector2(0.5f, 0.5f);
-        instructionsRect.anchorMax = new Vector2(0.5f, 0.5f);
-        instructionsRect.pivot = new Vector2(0.5f, 0.5f);
-        instructionsRect.sizeDelta = new Vector2(1900f, 500f);
-
-        TextMeshProUGUI instructionsLabel = instructionsGO.AddComponent<TextMeshProUGUI>();
-        instructionsLabel.alignment = TextAlignmentOptions.Center;
-        instructionsLabel.fontSize = 60f;
-        instructionsLabel.text = lines != null && lines.Length > 0
-            ? string.Join("\n", lines)
-            : string.Empty;
-        instructionsLabel.raycastTarget = false;
-
-        GameObject promptGO = new GameObject("InstructionPrompt");
-        promptGO.transform.SetParent(_instructionPanel.transform, false);
-
-        RectTransform promptRect = promptGO.AddComponent<RectTransform>();
-        promptRect.anchorMin = new Vector2(0.5f, 0f);
-        promptRect.anchorMax = new Vector2(0.5f, 0f);
-        promptRect.pivot = new Vector2(0.5f, 0f);
-        promptRect.anchoredPosition = new Vector2(0f, 60f);
-        promptRect.sizeDelta = new Vector2(700f, 80f);
-
-        TextMeshProUGUI promptLabel = promptGO.AddComponent<TextMeshProUGUI>();
-        promptLabel.alignment = TextAlignmentOptions.Center;
-        promptLabel.fontSize = 36f;
-        promptLabel.text = string.IsNullOrEmpty(prompt)
-            ? "Press Space to start"
-            : prompt;
-        promptLabel.raycastTarget = false;
-
-        _instructionPanel.transform.SetAsLastSibling();
-
-        _waitingForInstructionAck = true;
-
-        if (!_instructionPausedTime)
-        {
-            _previousTimeScale = Time.timeScale;
-            Time.timeScale = 0f;
-            _instructionPausedTime = true;
-        }
-    }
-
-    private void DismissInstructionPanel()
-    {
-        _waitingForInstructionAck = false;
-
-        if (_instructionPanel != null)
-        {
-            _instructionPanel.SetActive(false);
-        }
-
-        RestoreTimeScaleIfNeeded();
-
-        if (_levelReady)
-        {
-            TryStartLevel();
-        }
-    }
-
-    private void RestoreTimeScaleIfNeeded()
-    {
-        if (_instructionPausedTime)
-        {
-            Time.timeScale = _previousTimeScale;
-            _instructionPausedTime = false;
-        }
     }
 
     private void EnsureHudCanvas()
@@ -488,6 +308,20 @@ public class GameManager : MonoBehaviour
         scaler.matchWidthOrHeight = 0.5f;
 
         canvasGO.AddComponent<GraphicRaycaster>();
+        
+        // Ensure EventSystem exists for UI interactions
+        EnsureEventSystem();
+    }
+
+    private void EnsureEventSystem()
+    {
+        // Check if EventSystem already exists in the scene
+        if (FindFirstObjectByType<EventSystem>() != null) return;
+
+        // Create EventSystem if it doesn't exist
+        GameObject eventSystemGO = new GameObject("EventSystem");
+        eventSystemGO.AddComponent<EventSystem>();
+        eventSystemGO.AddComponent<StandaloneInputModule>();
     }
 
     private void CreateHeartsUI()
@@ -674,6 +508,7 @@ public class GameManager : MonoBehaviour
         label.alignment = TextAlignmentOptions.Center;
         label.fontSize = 28f;
         label.text = labelText;
+        label.raycastTarget = false; // Prevent text from blocking button clicks
 
         return button;
     }
@@ -732,35 +567,23 @@ public class GameManager : MonoBehaviour
             _victoryBodyLabel.text = isVictory ? victoryBodyText : defeatBodyText;
         }
 
+        // Hide token summary displays
         if (_fireSummaryRoot != null)
         {
-            _fireSummaryRoot.SetActive(isVictory);
+            _fireSummaryRoot.SetActive(false);
         }
 
         if (_waterSummaryRoot != null)
         {
-            _waterSummaryRoot.SetActive(isVictory);
+            _waterSummaryRoot.SetActive(false);
         }
 
         SetButtonLabel(_victoryNextLevelButton, nextLevelButtonText);
         SetButtonLabel(_victoryRestartButton, restartButtonText);
         SetButtonLabel(_victoryMainMenuButton, mainMenuButtonText);
 
-        bool hasNextScene = TryGetNextSceneName(out _);
-        if (isVictory)
-        {
-            if (_fireVictoryLabel != null)
-            {
-                _fireVictoryLabel.text = $"Total Ember Tokens: {s_totalFireTokensCollected}";
-            }
-
-            if (_waterVictoryLabel != null)
-            {
-                _waterVictoryLabel.text = $"Total Aqua Tokens: {s_totalWaterTokensCollected}";
-            }
-        }
-
-        bool canAdvance = isVictory && hasNextScene;
+        // For tutorial, always allow advancing to Level 1 on victory
+        bool canAdvance = isVictory;
 
         if (_victoryNextLevelButton != null)
         {
@@ -885,32 +708,6 @@ public class GameManager : MonoBehaviour
 
         UpdateHeartsUI();
 
-        // analytics hotspot capture on damage
-        try
-        {
-            EnsureLevelTimer();
-            float elapsed = levelTimer != null ? levelTimer.ElapsedSeconds : 0f;
-            Vector3 worldPos = Vector3.zero;
-            for (int i = 0; i < _players.Count; i++)
-            {
-                var p = _players[i];
-                if (p != null && p.Role == role)
-                {
-                    worldPos = p.transform.position;
-                    break;
-                }
-            }
-            Analytics.GoogleSheetsAnalytics.SendFailureHotspot(
-                null,
-                worldPos,
-                elapsed,
-                Mathf.Max(0, _fireHearts + _waterHearts),
-                Mathf.Max(0, fireTokensCollected),
-                Mathf.Max(0, waterTokensCollected),
-                1f);
-        }
-        catch { }
-
         if (!suppressCheck)
         {
             CheckForHeartDepletion();
@@ -948,11 +745,10 @@ public class GameManager : MonoBehaviour
     private void OnVictoryNextLevelClicked()
     {
         if (_reloadingScene) return;
-        if (!TryGetNextSceneName(out string sceneToLoad)) return;
 
         _reloadingScene = true;
         CancelNextSceneLoad();
-        SceneManager.LoadScene(sceneToLoad);
+        SceneManager.LoadScene("Level1Scene");
     }
 
     private void OnVictoryMainMenuClicked()
@@ -973,7 +769,13 @@ public class GameManager : MonoBehaviour
         // analytics code
         EnsureLevelTimer();
         (levelTimer ?? FindAnyObjectByType<Analytics.LevelTimer>())?.MarkSuccess();
-        UpdateStatus(levelVictoryMessage);
+        
+        // Hide the status UI instead of showing victory message
+        if (_statusBackground != null)
+        {
+            _statusBackground.SetActive(false);
+        }
+        
         FreezePlayers();
         CancelNextSceneLoad();
         ShowEndPanel(EndGameState.Victory);
@@ -991,7 +793,6 @@ public class GameManager : MonoBehaviour
         if (existing != null)
         {
             levelTimer = existing;
-            // Ensures abandon/quit attempts are captured
             levelTimer.autoSendFailureOnDestroy = true;
             return;
         }
@@ -999,7 +800,6 @@ public class GameManager : MonoBehaviour
         var go = new GameObject("LevelAnalytics");
         levelTimer = go.AddComponent<Analytics.LevelTimer>();
         levelTimer.autoSendFailureOnDestroy = true;
-
     }
 
     private IEnumerator LoadNextSceneAfterDelay()
@@ -1028,8 +828,6 @@ public class GameManager : MonoBehaviour
 
     private void OnDestroy()
     {
-        RestoreTimeScaleIfNeeded();
-
         if (_victoryRestartButton != null)
         {
             _victoryRestartButton.onClick.RemoveListener(OnVictoryRestartClicked);
@@ -1068,8 +866,7 @@ public class GameManager : MonoBehaviour
 
     private void NormalizeDisplayStrings()
     {
-        levelIntroMessage = ReplaceLegacyNames(levelIntroMessage);
-        levelStartMessage = ReplaceLegacyNames(levelStartMessage);
+        tutorialStartMessage = ReplaceLegacyNames(tutorialStartMessage);
         levelVictoryMessage = ReplaceLegacyNames(levelVictoryMessage);
         levelDefeatMessage = ReplaceLegacyNames(levelDefeatMessage);
         waitForPartnerMessage = ReplaceLegacyNames(waitForPartnerMessage);
@@ -1089,3 +886,5 @@ public class GameManager : MonoBehaviour
         return text.Replace("Fireboy", "Ember").Replace("Watergirl", "Aqua");
     }
 }
+
+
