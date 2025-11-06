@@ -119,6 +119,51 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
+--- !u!1 &38690079
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 38690080}
+  - component: {fileID: 38690081}
+  m_Layer: 0
+  m_Name: FireTokenAnchor4
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &38690080
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 38690079}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 20.95, y: -4.17, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2110000000000000001}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &38690081
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 38690079}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4d67bbb986cc445f8c08c1cd97eb1ef2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  tokenType: 0
 --- !u!1 &231701430
 GameObject:
   m_ObjectHideFlags: 0
@@ -541,6 +586,51 @@ Transform:
   - {fileID: 2110000000000000001}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1672909859
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1672909860}
+  - component: {fileID: 1672909861}
+  m_Layer: 0
+  m_Name: WaterTokenAnchor4
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1672909860
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1672909859}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 16.19, y: -13.76, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2110000000000000001}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1672909861
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1672909859}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4d67bbb986cc445f8c08c1cd97eb1ef2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  tokenType: 1
 --- !u!1 &1746984131
 GameObject:
   m_ObjectHideFlags: 0
@@ -610,9 +700,32 @@ MonoBehaviour:
   startingHearts: 3
   nextSceneName: 
   nextSceneDelaySeconds: 2
+  mainMenuSceneName: MainMenu
   useVictoryPanel: 1
-  victoryRestartSceneName: Level1Scene
+  victoryTitleText: Level Complete
+  victoryBodyText: Choose where to go next.
+  defeatTitleText: Out of Hearts
+  defeatBodyText: You ran out of hearts. Try again?
+  nextLevelButtonText: Next Level
+  restartButtonText: Restart
+  mainMenuButtonText: Main Menu
+  levelDefeatMessage: Out of hearts! Choose an option.
   resetGlobalTokenTotalsOnLoad: 0
+  showInstructionPanel: 1
+  instructionPanelSceneName: Level1Scene
+  instructionLines:
+  - <b>Heads up</b>
+  - Melt ice.
+  - Cool fire.
+  - Don't touch each other & lose a heart.
+  - Touch wrong obstacle & lose a heart.
+  instructionContinuePrompt: Press Space to start
+  level2InstructionSceneName: Level2Scene
+  level2InstructionLines:
+  - <b>Stay sharp</b>
+  - Opposites protect.
+  - Stand in front of danger for your partner.
+  level2InstructionContinuePrompt: Press Space to start
   fireTokensCollected: 0
   waterTokensCollected: 0
   levelTimer: {fileID: 0}
@@ -785,7 +898,9 @@ Transform:
   - {fileID: 2110000000000000101}
   - {fileID: 2110000000000000201}
   - {fileID: 2110000000000000301}
+  - {fileID: 38690080}
   - {fileID: 2110000000000000401}
+  - {fileID: 1672909860}
   - {fileID: 2110000000000000501}
   - {fileID: 2110000000000000601}
   m_Father: {fileID: 920500693}
@@ -830,7 +945,7 @@ Transform:
   m_GameObject: {fileID: 2110000000000000100}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 7.61, y: -3.2, z: 0}
+  m_LocalPosition: {x: 9.02, y: -7.18, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -875,7 +990,7 @@ Transform:
   m_GameObject: {fileID: 2110000000000000200}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 15.04, y: -7.32, z: 0}
+  m_LocalPosition: {x: 11.89, y: -0.91, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -920,7 +1035,7 @@ Transform:
   m_GameObject: {fileID: 2110000000000000300}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 1.06, y: -5.99, z: 0}
+  m_LocalPosition: {x: 16.15, y: -1.14, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -965,7 +1080,7 @@ Transform:
   m_GameObject: {fileID: 2110000000000000400}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 23.71, y: -9.34, z: 0}
+  m_LocalPosition: {x: 9.1, y: -9.34, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1010,7 +1125,7 @@ Transform:
   m_GameObject: {fileID: 2110000000000000500}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 12.21, y: -7.31, z: 0}
+  m_LocalPosition: {x: 25.06, y: -6.4, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
