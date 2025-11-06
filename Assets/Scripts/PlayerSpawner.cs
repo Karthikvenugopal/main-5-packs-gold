@@ -4,6 +4,7 @@ public class PlayerSpawner : MonoBehaviour
 {
     [SerializeField] private GameObject playerPrefab;
     [SerializeField] private GameManager gameManager;
+    [SerializeField] private GameManagerTutorial gameManagerTutorial;
 
     private void Start()
     {
@@ -39,7 +40,19 @@ public class PlayerSpawner : MonoBehaviour
         {
             controller = playerObject.AddComponent<CoopPlayerController>();
         }
-        controller.Initialize(role, gameManager);
+        
+        if (gameManagerTutorial != null)
+        {
+            controller.Initialize(role, gameManagerTutorial);
+        }
+        else if (gameManager != null)
+        {
+            controller.Initialize(role, gameManager);
+        }
+        else
+        {
+            Debug.LogWarning("PlayerSpawner: No GameManager or GameManagerTutorial assigned!");
+        }
 
         spawnMarker.SetActive(false);
     }

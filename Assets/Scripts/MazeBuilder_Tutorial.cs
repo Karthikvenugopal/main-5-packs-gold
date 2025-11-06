@@ -12,28 +12,37 @@ public class MazeBuilder_Tutorial : MonoBehaviour
     public GameObject floorPrefab;
     public GameObject iceWallPrefab;
     public GameObject fireWallPrefab;
-    
-    // (新) 添加对教程 Prefab 的引用
-    [Header("Tutorial")]
-    public GameObject tutorialTriggerPrefab; 
 
     [Header("Dependencies")]
-    public GameManager gameManager;
+    public GameManagerTutorial gameManager;
 
-    // (修改) 在布局中添加了 '1' 和 '2'
     private static readonly string[] Layout =
     {
-        "############",
-        "#F....I...E#", 
-        "###.#1#.####", 
-        "#...#...H..#", 
-        "###.#.##2###", 
-        "#..W#......#",
-        "############"
+        "##########################",
+        "##########################",
+        "#F.............H......####",
+        "#####..........H...##.####",
+        "##############..I..##H####",
+        "#############...I..##.####",
+        "#####################.####",
+        "#####################...E#",
+        "#####################.####",
+        "##############..H..##.####",
+        "#############...H..##.####",
+        "#####..........I...##.####",
+        "#W.............I......####",
+        "##########################",
+        "##########################"
     };
 
     private const string FireboySpawnName = "FireboySpawn";
     private const string WatergirlSpawnName = "WatergirlSpawn";
+
+    // Public property to expose cellSize
+    public float CellSize => cellSize;
+
+    // Public method to expose Layout
+    public string[] GetLayout() => Layout;
 
     private void Start()
     {
@@ -87,58 +96,11 @@ public class MazeBuilder_Tutorial : MonoBehaviour
                         SpawnExit(cellPosition);
                         break;
 
-                    case '1':
-                    case '2':
-                    // 你可以添加 '3', '4' 等
-                        SpawnFloor(cellPosition); 
-                        SpawnTutorialTrigger(cellPosition, cell);
-                        break;
-
                     default:
                         SpawnFloor(cellPosition);
                         break;
                 }
             }
-        }
-    }
-
-    // (新) 用于生成教程触发器的方法
-    private void SpawnTutorialTrigger(Vector2 position, char triggerId)
-    {
-        if (tutorialTriggerPrefab == null)
-        {
-            Debug.LogWarning("Tutorial Trigger Prefab is not assigned in the Inspector.");
-            return;
-        }
-
-        // 调整位置，使其居中于单元格
-        Vector2 spawnPosition = position + new Vector2(0.5f * cellSize, -0.5f * cellSize);
-        GameObject triggerObj = Instantiate(tutorialTriggerPrefab, spawnPosition, Quaternion.identity, transform);
-
-        // 获取触发器脚本并设置文本
-        TutorialTrigger trigger = triggerObj.GetComponent<TutorialTrigger>();
-        if (trigger != null)
-        {
-            trigger.SetText(GetTutorialText(triggerId));
-        }
-        else
-        {
-            Debug.LogError("Tutorial Trigger Prefab does not have a TutorialTrigger component.");
-        }
-    }
-
-    // (新) 辅助方法，根据 ID 获取教程文本
-    private string GetTutorialText(char triggerId)
-    {
-        switch (triggerId)
-        {
-            case '1':
-                return "Work together. Ember melts ice.";
-            case '2':
-                return "Aqua extinguishes fire.";
-            // 在这里为 '3', '4' 等添加更多文本
-            default:
-                return "Default tutorial text.";
         }
     }
 
@@ -242,3 +204,4 @@ public class MazeBuilder_Tutorial : MonoBehaviour
         }
     }
 }
+
