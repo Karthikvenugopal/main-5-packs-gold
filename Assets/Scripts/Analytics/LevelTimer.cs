@@ -70,5 +70,11 @@ namespace Analytics
 
             GoogleSheetsAnalytics.SendLevelResult(levelId, success, elapsed);
         }
+
+        public float ElapsedSeconds => Mathf.Max(0f, Time.realtimeSinceStartup - _startTime);
+
+        public string ResolvedLevelId => string.IsNullOrWhiteSpace(overrideLevelId)
+            ? SceneManager.GetActiveScene().name
+            : overrideLevelId.Trim();
     }
 }

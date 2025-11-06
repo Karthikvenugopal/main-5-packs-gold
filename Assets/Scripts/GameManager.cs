@@ -885,6 +885,32 @@ public class GameManager : MonoBehaviour
 
         UpdateHeartsUI();
 
+        // analytics hotspot capture on damage
+        try
+        {
+            EnsureLevelTimer();
+            float elapsed = levelTimer != null ? levelTimer.ElapsedSeconds : 0f;
+            Vector3 worldPos = Vector3.zero;
+            for (int i = 0; i < _players.Count; i++)
+            {
+                var p = _players[i];
+                if (p != null && p.Role == role)
+                {
+                    worldPos = p.transform.position;
+                    break;
+                }
+            }
+            Analytics.GoogleSheetsAnalytics.SendFailureHotspot(
+                null,
+                worldPos,
+                elapsed,
+                Mathf.Max(0, _fireHearts + _waterHearts),
+                Mathf.Max(0, fireTokensCollected),
+                Mathf.Max(0, waterTokensCollected),
+                1f);
+        }
+        catch { }
+
         if (!suppressCheck)
         {
             CheckForHeartDepletion();
