@@ -87,12 +87,18 @@ MonoBehaviour:
   - Opposites protect.
   - Stand in front of danger for your partner.
   level2InstructionContinuePrompt: Press Space to start
-  heartFullSprite: {fileID: 0}
-  heartEmptySprite: {fileID: 0}
-  fireTokenCollectedSprite: {fileID: 0}
-  fireTokenEmptySprite: {fileID: 0}
-  waterTokenCollectedSprite: {fileID: 0}
-  waterTokenEmptySprite: {fileID: 0}
+  emberHeartFullSprite: {fileID: 6341348101557482619, guid: 3b91ad87000d64526b2b182ed1ef4834, type: 3}
+  emberHeartEmptySprite: {fileID: -4643077359141595314, guid: 3333514574fc144eb95cc807c8348464, type: 3}
+  aquaHeartFullSprite: {fileID: -2880978766386009668, guid: 28fb0f56d13b04528a3ef03f381a909e, type: 3}
+  aquaHeartEmptySprite: {fileID: -3368947314594817166, guid: 146106181316f4840b888eff730ebb50, type: 3}
+  fireTokenCollectedSprite: {fileID: -4151771278503953051, guid: ec53f22ac97534774872e875f21508e6, type: 3}
+  fireTokenEmptySprite: {fileID: 7234325214794955360, guid: 26adadf21083d4800a0a960cc5bee95a, type: 3}
+  waterTokenCollectedSprite: {fileID: 3472107637496650615, guid: 22ce194b86d81416ba29f64f1b0e6c3c, type: 3}
+  waterTokenEmptySprite: {fileID: 6201639378690659322, guid: 61719adf5194c44d79debc0282e43dca, type: 3}
+  heartIconSize: {x: 50, y: 50}
+  tokenIconSize: {x: 45, y: 45}
+  topUiBarHeight: 160
+  topUiBarColor: {r: 0.1, g: 0.1, b: 0.1, a: 0.8}
   fireTokensCollected: 0
   waterTokensCollected: 0
   levelTimer: {fileID: 0}

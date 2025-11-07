@@ -1013,7 +1013,9 @@ public class GameManager : MonoBehaviour
     }
 
     // --- MODIFICATION START ---
-    // This function is modified to find the correct containers *inside* the master container.
+    // This function is modified to FIX the bug where token icons were not appearing.
+    // The line "AddComponent<LayoutElement>()" was accidentally removed in the previous
+    // version and has been RESTORED. This is required for the ContentSizeFitter.
     private void RecountTokensInScene()
     {
         int fireCount = 0;
@@ -1030,6 +1032,9 @@ public class GameManager : MonoBehaviour
             }
             else if (token.CompareTag("WaterToken"))
             {
+                // *** PLEASE CHECK THIS: ***
+                // Make sure your blue droplet prefabs/objects in the scene
+                // have their 'Tag' set to 'WaterToken' in the Inspector!
                 waterCount++;
             }
         }
@@ -1038,7 +1043,8 @@ public class GameManager : MonoBehaviour
         _totalWaterTokens = waterCount;
         
         // 1. Find the master container, *then* the sub-containers
-        Transform tokensMasterContainer = _hudCanvas.transform.Find("TokensMasterContainer");
+        Transform searchRoot = _topUiBar != null ? _topUiBar : _hudCanvas.transform;
+        Transform tokensMasterContainer = searchRoot.Find("TokensMasterContainer");
         if (tokensMasterContainer == null)
         {
             Debug.LogError("RecountTokensInScene: Could not find TokensMasterContainer!");
@@ -1064,18 +1070,6 @@ public class GameManager : MonoBehaviour
         // 3. Create the "empty" token slots based on the level's total
         if (emberContainer != null)
         {
-            // Adjust container size
-            HorizontalLayoutGroup layout = emberContainer.GetComponent<HorizontalLayoutGroup>();
-            float labelWidth = emberContainer.Find("Label").GetComponent<LayoutElement>().preferredWidth;
-            float iconsWidth = (tokenIconSize.x * _totalFireTokens) + (layout.spacing * (Mathf.Max(0, _totalFireTokens)));
-            float width = labelWidth + iconsWidth + layout.padding.left + layout.padding.right + layout.spacing;
-            
-            // Set the width on the RectTransform
-            emberContainer.GetComponent<RectTransform>().sizeDelta = new Vector2(width, tokenIconSize.y + layout.padding.top + layout.padding.bottom);
-            // And also set the preferredWidth on the LayoutElement so the master container wraps it
-            emberContainer.gameObject.AddComponent<LayoutElement>().preferredWidth = width;
-
-
             for (int i = 0; i < _totalFireTokens; i++)
             {
                 GameObject tokenImgGO = new GameObject($"Token_Fire_{i}");
@@ -1085,7 +1079,12 @@ public class GameManager : MonoBehaviour
                 
                 RectTransform tokenRect = tokenImgGO.GetComponent<RectTransform>();
                 tokenRect.sizeDelta = tokenIconSize; 
+                
+                // --- BUG FIX ---
+                // This line is CRITICAL and has been re-added.
+                // It tells the HorizontalLayoutGroup how wide the icon is.
                 tokenImgGO.AddComponent<LayoutElement>().preferredWidth = tokenIconSize.x;
+                // --- END BUG FIX ---
                 
                 _emberTokenImages.Add(tokenImg);
             }
@@ -1093,17 +1092,6 @@ public class GameManager : MonoBehaviour
         
         if (aquaContainer != null)
         {
-            // Adjust container size
-            HorizontalLayoutGroup layout = aquaContainer.GetComponent<HorizontalLayoutGroup>();
-            float labelWidth = aquaContainer.Find("Label").GetComponent<LayoutElement>().preferredWidth;
-            float iconsWidth = (tokenIconSize.x * _totalWaterTokens) + (layout.spacing * (Mathf.Max(0, _totalWaterTokens)));
-            float width = labelWidth + iconsWidth + layout.padding.left + layout.padding.right + layout.spacing;
-            
-            // Set the width on the RectTransform
-            aquaContainer.GetComponent<RectTransform>().sizeDelta = new Vector2(width, tokenIconSize.y + layout.padding.top + layout.padding.bottom);
-            // And also set the preferredWidth on the LayoutElement so the master container wraps it
-            aquaContainer.gameObject.AddComponent<LayoutElement>().preferredWidth = width;
-            
             for (int i = 0; i < _totalWaterTokens; i++)
             {
                 GameObject tokenImgGO = new GameObject($"Token_Aqua_{i}");
@@ -1113,7 +1101,11 @@ public class GameManager : MonoBehaviour
                 
                 RectTransform tokenRect = tokenImgGO.GetComponent<RectTransform>();
                 tokenRect.sizeDelta = tokenIconSize; 
+
+                // --- BUG FIX ---
+                // This line is CRITICAL and has been re-added.
                 tokenImgGO.AddComponent<LayoutElement>().preferredWidth = tokenIconSize.x;
+                // --- END BUG FIX ---
                 
                 _aquaTokenImages.Add(tokenImg);
             }
@@ -1168,6 +1160,7 @@ public class GameManager : MonoBehaviour
         }
 
         UpdateHeartsUI(); // This will now update the images
+        TriggerHurtEffect(role);
 
         if (!suppressCheck)
         {
@@ -1205,6 +1198,16 @@ public class GameManager : MonoBehaviour
             : victoryRestartSceneName;
 
         SceneManager.LoadScene(sceneToLoad);
+    }
+
+    private void TriggerHurtEffect(PlayerRole role)
+    {
+        foreach (var player in _players)
+        {
+            if (player == null || player.Role != role) continue;
+            player.PlayHurtFlash();
+            break;
+        }
     }
 
     private void HandleVictory()

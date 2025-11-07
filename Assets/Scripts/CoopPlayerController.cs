@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -23,12 +24,18 @@ public class CoopPlayerController : MonoBehaviour
     [Header("Hazard Damage")]
     [SerializeField] private float hazardDamageCooldown = 0.5f;
 
+    [Header("Feedback")]
+    [SerializeField] private Color hurtFlashColor = new Color(0.7f, 0.7f, 0.7f, 1f);
+    [SerializeField] private float hurtFlashDuration = 0.12f;
+
     private Rigidbody2D _rigidbody;
     private Collider2D _collider;
+    private SpriteRenderer _spriteRenderer;
     private GameManager _gameManager;
     private PlayerRole _role;
     private Vector2 _moveInput;
     private bool _movementEnabled;
+    private Coroutine _hurtFlashRoutine;
 
     private readonly Dictionary<int, float> _lastHazardDamageTimes = new();
 
@@ -38,6 +45,7 @@ public class CoopPlayerController : MonoBehaviour
     {
         _rigidbody = GetComponent<Rigidbody2D>();
         _collider = GetComponent<Collider2D>();
+        _spriteRenderer = GetComponent<SpriteRenderer>();
 
         _rigidbody.gravityScale = 0f;
         _rigidbody.freezeRotation = true;
@@ -188,10 +196,37 @@ public class CoopPlayerController : MonoBehaviour
 
     private void ApplyRoleVisuals()
     {
-        if (!TryGetComponent(out SpriteRenderer renderer)) return;
+        if (_spriteRenderer == null && !TryGetComponent(out _spriteRenderer)) return;
 
-        renderer.color = _role == PlayerRole.Fireboy ? fireboyColor : watergirlColor;
-        renderer.sortingOrder = 5;
+        _spriteRenderer.color = GetRoleColor();
+        _spriteRenderer.sortingOrder = 5;
+    }
+
+    private Color GetRoleColor()
+    {
+        return _role == PlayerRole.Fireboy ? fireboyColor : watergirlColor;
+    }
+
+    public void PlayHurtFlash()
+    {
+        if (!isActiveAndEnabled) return;
+        if (_spriteRenderer == null && !TryGetComponent(out _spriteRenderer)) return;
+
+        if (_hurtFlashRoutine != null)
+        {
+            StopCoroutine(_hurtFlashRoutine);
+        }
+
+        _hurtFlashRoutine = StartCoroutine(HurtFlashRoutine());
+    }
+
+    private IEnumerator HurtFlashRoutine()
+    {
+        Color originalColor = GetRoleColor();
+        _spriteRenderer.color = hurtFlashColor;
+        yield return new WaitForSeconds(hurtFlashDuration);
+        _spriteRenderer.color = originalColor;
+        _hurtFlashRoutine = null;
     }
 
     public void SetMovementEnabled(bool enabled)
