@@ -42,18 +42,18 @@ public class Level3Manager : MonoBehaviour
     private static readonly Vector2Int FireSpawnCell = new Vector2Int(13, 1);
     private static readonly Vector2Int WaterSpawnCell = new Vector2Int(1, 11);
 
+    private static readonly Vector2Int CenterExitCell = new Vector2Int(7, 6);
+
     private static readonly SequenceDefinition[] TriggerSequences =
     {
         new SequenceDefinition(
-            "NorthCorridor",
+            "FireThenIce",
             new[]
             {
-                new SequenceStep(SequenceActionType.Ice, new Vector2Int(8, 6)),
-                new SequenceStep(SequenceActionType.Fire, new Vector2Int(11, 6)),
-                new SequenceStep(SequenceActionType.Ice, new Vector2Int(12, 9)),
-                new SequenceStep(SequenceActionType.Fire, new Vector2Int(16, 9)),
-                new SequenceStep(SequenceActionType.Exit, new Vector2Int(24, 2))
-            }
+                new SequenceStep(SequenceActionType.Fire, new Vector2Int(2, 9)),
+                new SequenceStep(SequenceActionType.Ice, new Vector2Int(12, 3))
+            },
+            loop: true
         )
     };
 
@@ -61,12 +61,14 @@ public class Level3Manager : MonoBehaviour
     private readonly HashSet<Vector2Int> _sequenceReservedCells = new HashSet<Vector2Int>();
     private readonly Dictionary<int, SequenceState> _sequenceStates = new Dictionary<int, SequenceState>();
     private bool _tearingDown;
+    private bool _exitPlaced;
 
     private void Start()
     {
         CacheSequenceReservedCells();
         BuildMaze(Layout);
         CreateAdditionalSpawnMarkers();
+        PlaceCentralExit();
         InitializeSequences();
         CenterMaze(Layout);
         tokenPlacementManager?.SpawnTokens();
@@ -180,6 +182,20 @@ public class Level3Manager : MonoBehaviour
         }
     }
 
+    private void PlaceCentralExit()
+    {
+        if (_exitPlaced) return;
+
+        if (_cellOrigins.TryGetValue(CenterExitCell, out Vector2 origin))
+        {
+            SpawnExit(origin);
+        }
+        else
+        {
+            Debug.LogWarning($"Level3Manager: Unable to place central exit; missing cell {CenterExitCell}.", this);
+        }
+    }
+
     private void InitializeSequences()
     {
         _sequenceStates.Clear();
@@ -196,8 +212,20 @@ public class Level3Manager : MonoBehaviour
     {
         if (!_sequenceStates.TryGetValue(sequenceId, out SequenceState state)) return;
 
-        while (state.CurrentIndex < state.Definition.Steps.Length)
+        while (true)
         {
+            if (state.CurrentIndex >= state.Definition.Steps.Length)
+            {
+                if (state.Definition.Loop)
+                {
+                    state.CurrentIndex = 0;
+                }
+                else
+                {
+                    break;
+                }
+            }
+
             SequenceStep step = state.Definition.Steps[state.CurrentIndex];
 
             if (!_cellOrigins.TryGetValue(step.Cell, out Vector2 origin))
@@ -217,13 +245,6 @@ public class Level3Manager : MonoBehaviour
                 case SequenceActionType.Fire:
                     spawned = SpawnFireWall(origin);
                     break;
-
-                case SequenceActionType.Exit:
-                    spawned = SpawnExit(origin);
-                    state.CurrentIndex++;
-                    state.ActiveObject = spawned;
-                    Debug.Log($"Level3Manager: Sequence '{state.Definition.Name}' revealed exit at cell {step.Cell}.", this);
-                    continue;
 
                 default:
                     Debug.LogWarning($"Level3Manager: Unsupported sequence action {step.ActionType}.", this);
@@ -345,6 +366,11 @@ public class Level3Manager : MonoBehaviour
             0f
         );
 
+        if (_exitPlaced)
+        {
+            return null;
+        }
+
         GameObject exit = exitPrefab != null
             ? Instantiate(exitPrefab, center, Quaternion.identity, transform)
             : CreateFallbackExit(center);
@@ -359,6 +385,7 @@ public class Level3Manager : MonoBehaviour
             exitZone.Initialize(gameManager);
         }
 
+        _exitPlaced = true;
         return exit;
     }
 
@@ -431,14 +458,16 @@ public class Level3Manager : MonoBehaviour
 
     private readonly struct SequenceDefinition
     {
-        public SequenceDefinition(string name, SequenceStep[] steps)
+        public SequenceDefinition(string name, SequenceStep[] steps, bool loop = false)
         {
             Name = name;
             Steps = steps;
+            Loop = loop;
         }
 
         public string Name { get; }
         public SequenceStep[] Steps { get; }
+        public bool Loop { get; }
     }
 
     private readonly struct SequenceStep
