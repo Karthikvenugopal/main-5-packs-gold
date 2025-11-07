@@ -4,6 +4,7 @@ using System.IO;
 using TMPro; // Still needed for other UI elements
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 public class GameManager : MonoBehaviour
@@ -570,6 +571,8 @@ public class GameManager : MonoBehaviour
         scaler.matchWidthOrHeight = 0.5f;
 
         canvasGO.AddComponent<GraphicRaycaster>();
+
+        EnsureEventSystemExists();
         
         // --- NEW: Create the Top UI Bar ---
         GameObject topBarGO = new GameObject("TopUI_Bar_Background");
@@ -590,6 +593,16 @@ public class GameManager : MonoBehaviour
         // --- END NEW ---
     }
     // --- MODIFICATION END ---
+
+    private void EnsureEventSystemExists()
+    {
+        if (EventSystem.current != null) return;
+
+        GameObject eventSystemGO = new GameObject("EventSystem");
+        eventSystemGO.AddComponent<EventSystem>();
+        eventSystemGO.AddComponent<StandaloneInputModule>();
+        DontDestroyOnLoad(eventSystemGO);
+    }
 
     // --- MODIFICATION START ---
     // This function is modified to parent the HeartsMasterContainer to the _topUiBar
@@ -959,9 +972,9 @@ public class GameManager : MonoBehaviour
         layoutGroup.spacing = 24f;
         layoutGroup.padding = new RectOffset(10, 10, 10, 10);
         layoutGroup.childForceExpandHeight = false;
-        layoutGroup.childForceExpandWidth = false;
+        layoutGroup.childForceExpandWidth = true;
         layoutGroup.childControlHeight = true;
-        layoutGroup.childControlWidth = false;
+        layoutGroup.childControlWidth = true;
 
         _victoryNextLevelButton = CreateEndPanelButton("NextLevelButton", buttonRow.transform, nextLevelButtonText);
         if (_victoryNextLevelButton != null)
@@ -996,6 +1009,9 @@ public class GameManager : MonoBehaviour
         bg.color = new Color(0.2f, 0.45f, 0.9f, 1f);
 
         Button button = buttonGO.AddComponent<Button>();
+        LayoutElement layout = buttonGO.AddComponent<LayoutElement>();
+        layout.preferredWidth = rect.sizeDelta.x;
+        layout.preferredHeight = rect.sizeDelta.y;
 
         GameObject labelGO = new GameObject("Label");
         labelGO.transform.SetParent(buttonGO.transform, false);
@@ -1010,6 +1026,7 @@ public class GameManager : MonoBehaviour
         label.fontSize = 28f;
         label.text = labelText;
         label.color = Color.white;
+        label.raycastTarget = false;
 
         return button;
     }
@@ -1516,6 +1533,26 @@ public class GameManager : MonoBehaviour
         {
             sceneName = nextSceneName;
             return true;
+        }
+
+        Scene activeScene = SceneManager.GetActiveScene();
+        int activeIndex = activeScene.buildIndex;
+        int totalScenes = SceneManager.sceneCountInBuildSettings;
+
+        if (activeIndex >= 0 && totalScenes > 0)
+        {
+            for (int index = activeIndex + 1; index < totalScenes; index++)
+            {
+                string nextPath = SceneUtility.GetScenePathByBuildIndex(index);
+                if (string.IsNullOrEmpty(nextPath)) continue;
+
+                string candidate = Path.GetFileNameWithoutExtension(nextPath);
+                if (!string.IsNullOrEmpty(candidate))
+                {
+                    sceneName = candidate;
+                    return true;
+                }
+            }
         }
 
         sceneName = null;
