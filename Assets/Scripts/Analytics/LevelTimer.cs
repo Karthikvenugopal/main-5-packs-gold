@@ -57,14 +57,24 @@ namespace Analytics
                 ? SceneManager.GetActiveScene().name
                 : overrideLevelId.Trim();
 
-            // analytics code: avoid logging from MainMenu
-            if (string.Equals(levelId, "MainMenu", StringComparison.OrdinalIgnoreCase))
+            // analytics code: only log Level1 and Level2
+            var idLower = levelId.ToLowerInvariant();
+            var isWhitelisted = idLower == "level1scene" || idLower == "level2scene" ||
+                                idLower == "level1" || idLower == "level2";
+
+            if (!isWhitelisted)
             {
-                Debug.Log("[Analytics] Skipping analytics send for MainMenu scene.");
+                Debug.Log($"[Analytics] Skipping analytics send for scene '{levelId}'. Only Level1/Level2 allowed.");
                 return;
             }
 
             GoogleSheetsAnalytics.SendLevelResult(levelId, success, elapsed);
         }
+
+        public float ElapsedSeconds => Mathf.Max(0f, Time.realtimeSinceStartup - _startTime);
+
+        public string ResolvedLevelId => string.IsNullOrWhiteSpace(overrideLevelId)
+            ? SceneManager.GetActiveScene().name
+            : overrideLevelId.Trim();
     }
 }

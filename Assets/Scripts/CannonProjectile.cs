@@ -140,7 +140,7 @@ public class CannonProjectile : MonoBehaviour
         {
             if (ShouldAffectPlayer(player))
             {
-                _gameManager?.OnPlayerHitByEnemy(player);
+                _gameManager?.OnPlayerHitByEnemy(player, _variant);
             }
         }
 
