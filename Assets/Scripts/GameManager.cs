@@ -7,10 +7,10 @@ using UnityEngine.UI;
 
 public class GameManager : MonoBehaviour
 {
-    // --- MODIFICATION START ---
+    // ... (你所有的 [Header] 和 [SerializeField] 变量都保持不变) ...
+    // ... (isTutorialMode, messageBackground, levelIntroMessage, etc.) ...
     [Header("Tutorial Settings")]
     [SerializeField] private bool isTutorialMode = false;
-    // --- MODIFICATION END ---
 
     [SerializeField] private Color messageBackground = new Color(0f, 0f, 0f, 0.55f);
     [Header("UI Messages")]
@@ -50,8 +50,6 @@ public class GameManager : MonoBehaviour
     };
     [SerializeField] private string level2InstructionContinuePrompt = "Press Space to start";
     
-    // --- MODIFICATION START ---
-    // This section is updated to have separate heart sprites for Ember and Aqua.
     [Header("UI Sprites")]
     [Tooltip("Sprite for Ember's full heart (Red)")]
     [SerializeField] private Sprite emberHeartFullSprite;
@@ -71,18 +69,24 @@ public class GameManager : MonoBehaviour
     [Tooltip("Sprite for an empty water token slot")]
     [SerializeField] private Sprite waterTokenEmptySprite;
     
-    // --- NEW!! ---
-    // These variables let you control the icon size from the Inspector.
     [Header("UI Icon Sizes")]
     [Tooltip("The size (Width, Height) for the heart icons.")]
     [SerializeField] private Vector2 heartIconSize = new Vector2(50f, 50f);
     [Tooltip("The size (Width, Height) for the token icons.")]
     [SerializeField] private Vector2 tokenIconSize = new Vector2(45f, 45f);
+
+    // --- MODIFICATION START ---
+    // This new variable controls the height of the top UI bar.
+    [Header("UI Layout")]
+    [Tooltip("The height (in reference pixels) of the top UI bar")]
+    [SerializeField] private float topUiBarHeight = 160f;
+    [Tooltip("The background color of the top UI bar")]
+    [SerializeField] private Color topUiBarColor = new Color(0.1f, 0.1f, 0.1f, 0.8f);
     // --- MODIFICATION END ---
+
 
     // Keeps a visible record of how many fire tokens the team has picked up.
     public int fireTokensCollected = 0;
-
     // Keeps a visible record of how many water tokens the team has picked up.
     public int waterTokensCollected = 0;
 
@@ -92,16 +96,14 @@ public class GameManager : MonoBehaviour
     private Canvas _hudCanvas;
     
     // --- MODIFICATION START ---
-    // We remove the old TextMeshProUGUI labels for hearts and tokens.
-    // private TextMeshProUGUI _heartsLabel; // <-- Removed
-    // private TextMeshProUGUI _tokensLabel; // <-- Removed
-
-    // We add lists to store references to the new Image components.
+    // We add a reference for the top UI bar's RectTransform.
+    private RectTransform _topUiBar;
+    // --- MODIFICATION END ---
+    
     private List<Image> _emberHeartImages = new List<Image>();
     private List<Image> _aquaHeartImages = new List<Image>();
     private List<Image> _emberTokenImages = new List<Image>();
     private List<Image> _aquaTokenImages = new List<Image>();
-    // --- MODIFICATION END ---
     
     private int _fireHearts;
     private int _waterHearts;
@@ -133,7 +135,7 @@ public class GameManager : MonoBehaviour
     private void Awake()
     {
         NormalizeDisplayStrings();
-        EnsureHudCanvas();
+        EnsureHudCanvas(); // This function is now modified
         CreateHeartsUI(); // This function is now modified
         CreateTokensUI(); // This function is now modified
         CreateVictoryPanel();
@@ -144,25 +146,22 @@ public class GameManager : MonoBehaviour
             s_totalWaterTokensCollected = 0;
         }
 
-        // --- MODIFICATION START ---
         if (!isTutorialMode)
         {
-            CreateStatusUI(); 
+            CreateStatusUI(); // This function is now modified
         }
-        // --- MODIFICATION END ---
         ResetTokenTracking();
         ResetHearts();
         
-        // --- MODIFICATION START ---
-        // User requested to restore this call to create duplicate UI.
-        CreateStatusUI(); // <-- Restored per user request
-        // --- MODIFICATION END ---
+        CreateStatusUI(); // This function is now modified
         
-        // analytics code: ensure a LevelTimer exists in gameplay scenes
         EnsureLevelTimer();
         CreateInstructionPanelIfNeeded();
     }
 
+    // ... (Update, RegisterPlayer, OnLevelReady, TryStartLevel, etc. are UNCHANGED) ...
+    // ... (Scroll down to EnsureHudCanvas) ...
+    
     private void Update()
     {
         if (_waitingForInstructionAck)
@@ -203,14 +202,12 @@ public class GameManager : MonoBehaviour
     public void OnLevelReady()
     {
         _levelReady = true;
-        // --- MODIFICATION START ---
         if (!isTutorialMode)
         {
             UpdateStatus(levelIntroMessage);
         }
-        // --- MODIFICATION END ---
         ResetTokenTracking();
-        RecountTokensInScene(); // This function is now modified
+        RecountTokensInScene();
         if (_players.Count >= 2)
         {
             TryStartLevel();
@@ -231,12 +228,10 @@ public class GameManager : MonoBehaviour
         }
 
         CancelNextSceneLoad();
-        // --- MODIFICATION START ---
         if (!isTutorialMode)
         {
             UpdateStatus(levelStartMessage);
         }
-        // --- MODIFICATION END ---
     }
 
     public void OnPlayersTouched(CoopPlayerController playerA, CoopPlayerController playerB)
@@ -302,7 +297,7 @@ public class GameManager : MonoBehaviour
             _totalFireTokens = fireTokensCollected;
         }
 
-        UpdateTokensUI(); // This function is now modified
+        UpdateTokensUI();
     }
 
     public void OnWaterTokenCollected()
@@ -314,7 +309,7 @@ public class GameManager : MonoBehaviour
             _totalWaterTokens = waterTokensCollected;
         }
 
-        UpdateTokensUI(); // This function is now modified
+        UpdateTokensUI();
     }
 
     public void OnExitReached()
@@ -340,31 +335,34 @@ public class GameManager : MonoBehaviour
         Debug.Log(message);
     }
 
+    // --- MODIFICATION START ---
+    // This function is modified to parent the Status UI to the _topUiBar
+    // and anchor it to the top-center.
     private void CreateStatusUI()
     {
         if (_hudCanvas == null) return;
         
-        // --- MODIFICATION START ---
-        // This check is to prevent duplication if you *don't* want two UIs.
-        // But since you do, this check might be removed or changed.
-        // For now, we'll give the second UI a different name.
+        // This logic to create a second one is still here per your request
         string backgroundName = "MessageBackground";
         if (_hudCanvas.transform.Find(backgroundName) != null)
         {
-             // If one already exists, create the second one with a different name.
              backgroundName = "MessageBackground_2";
         }
-        // --- MODIFICATION END ---
 
-        GameObject background = new GameObject(backgroundName); // Use the dynamic name
-        background.transform.SetParent(_hudCanvas.transform, false);
+        GameObject background = new GameObject(backgroundName); 
+        
+        // --- MODIFICATION: Parent to the Top UI Bar ---
+        background.transform.SetParent(_topUiBar, false);
 
         RectTransform bgRect = background.AddComponent<RectTransform>();
-        bgRect.anchorMin = new Vector2(0.5f, 1f);
-        bgRect.anchorMax = new Vector2(0.5f, 1f);
+        
+        // --- MODIFICATION: Anchor to the Top-Center of the bar ---
+        bgRect.anchorMin = new Vector2(0.5f, 1f); // Top-Center
+        bgRect.anchorMax = new Vector2(0.5f, 1f); // Top-Center
         bgRect.pivot = new Vector2(0.5f, 1f);
         bgRect.sizeDelta = new Vector2(680f, 120f);
-        bgRect.anchoredPosition = new Vector2(0f, -40f);
+        // Position it 40 pixels down from the top-center of the bar
+        bgRect.anchoredPosition = new Vector2(0f, -40f); 
 
         Image image = background.AddComponent<Image>();
         image.color = messageBackground;
@@ -378,18 +376,17 @@ public class GameManager : MonoBehaviour
         textRect.offsetMin = new Vector2(20f, 20f);
         textRect.offsetMax = new Vector2(-20f, -20f);
 
-        // --- MODIFICATION START ---
-        // We assign _statusLabel. If two are created, this will only reference the *last* one.
-        // This is the intended behavior based on your request.
         _statusLabel = textGO.AddComponent<TextMeshProUGUI>();
-        // --- MODIFICATION END ---
         _statusLabel.alignment = TextAlignmentOptions.Center;
         _statusLabel.fontSize = 40f;
         _statusLabel.text = string.Empty;
     }
+    // --- MODIFICATION END ---
+
 
     private bool TryGetInstructionContentForScene(out string[] lines, out string prompt)
     {
+        // ... (This function is UNCHANGED) ...
         lines = null;
         prompt = instructionContinuePrompt;
 
@@ -421,6 +418,7 @@ public class GameManager : MonoBehaviour
 
     private void CreateInstructionPanelIfNeeded()
     {
+        // ... (This function is UNCHANGED) ...
         if (_hudCanvas == null || _instructionPanel != null) return;
 
         if (!TryGetInstructionContentForScene(out var lines, out var prompt)) return;
@@ -486,6 +484,7 @@ public class GameManager : MonoBehaviour
 
     private void DismissInstructionPanel()
     {
+        // ... (This function is UNCHANGED) ...
         _waitingForInstructionAck = false;
 
         if (_instructionPanel != null)
@@ -503,6 +502,7 @@ public class GameManager : MonoBehaviour
 
     private void RestoreTimeScaleIfNeeded()
     {
+        // ... (This function is UNCHANGED) ...
         if (_instructionPausedTime)
         {
             Time.timeScale = _previousTimeScale;
@@ -510,6 +510,8 @@ public class GameManager : MonoBehaviour
         }
     }
 
+    // --- MODIFICATION START ---
+    // This function is modified to create the _topUiBar.
     private void EnsureHudCanvas()
     {
         if (_hudCanvas != null) return;
@@ -527,40 +529,62 @@ public class GameManager : MonoBehaviour
         scaler.matchWidthOrHeight = 0.5f;
 
         canvasGO.AddComponent<GraphicRaycaster>();
+        
+        // --- NEW: Create the Top UI Bar ---
+        GameObject topBarGO = new GameObject("TopUI_Bar_Background");
+        topBarGO.transform.SetParent(canvasGO.transform, false); // Parent to the Canvas
+        Image topBarImg = topBarGO.AddComponent<Image>();
+        topBarImg.color = topUiBarColor; // Use the new color variable
+
+        _topUiBar = topBarGO.GetComponent<RectTransform>();
+        
+        // Anchor it to the top edge and stretch 100% wide
+        _topUiBar.anchorMin = new Vector2(0f, 1f); 
+        _topUiBar.anchorMax = new Vector2(1f, 1f); 
+        _topUiBar.pivot = new Vector2(0.5f, 1f);
+        
+        // Set its height using the new variable
+        _topUiBar.sizeDelta = new Vector2(0f, topUiBarHeight); // 0f for width = 100% stretch
+        _topUiBar.anchoredPosition = Vector2.zero; // Position at the top
+        // --- END NEW ---
     }
+    // --- MODIFICATION END ---
 
     // --- MODIFICATION START ---
-    // This function is completely refactored to add a master container and a "Life" title.
+    // This function is modified to parent the HeartsMasterContainer to the _topUiBar
+    // and anchor it to the top-right *of the bar*.
     private void CreateHeartsUI()
     {
         if (_hudCanvas == null) return;
         
         // --- 1. Create the Master Container for all "Life" UI ---
         GameObject heartsMasterContainer = new GameObject("HeartsMasterContainer");
-        heartsMasterContainer.transform.SetParent(_hudCanvas.transform, false);
+        
+        // --- MODIFICATION: Parent to the Top UI Bar ---
+        heartsMasterContainer.transform.SetParent(_topUiBar, false);
 
-        // Add a Vertical Layout Group to stack the Title, Ember's hearts, and Aqua's hearts
         VerticalLayoutGroup masterLayout = heartsMasterContainer.AddComponent<VerticalLayoutGroup>();
         masterLayout.spacing = 10;
         masterLayout.childAlignment = TextAnchor.UpperRight;
         masterLayout.childControlWidth = false;
         masterLayout.childControlHeight = false;
         
-        // Add a Content Size Fitter to make the master container wrap its children
         ContentSizeFitter masterFitter = heartsMasterContainer.AddComponent<ContentSizeFitter>();
         masterFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
 
-        // Position the master container in the top-right corner
         RectTransform masterRect = heartsMasterContainer.GetComponent<RectTransform>();
-        masterRect.anchorMin = new Vector2(1f, 1f);
+        
+        // --- MODIFICATION: Anchor to the top-right *of the bar* ---
+        masterRect.anchorMin = new Vector2(1f, 1f); 
         masterRect.anchorMax = new Vector2(1f, 1f);
         masterRect.pivot = new Vector2(1f, 1f);
-        masterRect.anchoredPosition = new Vector2(-40f, -40f); // Top-right position
-        masterRect.sizeDelta = new Vector2(360f, 200f); // Set a base width, height will be controlled by fitter
+        // Position it 40px in from the top-right corner of the bar
+        masterRect.anchoredPosition = new Vector2(-40f, -40f); 
+        masterRect.sizeDelta = new Vector2(360f, 200f); 
 
         // --- 2. Create the "Life" Title ---
         GameObject titleLabelGO = new GameObject("TitleLabel");
-        titleLabelGO.transform.SetParent(heartsMasterContainer.transform, false); // Parent to master
+        titleLabelGO.transform.SetParent(heartsMasterContainer.transform, false);
         TextMeshProUGUI titleLabel = titleLabelGO.AddComponent<TextMeshProUGUI>();
         titleLabel.text = "Life";
         titleLabel.fontSize = 42f;
@@ -568,13 +592,12 @@ public class GameManager : MonoBehaviour
         titleLabel.color = Color.white;
         titleLabel.alignment = TextAlignmentOptions.Right;
 
-        // Add LayoutElement to control size
         LayoutElement titleLayout = titleLabelGO.AddComponent<LayoutElement>();
-        titleLayout.preferredWidth = 360f; // Match the container width
+        titleLayout.preferredWidth = 360f; 
         
         // --- 3. Create Hearts Container for Ember ---
         GameObject emberHeartsGO = new GameObject("EmberHeartsContainer");
-        emberHeartsGO.transform.SetParent(heartsMasterContainer.transform, false); // Parent to master
+        emberHeartsGO.transform.SetParent(heartsMasterContainer.transform, false); 
         
         Image emberBg = emberHeartsGO.AddComponent<Image>();
         emberBg.color = new Color(0f, 0f, 0f, 0.35f); 
@@ -588,9 +611,8 @@ public class GameManager : MonoBehaviour
 
         RectTransform emberRect = emberHeartsGO.GetComponent<RectTransform>();
         float heartContainerHeight = heartIconSize.y + emberLayout.padding.top + emberLayout.padding.bottom;
-        emberRect.sizeDelta = new Vector2(360f, heartContainerHeight); // Set fixed width
+        emberRect.sizeDelta = new Vector2(360f, heartContainerHeight);
 
-        // Create Ember Label
         GameObject emberLabelGO = new GameObject("Label");
         emberLabelGO.transform.SetParent(emberHeartsGO.transform, false); 
         TextMeshProUGUI emberLabel = emberLabelGO.AddComponent<TextMeshProUGUI>();
@@ -599,7 +621,7 @@ public class GameManager : MonoBehaviour
         emberLabel.color = Color.white;
         emberLabel.alignment = TextAlignmentOptions.Right;
         LayoutElement emberLabelLayout = emberLabelGO.AddComponent<LayoutElement>();
-        emberLabelLayout.preferredWidth = 160f; // Give the label a fixed width
+        emberLabelLayout.preferredWidth = 160f; 
 
         _emberHeartImages.Clear();
         for (int i = 0; i < startingHearts; i++)
@@ -618,7 +640,7 @@ public class GameManager : MonoBehaviour
 
         // --- 4. Create Hearts Container for Aqua ---
         GameObject aquaHeartsGO = new GameObject("AquaHeartsContainer");
-        aquaHeartsGO.transform.SetParent(heartsMasterContainer.transform, false); // Parent to master
+        aquaHeartsGO.transform.SetParent(heartsMasterContainer.transform, false); 
 
         Image aquaBg = aquaHeartsGO.AddComponent<Image>();
         aquaBg.color = new Color(0f, 0f, 0f, 0.35f); 
@@ -631,9 +653,8 @@ public class GameManager : MonoBehaviour
         aquaLayout.padding = new RectOffset(10, 10, 5, 5); 
 
         RectTransform aquaRect = aquaHeartsGO.GetComponent<RectTransform>();
-        aquaRect.sizeDelta = new Vector2(360f, heartContainerHeight); // Use same size
+        aquaRect.sizeDelta = new Vector2(360f, heartContainerHeight); 
 
-        // Create Aqua Label
         GameObject aquaLabelGO = new GameObject("Label");
         aquaLabelGO.transform.SetParent(aquaHeartsGO.transform, false); 
         TextMeshProUGUI aquaLabel = aquaLabelGO.AddComponent<TextMeshProUGUI>();
@@ -642,7 +663,7 @@ public class GameManager : MonoBehaviour
         aquaLabel.color = Color.white;
         aquaLabel.alignment = TextAlignmentOptions.Right;
         LayoutElement aquaLabelLayout = aquaLabelGO.AddComponent<LayoutElement>();
-        aquaLabelLayout.preferredWidth = 160f; // Give the label a fixed width
+        aquaLabelLayout.preferredWidth = 160f; 
 
         _aquaHeartImages.Clear();
         for (int i = 0; i < startingHearts; i++)
@@ -664,37 +685,41 @@ public class GameManager : MonoBehaviour
     // --- MODIFICATION END ---
     
     // --- MODIFICATION START ---
-    // This function is completely refactored to add a master container and a "Collect" title.
+    // This function is modified to parent the TokensMasterContainer to the _topUiBar
+    // and anchor it to the top-left *of the bar*.
     private void CreateTokensUI()
     {
         if (_hudCanvas == null) return;
         
         // --- 1. Create the Master Container for all "Collect" UI ---
         GameObject tokensMasterContainer = new GameObject("TokensMasterContainer");
-        tokensMasterContainer.transform.SetParent(_hudCanvas.transform, false);
+        
+        // --- MODIFICATION: Parent to the Top UI Bar ---
+        tokensMasterContainer.transform.SetParent(_topUiBar, false);
 
-        // Add a Vertical Layout Group to stack the Title, Ember's tokens, and Aqua's tokens
         VerticalLayoutGroup masterLayout = tokensMasterContainer.AddComponent<VerticalLayoutGroup>();
         masterLayout.spacing = 10;
         masterLayout.childAlignment = TextAnchor.UpperLeft;
         masterLayout.childControlWidth = false;
         masterLayout.childControlHeight = false;
         
-        // Add a Content Size Fitter to make the master container wrap its children
         ContentSizeFitter masterFitter = tokensMasterContainer.AddComponent<ContentSizeFitter>();
         masterFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+        masterFitter.horizontalFit = ContentSizeFitter.FitMode.PreferredSize; // Let it wrap width
 
-        // Position the master container in the top-left corner
         RectTransform masterRect = tokensMasterContainer.GetComponent<RectTransform>();
-        masterRect.anchorMin = new Vector2(0f, 1f);
+        
+        // --- MODIFICATION: Anchor to the top-left *of the bar* ---
+        masterRect.anchorMin = new Vector2(0f, 1f); 
         masterRect.anchorMax = new Vector2(0f, 1f);
         masterRect.pivot = new Vector2(0f, 1f);
-        masterRect.anchoredPosition = new Vector2(40f, -40f); // Top-left position
-        masterRect.sizeDelta = new Vector2(520f, 200f); // Set a base width, height will be controlled by fitter
+        // Position it 40px in from the top-left corner of the bar
+        masterRect.anchoredPosition = new Vector2(40f, -40f);
+        masterRect.sizeDelta = new Vector2(520f, 200f); 
 
         // --- 2. Create the "Collect" Title ---
         GameObject titleLabelGO = new GameObject("TitleLabel");
-        titleLabelGO.transform.SetParent(tokensMasterContainer.transform, false); // Parent to master
+        titleLabelGO.transform.SetParent(tokensMasterContainer.transform, false); 
         TextMeshProUGUI titleLabel = titleLabelGO.AddComponent<TextMeshProUGUI>();
         titleLabel.text = "Collect";
         titleLabel.fontSize = 42f;
@@ -702,13 +727,12 @@ public class GameManager : MonoBehaviour
         titleLabel.color = Color.white;
         titleLabel.alignment = TextAlignmentOptions.Left;
 
-        // Add LayoutElement to control size
         LayoutElement titleLayout = titleLabelGO.AddComponent<LayoutElement>();
-        titleLayout.preferredWidth = 520f; // Match the container width
+        titleLayout.preferredWidth = 520f;
         
         // --- 3. Create Token Container for Ember ---
         GameObject emberTokensGO = new GameObject("EmberTokensContainer");
-        emberTokensGO.transform.SetParent(tokensMasterContainer.transform, false); // Parent to master
+        emberTokensGO.transform.SetParent(tokensMasterContainer.transform, false); 
         
         Image emberBg = emberTokensGO.AddComponent<Image>();
         emberBg.color = new Color(0f, 0f, 0f, 0.35f); 
@@ -722,9 +746,12 @@ public class GameManager : MonoBehaviour
 
         RectTransform emberRect = emberTokensGO.GetComponent<RectTransform>();
         float tokenContainerHeight = tokenIconSize.y + emberLayout.padding.top + emberLayout.padding.bottom;
-        emberRect.sizeDelta = new Vector2(520f, tokenContainerHeight); // Set fixed width
+        emberRect.sizeDelta = new Vector2(520f, tokenContainerHeight); 
+        
+        // --- MODIFICATION: Add Content Size Fitter ---
+        ContentSizeFitter emberFitter = emberTokensGO.AddComponent<ContentSizeFitter>();
+        emberFitter.horizontalFit = ContentSizeFitter.FitMode.PreferredSize; // Make it wrap content
 
-        // Create Ember Token Label
         GameObject emberLabelGO = new GameObject("Label");
         emberLabelGO.transform.SetParent(emberTokensGO.transform, false); 
         TextMeshProUGUI emberLabel = emberLabelGO.AddComponent<TextMeshProUGUI>();
@@ -733,11 +760,11 @@ public class GameManager : MonoBehaviour
         emberLabel.color = Color.white;
         emberLabel.alignment = TextAlignmentOptions.Left;
         LayoutElement emberLabelLayout = emberLabelGO.AddComponent<LayoutElement>();
-        emberLabelLayout.preferredWidth = 130f; // Give the label a fixed width
+        emberLabelLayout.preferredWidth = 130f; 
 
         // --- 4. Create Token Container for Aqua ---
         GameObject aquaTokensGO = new GameObject("AquaTokensContainer");
-        aquaTokensGO.transform.SetParent(tokensMasterContainer.transform, false); // Parent to master
+        aquaTokensGO.transform.SetParent(tokensMasterContainer.transform, false); 
         
         Image aquaBg = aquaTokensGO.AddComponent<Image>();
         aquaBg.color = new Color(0f, 0f, 0f, 0.35f); 
@@ -750,9 +777,12 @@ public class GameManager : MonoBehaviour
         aquaLayout.padding = new RectOffset(10, 10, 5, 5); 
 
         RectTransform aquaRect = aquaTokensGO.GetComponent<RectTransform>();
-        aquaRect.sizeDelta = new Vector2(520f, tokenContainerHeight); // Set fixed width
+        aquaRect.sizeDelta = new Vector2(520f, tokenContainerHeight);
+        
+        // --- MODIFICATION: Add Content Size Fitter ---
+        ContentSizeFitter aquaFitter = aquaTokensGO.AddComponent<ContentSizeFitter>();
+        aquaFitter.horizontalFit = ContentSizeFitter.FitMode.PreferredSize; // Make it wrap content
 
-        // Create Aqua Token Label
         GameObject aquaLabelGO = new GameObject("Label");
         aquaLabelGO.transform.SetParent(aquaTokensGO.transform, false); 
         TextMeshProUGUI aquaLabel = aquaLabelGO.AddComponent<TextMeshProUGUI>();
@@ -761,7 +791,7 @@ public class GameManager : MonoBehaviour
         aquaLabel.color = Color.white;
         aquaLabel.alignment = TextAlignmentOptions.Left;
         LayoutElement aquaLabelLayout = aquaLabelGO.AddComponent<LayoutElement>();
-        aquaLabelLayout.preferredWidth = 130f; // Give the label a fixed width
+        aquaLabelLayout.preferredWidth = 130f; 
 
         UpdateTokensUI();
     }
@@ -769,6 +799,7 @@ public class GameManager : MonoBehaviour
 
     private void CreateVictoryPanel()
     {
+        // ... (This function is UNCHANGED, it's an overlay so it's fine) ...
         if (!useVictoryPanel || _hudCanvas == null || _victoryPanel != null) return;
 
         _victoryPanel = new GameObject("VictoryPanel");
@@ -860,6 +891,7 @@ public class GameManager : MonoBehaviour
 
     private void ShowVictoryPanel()
     {
+        // ... (This function is UNCHANGED) ...
         if (!useVictoryPanel || _victoryPanel == null) return;
 
         if (_fireVictoryLabel != null)
@@ -877,6 +909,7 @@ public class GameManager : MonoBehaviour
 
     private void ResetHearts()
     {
+        // ... (This function is UNCHANGED) ...
         int clampedHearts = Mathf.Max(0, startingHearts);
         _fireHearts = clampedHearts;
         _waterHearts = clampedHearts;
@@ -885,6 +918,7 @@ public class GameManager : MonoBehaviour
 
     private void ResetTokenTracking()
     {
+        // ... (This function is UNCHANGED) ...
         fireTokensCollected = 0;
         waterTokensCollected = 0;
         _totalFireTokens = 0;
@@ -892,10 +926,9 @@ public class GameManager : MonoBehaviour
         UpdateTokensUI();
     }
 
-    // --- MODIFICATION START ---
-    // This function is rewritten to update the Heart Images using the new specific sprites.
     private void UpdateHeartsUI()
     {
+        // ... (This function is UNCHANGED) ...
         // Loop through all of Ember's heart images
         for (int i = 0; i < _emberHeartImages.Count; i++)
         {
@@ -946,12 +979,10 @@ public class GameManager : MonoBehaviour
             }
         }
     }
-    // --- MODIFICATION END ---
 
-    // --- MODIFICATION START ---
-    // This function is completely rewritten to update the Token Images.
     private void UpdateTokensUI()
     {
+        // ... (This function is UNCHANGED) ...
         // Loop through all of Ember's token images
         for (int i = 0; i < _emberTokenImages.Count; i++)
         {
@@ -980,10 +1011,9 @@ public class GameManager : MonoBehaviour
             }
         }
     }
-    // --- MODIFICATION END ---
 
     // --- MODIFICATION START ---
-    // This function is modified to find the correct containers and populate them.
+    // This function is modified to find the correct containers *inside* the master container.
     private void RecountTokensInScene()
     {
         int fireCount = 0;
@@ -1006,8 +1036,6 @@ public class GameManager : MonoBehaviour
 
         _totalFireTokens = fireCount;
         _totalWaterTokens = waterCount;
-        
-        // --- NEW CODE START ---
         
         // 1. Find the master container, *then* the sub-containers
         Transform tokensMasterContainer = _hudCanvas.transform.Find("TokensMasterContainer");
@@ -1039,16 +1067,21 @@ public class GameManager : MonoBehaviour
             // Adjust container size
             HorizontalLayoutGroup layout = emberContainer.GetComponent<HorizontalLayoutGroup>();
             float labelWidth = emberContainer.Find("Label").GetComponent<LayoutElement>().preferredWidth;
-            float iconsWidth = (tokenIconSize.x * _totalFireTokens) + (layout.spacing * (Mathf.Max(0, _totalFireTokens))); // Add spacing for label
+            float iconsWidth = (tokenIconSize.x * _totalFireTokens) + (layout.spacing * (Mathf.Max(0, _totalFireTokens)));
             float width = labelWidth + iconsWidth + layout.padding.left + layout.padding.right + layout.spacing;
+            
+            // Set the width on the RectTransform
             emberContainer.GetComponent<RectTransform>().sizeDelta = new Vector2(width, tokenIconSize.y + layout.padding.top + layout.padding.bottom);
+            // And also set the preferredWidth on the LayoutElement so the master container wraps it
+            emberContainer.gameObject.AddComponent<LayoutElement>().preferredWidth = width;
+
 
             for (int i = 0; i < _totalFireTokens; i++)
             {
                 GameObject tokenImgGO = new GameObject($"Token_Fire_{i}");
                 tokenImgGO.transform.SetParent(emberContainer, false);
                 Image tokenImg = tokenImgGO.AddComponent<Image>();
-                tokenImg.sprite = fireTokenEmptySprite; // Default to "empty"
+                tokenImg.sprite = fireTokenEmptySprite; 
                 
                 RectTransform tokenRect = tokenImgGO.GetComponent<RectTransform>();
                 tokenRect.sizeDelta = tokenIconSize; 
@@ -1063,16 +1096,20 @@ public class GameManager : MonoBehaviour
             // Adjust container size
             HorizontalLayoutGroup layout = aquaContainer.GetComponent<HorizontalLayoutGroup>();
             float labelWidth = aquaContainer.Find("Label").GetComponent<LayoutElement>().preferredWidth;
-            float iconsWidth = (tokenIconSize.x * _totalWaterTokens) + (layout.spacing * (Mathf.Max(0, _totalWaterTokens))); // Add spacing for label
+            float iconsWidth = (tokenIconSize.x * _totalWaterTokens) + (layout.spacing * (Mathf.Max(0, _totalWaterTokens)));
             float width = labelWidth + iconsWidth + layout.padding.left + layout.padding.right + layout.spacing;
+            
+            // Set the width on the RectTransform
             aquaContainer.GetComponent<RectTransform>().sizeDelta = new Vector2(width, tokenIconSize.y + layout.padding.top + layout.padding.bottom);
+            // And also set the preferredWidth on the LayoutElement so the master container wraps it
+            aquaContainer.gameObject.AddComponent<LayoutElement>().preferredWidth = width;
             
             for (int i = 0; i < _totalWaterTokens; i++)
             {
                 GameObject tokenImgGO = new GameObject($"Token_Aqua_{i}");
                 tokenImgGO.transform.SetParent(aquaContainer, false);
                 Image tokenImg = tokenImgGO.AddComponent<Image>();
-                tokenImg.sprite = waterTokenEmptySprite; // Default to "empty"
+                tokenImg.sprite = waterTokenEmptySprite; 
                 
                 RectTransform tokenRect = tokenImgGO.GetComponent<RectTransform>();
                 tokenRect.sizeDelta = tokenIconSize; 
@@ -1081,12 +1118,14 @@ public class GameManager : MonoBehaviour
                 _aquaTokenImages.Add(tokenImg);
             }
         }
-        // --- NEW CODE END ---
 
-        UpdateTokensUI(); // This existing call will now update the new images
+        UpdateTokensUI();
     }
     // --- MODIFICATION END ---
 
+    // ... (DamageBothPlayers, DamagePlayer, ApplyDamage, etc. are UNCHANGED) ...
+    // ... (Scroll down to the end) ...
+    
     private void DamageBothPlayers(CoopPlayerController playerA, CoopPlayerController playerB)
     {
         if (!_gameActive || _gameFinished) return;
@@ -1123,12 +1162,9 @@ public class GameManager : MonoBehaviour
             case PlayerRole.Watergirl: // This is the line I fixed for you before
                 _waterHearts = Mathf.Max(0, _waterHearts - amount);
                 break;
-            // --- MODIFICATION START ---
-            // Added a default case to catch potential new or incorrect roles
             default:
                  Debug.LogWarning($"ApplyDamage called with unhandled role: {role}");
                  break;
-            // --- MODIFICATION END ---
         }
 
         UpdateHeartsUI(); // This will now update the images
