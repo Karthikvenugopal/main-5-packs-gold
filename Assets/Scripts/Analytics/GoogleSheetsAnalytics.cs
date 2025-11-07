@@ -74,10 +74,10 @@ public static void SendLevelResult(string levelId, bool success, float timeSpent
 
             // Client-side whitelist to avoid Tutorial or other scenes
             var idLower = levelId != null ? levelId.ToLowerInvariant() : string.Empty;
-            bool allowed = idLower == "level1scene" || idLower == "level2scene" || idLower == "level1" || idLower == "level2";
+            bool allowed = idLower == "level1scene" || idLower == "level2scene" || idLower == "level3scene" || idLower == "level1" || idLower == "level2" || idLower == "level3";
             if (!allowed)
             {
-                Debug.Log($"[Analytics] Skipping level result for scene '{levelId}'. Only Level1/Level2 allowed.");
+                Debug.Log($"[Analytics] Skipping level result for scene '{levelId}'. Only Level1/Level2/Level3 allowed.");
                 return;
             }
 
@@ -119,10 +119,10 @@ CoroutineHost.Run(SendFormUrlEncoded(_webAppUrl, data));
 
             // Client-side whitelist to ensure Tutorial is never logged
             var idLower = levelId != null ? levelId.ToLowerInvariant() : string.Empty;
-            bool allowed = idLower == "level1scene" || idLower == "level2scene" || idLower == "level1" || idLower == "level2";
+            bool allowed = idLower == "level1scene" || idLower == "level2scene" || idLower == "level3scene" || idLower == "level1" || idLower == "level2" || idLower == "level3";
             if (!allowed)
             {
-                Debug.Log($"[Analytics] Skipping hotspot for scene '{levelId}'. Only Level1/Level2 allowed.");
+                Debug.Log($"[Analytics] Skipping hotspot for scene '{levelId}'. Only Level1/Level2/Level3 allowed.");
                 return;
             }
 
@@ -170,10 +170,10 @@ if (!string.IsNullOrEmpty(victimRole)) data["victim_role"] = victimRole;
             }
 
             var idLower = levelId != null ? levelId.ToLowerInvariant() : string.Empty;
-            bool allowed = idLower == "level1scene" || idLower == "level2scene" || idLower == "level1" || idLower == "level2";
+            bool allowed = idLower == "level1scene" || idLower == "level2scene" || idLower == "level3scene" || idLower == "level1" || idLower == "level2" || idLower == "level3";
             if (!allowed)
             {
-                Debug.Log($"[Analytics] Skipping heart loss for scene '{levelId}'. Only Level1/Level2 allowed.");
+                Debug.Log($"[Analytics] Skipping heart loss for scene '{levelId}'. Only Level1/Level2/Level3 allowed.");
                 return;
             }
 
@@ -192,7 +192,47 @@ if (!string.IsNullOrEmpty(victimRole)) data["victim_role"] = victimRole;
 CoroutineHost.Run(SendGetQuery(_webAppUrl, data));
         }
 
-        private static IEnumerator SendFormUrlEncoded(string url, System.Collections.Generic.Dictionary<string, string> data)
+                public static void SendAssist(
+            string levelId,
+            string actor,
+            string recipient,
+            string kind,
+            float timeSinceStartSeconds)
+        {
+            if (string.IsNullOrWhiteSpace(_webAppUrl))
+            {
+                Debug.LogWarning("[Analytics] Cannot send analytics: Web App URL is empty.");
+                return;
+            }
+
+            if (string.IsNullOrEmpty(levelId))
+            {
+                levelId = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
+            }
+
+            var idLower = levelId != null ? levelId.ToLowerInvariant() : string.Empty;
+            bool allowed = idLower == "level1scene" || idLower == "level2scene" || idLower == "level3scene" || idLower == "level1" || idLower == "level2" || idLower == "level3";
+            if (!allowed)
+            {
+                Debug.Log($"[Analytics] Skipping assist for scene '{levelId}'. Only Level1/Level2/Level3 allowed.");
+                return;
+            }
+
+            var data = new System.Collections.Generic.Dictionary<string, string>
+            {
+                { "event", "assist" },
+                { "session_id", _sessionId },
+                { "level_id", levelId },
+                { "actor", actor ?? string.Empty },
+                { "recipient", recipient ?? string.Empty },
+                { "kind", kind ?? string.Empty },
+                { "time_since_start_s", Mathf.RoundToInt(timeSinceStartSeconds).ToString() }
+            };
+
+            if (!string.IsNullOrWhiteSpace(_sheetId)) data["sid"] = _sheetId;
+
+            CoroutineHost.Run(SendGetQuery(_webAppUrl, data));
+        }private static IEnumerator SendFormUrlEncoded(string url, System.Collections.Generic.Dictionary<string, string> data)
         {
             using (var request = UnityWebRequest.Post(url, data))
             {

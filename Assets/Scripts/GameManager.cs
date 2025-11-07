@@ -17,6 +17,12 @@ public class GameManager : MonoBehaviour
         ProjectileFire = 4,
         ProjectileIce = 5
     }
+    public enum AssistType
+    {
+        ExtinguishFire = 1,
+        MeltIce = 2
+    }
+
     // --- MODIFICATION START ---
     // ... (你所有的 [Header] 和 [SerializeField] 变量都保持不变) ...
     // ... (isTutorialMode, messageBackground, levelIntroMessage, etc.) ...
@@ -1444,7 +1450,21 @@ public class GameManager : MonoBehaviour
     }
 
     // analytics code
-    private void EnsureLevelTimer()
+    
+    // analytics: assist interaction
+    public void RecordAssist(PlayerRole actor, AssistType type, Vector3? world = null)
+    {
+        try
+        {
+            EnsureLevelTimer();
+            float elapsed = levelTimer != null ? levelTimer.ElapsedSeconds : 0f;
+            string actorStr = actor == PlayerRole.Fireboy ? "fire" : "water";
+            string recipStr = actor == PlayerRole.Fireboy ? "water" : "fire";
+            string kind = type == AssistType.ExtinguishFire ? "extinguish_fire" : "melt_ice";
+            Analytics.GoogleSheetsAnalytics.SendAssist(null, actorStr, recipStr, kind, elapsed);
+        }
+        catch { }
+    }private void EnsureLevelTimer()
     {
         if (levelTimer != null) return;
 
