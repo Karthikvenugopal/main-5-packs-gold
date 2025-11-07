@@ -29,7 +29,7 @@ public class Level3Manager : MonoBehaviour
         "#.#.#.#.#.#.###",
         "#.#.#.#.###.#.#",
         "#.#.......#.#.#",
-        "#.#..###..#.#.#",
+        "#.#.####..#.#.#",
         "#.####.#..#.#.#",
         "#....#.#..#.#.#",
         "#.##.#....#.#.#",
@@ -71,6 +71,33 @@ public class Level3Manager : MonoBehaviour
             {
                 new SequenceStep(SequenceActionType.Fire, new Vector2Int(3, 5)),
                 new SequenceStep(SequenceActionType.Ice, new Vector2Int(4, 1))
+            },
+            loop: true
+        ),
+        new SequenceDefinition(
+            "FireThenIce_MidLeft",
+            new[]
+            {
+                new SequenceStep(SequenceActionType.Fire, new Vector2Int(4, 6)),
+                new SequenceStep(SequenceActionType.Ice, new Vector2Int(5, 5))
+            },
+            loop: true
+        ),
+        new SequenceDefinition(
+            "FireThenIce_CenterTop",
+            new[]
+            {
+                new SequenceStep(SequenceActionType.Fire, new Vector2Int(7, 5)),
+                new SequenceStep(SequenceActionType.Ice, new Vector2Int(8, 6))
+            },
+            loop: true
+        ),
+        new SequenceDefinition(
+            "IceThenFire_BottomRight",
+            new[]
+            {
+                new SequenceStep(SequenceActionType.Ice, new Vector2Int(11, 10)),
+                new SequenceStep(SequenceActionType.Fire, new Vector2Int(12, 11))
             },
             loop: true
         )
