@@ -932,7 +932,48 @@ public class GameManager : MonoBehaviour
         _victoryPanel.SetActive(false);
     }
 
-    private void ShowVictoryPanel()
+    private Button CreateEndPanelButton(string name, Transform parent, string labelText)
+    {
+        GameObject buttonGO = new GameObject(name);
+        buttonGO.transform.SetParent(parent, false);
+
+        RectTransform rect = buttonGO.AddComponent<RectTransform>();
+        rect.sizeDelta = new Vector2(160f, 60f);
+
+        Image bg = buttonGO.AddComponent<Image>();
+        bg.color = new Color(0.2f, 0.45f, 0.9f, 1f);
+
+        Button button = buttonGO.AddComponent<Button>();
+
+        GameObject labelGO = new GameObject("Label");
+        labelGO.transform.SetParent(buttonGO.transform, false);
+        RectTransform labelRect = labelGO.AddComponent<RectTransform>();
+        labelRect.anchorMin = Vector2.zero;
+        labelRect.anchorMax = Vector2.one;
+        labelRect.offsetMin = Vector2.zero;
+        labelRect.offsetMax = Vector2.zero;
+
+        TextMeshProUGUI label = labelGO.AddComponent<TextMeshProUGUI>();
+        label.alignment = TextAlignmentOptions.Center;
+        label.fontSize = 28f;
+        label.text = labelText;
+        label.color = Color.white;
+
+        return button;
+    }
+
+    private void SetButtonLabel(Button button, string text)
+    {
+        if (button == null) return;
+
+        TextMeshProUGUI label = button.GetComponentInChildren<TextMeshProUGUI>();
+        if (label != null)
+        {
+            label.text = text;
+        }
+    }
+
+    private void ShowEndPanel(EndGameState state)
     {
         // ... (This function is UNCHANGED) ...
         if (!useVictoryPanel || _victoryPanel == null) return;
@@ -1409,6 +1450,18 @@ public class GameManager : MonoBehaviour
 
         StopCoroutine(_loadNextSceneRoutine);
         _loadNextSceneRoutine = null;
+    }
+
+    private bool TryGetNextSceneName(out string sceneName)
+    {
+        if (!string.IsNullOrEmpty(nextSceneName))
+        {
+            sceneName = nextSceneName;
+            return true;
+        }
+
+        sceneName = null;
+        return false;
     }
 
     private void OnDestroy()

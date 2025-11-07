@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using UnityEngine;
 using UnityEngine.Networking;
 
@@ -139,39 +140,33 @@ namespace Analytics
 
         private static IEnumerator SendFormUrlEncoded(string url, System.Collections.Generic.Dictionary<string, string> data)
         {
-            var request = UnityWebRequest.Post(url, data);
-            var asyncOperation = request.SendWebRequest();
-
-            asyncOperation.completed += _ =>
+            using (var request = UnityWebRequest.Post(url, data))
             {
-                try
-                {
+                yield return request.SendWebRequest();
+
+                bool failed;
+                string errorSummary;
 #if UNITY_2020_2_OR_NEWER
-                    if (request.result != UnityWebRequest.Result.Success)
-                    {
-                        Debug.LogWarning($"[Analytics] Post failed: {(int)request.responseCode} {request.result} {request.error}");
-                    }
-                    else
+                failed = request.result != UnityWebRequest.Result.Success;
+                errorSummary = $"{(int)request.responseCode} {request.result} {request.error}";
 #else
-                    if (request.isNetworkError || request.isHttpError)
-                    {
-                        Debug.LogWarning($"[Analytics] Post failed: {(int)request.responseCode} {request.error}");
-                    }
-                    else
+                failed = request.isNetworkError || request.isHttpError;
+                errorSummary = $"{(int)request.responseCode} {request.error}";
 #endif
+
+                if (failed)
+                {
+                    Debug.LogWarning($"[Analytics] Post failed: {errorSummary}");
+                }
+                else
+                {
+                    var body = request.downloadHandler != null ? request.downloadHandler.text : string.Empty;
+                    if (!string.IsNullOrEmpty(body))
                     {
-                        var body = request.downloadHandler != null ? request.downloadHandler.text : string.Empty;
-                        if (!string.IsNullOrEmpty(body))
-                        {
-                            Debug.Log($"[Analytics] Post ok: {body}");
-                        }
+                        Debug.Log($"[Analytics] Post ok: {body}");
                     }
                 }
-                finally
-                {
-                    request.Dispose();
-                }
-            };
+            }
         }
 
         private static IEnumerator SendGetQuery(string url, System.Collections.Generic.Dictionary<string, string> data)
