@@ -55,6 +55,24 @@ public class Level3Manager : MonoBehaviour
                 new SequenceStep(SequenceActionType.Ice, new Vector2Int(12, 3))
             },
             loop: true
+        ),
+        new SequenceDefinition(
+            "IceThenFire",
+            new[]
+            {
+                new SequenceStep(SequenceActionType.Ice, new Vector2Int(5, 11)),
+                new SequenceStep(SequenceActionType.Fire, new Vector2Int(7, 10))
+            },
+            loop: true
+        ),
+        new SequenceDefinition(
+            "FireThenIce_Top",
+            new[]
+            {
+                new SequenceStep(SequenceActionType.Fire, new Vector2Int(3, 5)),
+                new SequenceStep(SequenceActionType.Ice, new Vector2Int(4, 1))
+            },
+            loop: true
         )
     };
 
