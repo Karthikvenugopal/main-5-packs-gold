@@ -26,6 +26,7 @@ public class CoopPlayerController : MonoBehaviour
     private Rigidbody2D _rigidbody;
     private Collider2D _collider;
     private GameManager _gameManager;
+    private GameManagerTutorial _gameManagerTutorial;
     private PlayerRole _role;
     private Vector2 _moveInput;
     private bool _movementEnabled;
@@ -54,10 +55,22 @@ public class CoopPlayerController : MonoBehaviour
     {
         _role = role;
         _gameManager = manager;
+        _gameManagerTutorial = null;
         _movementEnabled = false;
 
         ApplyRoleVisuals();
         _gameManager?.RegisterPlayer(this);
+    }
+
+    public void Initialize(PlayerRole role, GameManagerTutorial manager)
+    {
+        _role = role;
+        _gameManagerTutorial = manager;
+        _gameManager = null;
+        _movementEnabled = false;
+
+        ApplyRoleVisuals();
+        _gameManagerTutorial?.RegisterPlayer(this);
     }
 
     private void Update()
@@ -210,19 +223,20 @@ public class CoopPlayerController : MonoBehaviour
 
     private void OnCollisionEnter2D(Collision2D collision)
     {
-        if (_gameManager == null) return;
+        if (_gameManager == null && _gameManagerTutorial == null) return;
         if (!collision.collider.TryGetComponent(out CoopPlayerController other)) return;
         if (other == this) return;
 
         if (GetInstanceID() < other.GetInstanceID())
         {
-            _gameManager.OnPlayersTouched(this, other);
+            _gameManager?.OnPlayersTouched(this, other);
+            _gameManagerTutorial?.OnPlayersTouched(this, other);
         }
     }
 
     private bool TryApplyHazardDamage(Collider2D hazard)
     {
-        if (hazard == null || _gameManager == null) return false;
+        if (hazard == null || (_gameManager == null && _gameManagerTutorial == null)) return false;
 
         int hazardId = hazard.GetInstanceID();
         float now = Time.time;
@@ -236,7 +250,8 @@ public class CoopPlayerController : MonoBehaviour
         }
 
         _lastHazardDamageTimes[hazardId] = now;
-        _gameManager.DamagePlayer(_role, 1);
+        _gameManager?.DamagePlayer(_role, 1);
+        _gameManagerTutorial?.DamagePlayer(_role, 1);
         return true;
     }
 }
