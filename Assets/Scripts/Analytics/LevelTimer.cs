@@ -57,14 +57,14 @@ namespace Analytics
                 ? SceneManager.GetActiveScene().name
                 : overrideLevelId.Trim();
 
-            // analytics code: only log Level1 and Level2
+            // analytics code: only log Level1/Level2/Level3
             var idLower = levelId.ToLowerInvariant();
-            var isWhitelisted = idLower == "level1scene" || idLower == "level2scene" ||
-                                idLower == "level1" || idLower == "level2";
+            var isWhitelisted = idLower == "level1scene" || idLower == "level2scene" || idLower == "level3scene" ||
+                                idLower == "level1" || idLower == "level2" || idLower == "level3";
 
             if (!isWhitelisted)
             {
-                Debug.Log($"[Analytics] Skipping analytics send for scene '{levelId}'. Only Level1/Level2 allowed.");
+                Debug.Log($"[Analytics] Skipping analytics send for scene '{levelId}'. Only Level1/Level2/Level3 allowed.");
                 return;
             }
 
