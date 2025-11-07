@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
@@ -60,6 +61,7 @@ public class Level3Manager : MonoBehaviour
     private readonly Dictionary<Vector2Int, Vector2> _cellOrigins = new Dictionary<Vector2Int, Vector2>();
     private readonly HashSet<Vector2Int> _sequenceReservedCells = new HashSet<Vector2Int>();
     private readonly Dictionary<int, SequenceState> _sequenceStates = new Dictionary<int, SequenceState>();
+    private readonly Dictionary<int, Coroutine> _pendingSpawnCoroutines = new Dictionary<int, Coroutine>();
     private bool _tearingDown;
     private bool _exitPlaced;
 
@@ -235,6 +237,16 @@ public class Level3Manager : MonoBehaviour
                 continue;
             }
 
+            if (IsPlayerBlockingCell(origin))
+            {
+                if (!_pendingSpawnCoroutines.ContainsKey(sequenceId))
+                {
+                    _pendingSpawnCoroutines[sequenceId] = StartCoroutine(WaitForSequenceCellClear(sequenceId, step.Cell));
+                }
+                _sequenceStates[sequenceId] = state;
+                return;
+            }
+
             GameObject spawned;
             switch (step.ActionType)
             {
@@ -279,6 +291,52 @@ public class Level3Manager : MonoBehaviour
         SpawnNextSequenceStep(sequenceId);
     }
 
+    private IEnumerator WaitForSequenceCellClear(int sequenceId, Vector2Int cell)
+    {
+        while (!_tearingDown)
+        {
+            if (!_cellOrigins.TryGetValue(cell, out Vector2 origin))
+            {
+                break;
+            }
+
+            if (!IsPlayerBlockingCell(origin))
+            {
+                break;
+            }
+
+            yield return null;
+        }
+
+        _pendingSpawnCoroutines.Remove(sequenceId);
+
+        if (!_tearingDown)
+        {
+            SpawnNextSequenceStep(sequenceId);
+        }
+    }
+
+    private bool IsPlayerBlockingCell(Vector2 origin)
+    {
+        Vector2 center = new Vector2(
+            origin.x + 0.5f * cellSize,
+            origin.y - 0.5f * cellSize
+        );
+
+        Vector2 size = new Vector2(cellSize * 0.8f, cellSize * 0.8f);
+        Collider2D[] overlaps = Physics2D.OverlapBoxAll(center, size, 0f);
+
+        foreach (Collider2D collider in overlaps)
+        {
+            if (collider != null && collider.GetComponent<CoopPlayerController>() != null)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     private void AttachSequenceMember(GameObject target, int sequenceId)
     {
         if (target == null) return;
@@ -304,6 +362,14 @@ public class Level3Manager : MonoBehaviour
     private void OnDisable()
     {
         _tearingDown = true;
+        foreach (KeyValuePair<int, Coroutine> pending in _pendingSpawnCoroutines)
+        {
+            if (pending.Value != null)
+            {
+                StopCoroutine(pending.Value);
+            }
+        }
+        _pendingSpawnCoroutines.Clear();
     }
 
     private void OnDestroy()
