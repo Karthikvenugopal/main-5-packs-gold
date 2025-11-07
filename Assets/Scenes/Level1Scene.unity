@@ -359,7 +359,7 @@ Camera:
   m_Enabled: 1
   serializedVersion: 2
   m_ClearFlags: 2
-  m_BackGroundColor: {r: 0.11764706, g: 0.05882353, b: 0.05882353, a: 0}
+  m_BackGroundColor: {r: 0.12941177, g: 0.101960786, b: 0.16078432, a: 0}
   m_projectionMatrixMode: 1
   m_GateFitMode: 2
   m_FOVAxisMode: 0
@@ -379,7 +379,7 @@ Camera:
     x: 0
     y: 0
     width: 1
-    height: 1
+    height: 0.9
   near clip plane: 0.3
   far clip plane: 1000
   field of view: 60
@@ -676,79 +676,122 @@ MonoBehaviour:
   fireWallPrefab: {fileID: 4468719429622143330, guid: 1ada63391b0245bd931c379b2c1c8d09, type: 3}
   gameManager: {fileID: 1746984134}
   tokenPlacementManager: {fileID: 2110000000000000002}
---- !u!1 &1746984131
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1746984133}
-  - component: {fileID: 1746984132}
-  - component: {fileID: 1746984134}
-  m_Layer: 0
-  m_Name: GameManager
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &1746984132
+--- !u!114 &1746984134 stripped
 MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
+  m_CorrespondingSourceObject: {fileID: 777697172324581036, guid: 8c454dc0a577643e89ba9e1793c4e03f, type: 3}
+  m_PrefabInstance: {fileID: 1192189908127232899}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1746984131}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 112b4de80065e8f49906f7186a32798d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PlayerSpawner
-  playerPrefab: {fileID: 7307446650723487989, guid: 44964639595521e40aa2d28dda0ba7bd, type: 3}
-  gameManager: {fileID: 1746984134}
---- !u!4 &1746984133
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1746984131}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1746984134
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1746984131}
+  m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 72bba14dcf2e74822ae6734bd9595d83, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameManager
-  isTutorialMode: 0
-  messageBackground: {r: 0, g: 0, b: 0, a: 0.55}
-  levelIntroMessage: 'Work together: Ember melts ice; Aqua extinguishes fire.'
-  levelStartMessage: Work together. Ember melts ice; Aqua extinguishes fire.
-  levelVictoryMessage: Victory! Both heroes reached safety. Press R to play again.
-  waitForPartnerMessage: '{0} made it. Wait for your partner!'
-  exitReminderMessage: Both heroes must stand in the exit to finish.
-  nextSceneName: Level2Scene
-  nextSceneDelaySeconds: 2
-  useVictoryPanel: 0
-  victoryRestartSceneName: 
-  resetGlobalTokenTotalsOnLoad: 1
-  fireTokensCollected: 0
-  waterTokensCollected: 0
+--- !u!1001 &1192189908127232899
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 777697172324581036, guid: 8c454dc0a577643e89ba9e1793c4e03f, type: 3}
+      propertyPath: heartIconSize.x
+      value: 30
+      objectReference: {fileID: 0}
+    - target: {fileID: 777697172324581036, guid: 8c454dc0a577643e89ba9e1793c4e03f, type: 3}
+      propertyPath: heartIconSize.y
+      value: 30
+      objectReference: {fileID: 0}
+    - target: {fileID: 777697172324581036, guid: 8c454dc0a577643e89ba9e1793c4e03f, type: 3}
+      propertyPath: tokenIconSize.x
+      value: 30
+      objectReference: {fileID: 0}
+    - target: {fileID: 777697172324581036, guid: 8c454dc0a577643e89ba9e1793c4e03f, type: 3}
+      propertyPath: tokenIconSize.y
+      value: 30
+      objectReference: {fileID: 0}
+    - target: {fileID: 777697172324581036, guid: 8c454dc0a577643e89ba9e1793c4e03f, type: 3}
+      propertyPath: aquaHeartFullSprite
+      value: 
+      objectReference: {fileID: -2880978766386009668, guid: 28fb0f56d13b04528a3ef03f381a909e, type: 3}
+    - target: {fileID: 777697172324581036, guid: 8c454dc0a577643e89ba9e1793c4e03f, type: 3}
+      propertyPath: aquaHeartEmptySprite
+      value: 
+      objectReference: {fileID: -3368947314594817166, guid: 146106181316f4840b888eff730ebb50, type: 3}
+    - target: {fileID: 777697172324581036, guid: 8c454dc0a577643e89ba9e1793c4e03f, type: 3}
+      propertyPath: emberHeartFullSprite
+      value: 
+      objectReference: {fileID: 6341348101557482619, guid: 3b91ad87000d64526b2b182ed1ef4834, type: 3}
+    - target: {fileID: 777697172324581036, guid: 8c454dc0a577643e89ba9e1793c4e03f, type: 3}
+      propertyPath: fireTokenEmptySprite
+      value: 
+      objectReference: {fileID: 7234325214794955360, guid: 26adadf21083d4800a0a960cc5bee95a, type: 3}
+    - target: {fileID: 777697172324581036, guid: 8c454dc0a577643e89ba9e1793c4e03f, type: 3}
+      propertyPath: emberHeartEmptySprite
+      value: 
+      objectReference: {fileID: -4643077359141595314, guid: 3333514574fc144eb95cc807c8348464, type: 3}
+    - target: {fileID: 777697172324581036, guid: 8c454dc0a577643e89ba9e1793c4e03f, type: 3}
+      propertyPath: waterTokenEmptySprite
+      value: 
+      objectReference: {fileID: 6201639378690659322, guid: 61719adf5194c44d79debc0282e43dca, type: 3}
+    - target: {fileID: 777697172324581036, guid: 8c454dc0a577643e89ba9e1793c4e03f, type: 3}
+      propertyPath: fireTokenCollectedSprite
+      value: 
+      objectReference: {fileID: -4151771278503953051, guid: ec53f22ac97534774872e875f21508e6, type: 3}
+    - target: {fileID: 777697172324581036, guid: 8c454dc0a577643e89ba9e1793c4e03f, type: 3}
+      propertyPath: waterTokenCollectedSprite
+      value: 
+      objectReference: {fileID: 3472107637496650615, guid: 22ce194b86d81416ba29f64f1b0e6c3c, type: 3}
+    - target: {fileID: 1320424588882643016, guid: 8c454dc0a577643e89ba9e1793c4e03f, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1320424588882643016, guid: 8c454dc0a577643e89ba9e1793c4e03f, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1320424588882643016, guid: 8c454dc0a577643e89ba9e1793c4e03f, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1320424588882643016, guid: 8c454dc0a577643e89ba9e1793c4e03f, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1320424588882643016, guid: 8c454dc0a577643e89ba9e1793c4e03f, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1320424588882643016, guid: 8c454dc0a577643e89ba9e1793c4e03f, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1320424588882643016, guid: 8c454dc0a577643e89ba9e1793c4e03f, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1320424588882643016, guid: 8c454dc0a577643e89ba9e1793c4e03f, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1320424588882643016, guid: 8c454dc0a577643e89ba9e1793c4e03f, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1320424588882643016, guid: 8c454dc0a577643e89ba9e1793c4e03f, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8844507415564467767, guid: 8c454dc0a577643e89ba9e1793c4e03f, type: 3}
+      propertyPath: m_Name
+      value: GameManager
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 8c454dc0a577643e89ba9e1793c4e03f, type: 3}
 --- !u!1 &2110000000000000000
 GameObject:
   m_ObjectHideFlags: 0
@@ -986,7 +1029,7 @@ SceneRoots:
   - {fileID: 519420032}
   - {fileID: 549460520}
   - {fileID: 920500693}
-  - {fileID: 1746984133}
+  - {fileID: 1192189908127232899}
   - {fileID: 265964374}
   - {fileID: 231701431}
   - {fileID: 773757645}

@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -23,13 +24,22 @@ public class CoopPlayerController : MonoBehaviour
     [Header("Hazard Damage")]
     [SerializeField] private float hazardDamageCooldown = 0.5f;
 
+    [Header("Feedback")]
+    [SerializeField, Range(1, 6)] private int hurtFlashCount = 4;
+    [SerializeField, Range(0.01f, 0.5f)] private float hurtFlashOnDuration = 0.3f;
+    [SerializeField, Range(0.01f, 0.5f)] private float hurtFlashOffDuration = 0.3f;
+    [SerializeField, Range(0f, 1f)] private float hurtFlashGreyBlend = 0.4f;
+    [SerializeField, Range(0f, 1f)] private float hurtFlashBrightnessBoost = 0.09f;
+
     private Rigidbody2D _rigidbody;
     private Collider2D _collider;
+    private SpriteRenderer _spriteRenderer;
     private GameManager _gameManager;
     private GameManagerTutorial _gameManagerTutorial;
     private PlayerRole _role;
     private Vector2 _moveInput;
     private bool _movementEnabled;
+    private Coroutine _hurtFlashRoutine;
 
     private readonly Dictionary<int, float> _lastHazardDamageTimes = new();
 
@@ -39,6 +49,7 @@ public class CoopPlayerController : MonoBehaviour
     {
         _rigidbody = GetComponent<Rigidbody2D>();
         _collider = GetComponent<Collider2D>();
+        _spriteRenderer = GetComponent<SpriteRenderer>();
 
         _rigidbody.gravityScale = 0f;
         _rigidbody.freezeRotation = true;
@@ -201,10 +212,64 @@ public class CoopPlayerController : MonoBehaviour
 
     private void ApplyRoleVisuals()
     {
-        if (!TryGetComponent(out SpriteRenderer renderer)) return;
+        if (_spriteRenderer == null && !TryGetComponent(out _spriteRenderer)) return;
 
-        renderer.color = _role == PlayerRole.Fireboy ? fireboyColor : watergirlColor;
-        renderer.sortingOrder = 5;
+        _spriteRenderer.color = GetRoleColor();
+        _spriteRenderer.sortingOrder = 5;
+    }
+
+    private Color GetRoleColor()
+    {
+        return _role == PlayerRole.Fireboy ? fireboyColor : watergirlColor;
+    }
+
+    public void PlayHurtFlash()
+    {
+        if (!isActiveAndEnabled) return;
+        if (_spriteRenderer == null && !TryGetComponent(out _spriteRenderer)) return;
+
+        if (_hurtFlashRoutine != null)
+        {
+            StopCoroutine(_hurtFlashRoutine);
+        }
+
+        _hurtFlashRoutine = StartCoroutine(HurtFlashRoutine());
+    }
+
+    private IEnumerator HurtFlashRoutine()
+    {
+        Color originalColor = GetRoleColor();
+        Color flashColor = BuildHurtFlashColor(originalColor);
+
+        int flashes = Mathf.Max(1, hurtFlashCount);
+        float onDuration = Mathf.Max(0.01f, hurtFlashOnDuration);
+        float offDuration = Mathf.Max(0.01f, hurtFlashOffDuration);
+
+        for (int i = 0; i < flashes; i++)
+        {
+            _spriteRenderer.color = flashColor;
+            yield return new WaitForSeconds(onDuration);
+            _spriteRenderer.color = originalColor;
+
+            if (i < flashes - 1)
+            {
+                yield return new WaitForSeconds(offDuration);
+            }
+        }
+
+        _hurtFlashRoutine = null;
+    }
+
+    private Color BuildHurtFlashColor(Color roleColor)
+    {
+        float brightness = Mathf.Clamp01(hurtFlashBrightnessBoost);
+        float greyBlend = Mathf.Clamp01(hurtFlashGreyBlend);
+
+        Color brightened = Color.Lerp(roleColor, Color.white, brightness);
+        Color greyTarget = Color.Lerp(brightened, Color.gray, greyBlend);
+
+        greyTarget.a = roleColor.a;
+        return greyTarget;
     }
 
     public void SetMovementEnabled(bool enabled)

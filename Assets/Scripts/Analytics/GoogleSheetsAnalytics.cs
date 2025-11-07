@@ -92,6 +92,7 @@ public static void SendLevelResult(string levelId, bool success, float timeSpent
             
             if (!string.IsNullOrWhiteSpace(_sheetId)) data["sid"] = _sheetId;
 CoroutineHost.Run(SendFormUrlEncoded(_webAppUrl, data));
+            SendFormUrlEncoded(_webAppUrl, data);
         }
 
         public static void SendFailureHotspot(
@@ -193,19 +194,31 @@ CoroutineHost.Run(SendGetQuery(_webAppUrl, data));
 
         private static IEnumerator SendFormUrlEncoded(string url, System.Collections.Generic.Dictionary<string, string> data)
         {
-            using (var req = UnityWebRequest.Post(url, data))
+            using (var request = UnityWebRequest.Post(url, data))
             {
-                yield return req.SendWebRequest();
+                yield return request.SendWebRequest();
 
-                if (req.result != UnityWebRequest.Result.Success)
+                bool failed;
+                string errorSummary;
+#if UNITY_2020_2_OR_NEWER
+                failed = request.result != UnityWebRequest.Result.Success;
+                errorSummary = $"{(int)request.responseCode} {request.result} {request.error}";
+#else
+                failed = request.isNetworkError || request.isHttpError;
+                errorSummary = $"{(int)request.responseCode} {request.error}";
+#endif
+
+                if (failed)
                 {
-                    Debug.LogWarning($"[Analytics] Post failed: {(int)req.responseCode} {req.result} {req.error}");
+                    Debug.LogWarning($"[Analytics] Post failed: {errorSummary}");
                 }
                 else
                 {
-                    var body = req.downloadHandler != null ? req.downloadHandler.text : string.Empty;
+                    var body = request.downloadHandler != null ? request.downloadHandler.text : string.Empty;
                     if (!string.IsNullOrEmpty(body))
+                    {
                         Debug.Log($"[Analytics] Post ok: {body}");
+                    }
                 }
             }
         }
