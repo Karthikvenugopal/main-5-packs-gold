@@ -8,6 +8,16 @@ using UnityEngine.UI;
 
 public class GameManager : MonoBehaviour
 {
+    public enum DamageCause
+    {
+        Unknown = 0,
+        PlayerTouch = 1,
+        FireWall = 2,
+        IceWall = 3,
+        ProjectileFire = 4,
+        ProjectileIce = 5
+    }
+    // --- MODIFICATION START ---
     // ... (你所有的 [Header] 和 [SerializeField] 变量都保持不变) ...
     // ... (isTutorialMode, messageBackground, levelIntroMessage, etc.) ...
     [Header("Tutorial Settings")]
@@ -305,10 +315,11 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    public void OnPlayerHitByEnemy(CoopPlayerController player)
+    public void OnPlayerHitByEnemy(CoopPlayerController player, CannonVariant variant = CannonVariant.Fire)
     {
         if (player == null) return;
-        DamagePlayer(player.Role, 1);
+        var cause = variant == CannonVariant.Fire ? DamageCause.ProjectileFire : DamageCause.ProjectileIce;
+        DamagePlayer(player.Role, 1, cause);
     }
 
     public void OnFireTokenCollected()
@@ -1264,24 +1275,24 @@ public class GameManager : MonoBehaviour
 
         if (playerA != null)
         {
-            ApplyDamage(playerA.Role, 1, suppressCheck: true);
+            ApplyDamage(playerA.Role, 1, suppressCheck: true, cause: DamageCause.PlayerTouch);
         }
 
         if (playerB != null)
         {
-            ApplyDamage(playerB.Role, 1, suppressCheck: true);
+            ApplyDamage(playerB.Role, 1, suppressCheck: true, cause: DamageCause.PlayerTouch);
         }
 
         CheckForHeartDepletion();
     }
 
-    public void DamagePlayer(PlayerRole role, int amount)
+    public void DamagePlayer(PlayerRole role, int amount, DamageCause cause = DamageCause.Unknown, Vector3? worldOverride = null)
     {
         if (amount <= 0 || !_gameActive || _gameFinished) return;
-        ApplyDamage(role, amount, suppressCheck: false);
+        ApplyDamage(role, amount, suppressCheck: false, cause: cause, worldOverride: worldOverride);
     }
 
-    private void ApplyDamage(PlayerRole role, int amount, bool suppressCheck)
+    private void ApplyDamage(PlayerRole role, int amount, bool suppressCheck, DamageCause cause = DamageCause.Unknown, Vector3? worldOverride = null)
     {
         if (amount <= 0) return;
 
@@ -1301,29 +1312,16 @@ public class GameManager : MonoBehaviour
         UpdateHeartsUI(); // This will now update the images
         TriggerHurtEffect(role);
 
-        // analytics hotspot capture on damage
+        // analytics: heart loss event
         try
         {
             EnsureLevelTimer();
             float elapsed = levelTimer != null ? levelTimer.ElapsedSeconds : 0f;
-            Vector3 worldPos = Vector3.zero;
-            for (int i = 0; i < _players.Count; i++)
-            {
-                var p = _players[i];
-                if (p != null && p.Role == role)
-                {
-                    worldPos = p.transform.position;
-                    break;
-                }
-            }
-            Analytics.GoogleSheetsAnalytics.SendFailureHotspot(
+            Analytics.GoogleSheetsAnalytics.SendHeartLoss(
                 null,
-                worldPos,
-                elapsed,
-                Mathf.Max(0, _fireHearts + _waterHearts),
-                Mathf.Max(0, fireTokensCollected),
-                Mathf.Max(0, waterTokensCollected),
-                1f);
+                role == PlayerRole.Fireboy ? "fire" : "water",
+                cause.ToString(),
+                elapsed);
         }
         catch { }
 

@@ -315,8 +315,17 @@ public class CoopPlayerController : MonoBehaviour
         }
 
         _lastHazardDamageTimes[hazardId] = now;
-        _gameManager?.DamagePlayer(_role, 1);
         _gameManagerTutorial?.DamagePlayer(_role, 1);
+        GameManager.DamageCause cause = GameManager.DamageCause.Unknown;
+        if (hazard.TryGetComponent<FireWall>(out _))
+        {
+            cause = GameManager.DamageCause.FireWall;
+        }
+        else if (hazard.TryGetComponent<IceWall>(out _))
+        {
+            cause = GameManager.DamageCause.IceWall;
+        }
+        _gameManager.DamagePlayer(_role, 1, cause, hazard.transform.position);
         return true;
     }
 }

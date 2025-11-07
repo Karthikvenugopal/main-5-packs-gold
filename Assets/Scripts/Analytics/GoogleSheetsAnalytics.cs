@@ -9,14 +9,17 @@ namespace Analytics
     {
         private const string ConfigResourceName = "google_sheets_config"; // Resources/google_sheets_config.json
         private static string _webAppUrl;
-        private static string _sessionId;
+                private static string _sheetId; // Optional spreadsheet id for standalone Apps Script
+private static string _sessionId;
         private static bool _initialized;
 
         [Serializable]
         private class Config
         {
             public string webAppUrl;
-        }
+        
+            public string sheetId; // optional
+}
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         private static void Initialize()
@@ -32,7 +35,7 @@ namespace Analytics
                 if (ta != null && !string.IsNullOrEmpty(ta.text))
                 {
                     var cfg = JsonUtility.FromJson<Config>(ta.text);
-                    _webAppUrl = cfg != null ? cfg.webAppUrl : null;
+                    if (cfg != null) { _webAppUrl = cfg.webAppUrl; _sheetId = cfg.sheetId; }
                 }
             }
             catch (Exception e)
@@ -51,7 +54,12 @@ namespace Analytics
             _webAppUrl = url;
         }
 
-        public static void SendLevelResult(string levelId, bool success, float timeSpentSeconds)
+        
+        public static void SetSheetId(string sheetId)
+        {
+            _sheetId = sheetId;
+        }
+public static void SendLevelResult(string levelId, bool success, float timeSpentSeconds)
         {
             if (string.IsNullOrWhiteSpace(_webAppUrl))
             {
@@ -81,6 +89,9 @@ namespace Analytics
                 { "time_spent_s", Mathf.RoundToInt(timeSpentSeconds).ToString() }
             };
 
+            
+            if (!string.IsNullOrWhiteSpace(_sheetId)) data["sid"] = _sheetId;
+CoroutineHost.Run(SendFormUrlEncoded(_webAppUrl, data));
             SendFormUrlEncoded(_webAppUrl, data);
         }
 
@@ -91,7 +102,9 @@ namespace Analytics
             int heartsRemaining,
             int fireTokensCollected,
             int waterTokensCollected,
-            float cellSize = 1f)
+            float cellSize = 1f,
+            string victimRole = null,
+            string cause = null)
         {
             if (string.IsNullOrWhiteSpace(_webAppUrl))
             {
@@ -130,12 +143,53 @@ namespace Analytics
                 { "water_tokens", Mathf.Max(0, waterTokensCollected).ToString() }
             };
 
-#if UNITY_WEBGL && !UNITY_EDITOR
-            // Use GET on WebGL to avoid strict CORS preflight issues
+            
+            if (!string.IsNullOrWhiteSpace(_sheetId)) data["sid"] = _sheetId;
+if (!string.IsNullOrEmpty(victimRole)) data["victim_role"] = victimRole;
+            if (!string.IsNullOrEmpty(cause)) data["cause"] = cause;
+
+            // Use GET for robustness across Editor/WebGL/Standalone
             CoroutineHost.Run(SendGetQuery(_webAppUrl, data));
-#else
-            CoroutineHost.Run(SendFormUrlEncoded(_webAppUrl, data));
-#endif
+        }
+
+        public static void SendHeartLoss(
+            string levelId,
+            string player,
+            string cause,
+            float timeSinceStartSeconds)
+        {
+            if (string.IsNullOrWhiteSpace(_webAppUrl))
+            {
+                Debug.LogWarning("[Analytics] Cannot send analytics: Web App URL is empty.");
+                return;
+            }
+
+            if (string.IsNullOrEmpty(levelId))
+            {
+                levelId = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
+            }
+
+            var idLower = levelId != null ? levelId.ToLowerInvariant() : string.Empty;
+            bool allowed = idLower == "level1scene" || idLower == "level2scene" || idLower == "level1" || idLower == "level2";
+            if (!allowed)
+            {
+                Debug.Log($"[Analytics] Skipping heart loss for scene '{levelId}'. Only Level1/Level2 allowed.");
+                return;
+            }
+
+            var data = new System.Collections.Generic.Dictionary<string, string>
+            {
+                { "event", "heart_lost" },
+                { "session_id", _sessionId },
+                { "level_id", levelId },
+                { "player", player ?? string.Empty },
+                { "cause", cause ?? string.Empty },
+                { "time_since_start_s", Mathf.RoundToInt(timeSinceStartSeconds).ToString() }
+            };
+
+            
+            if (!string.IsNullOrWhiteSpace(_sheetId)) data["sid"] = _sheetId;
+CoroutineHost.Run(SendGetQuery(_webAppUrl, data));
         }
 
         private static IEnumerator SendFormUrlEncoded(string url, System.Collections.Generic.Dictionary<string, string> data)
