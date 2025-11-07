@@ -12,10 +12,6 @@ function doPost(e) {
   }
 }
 
-
-
-
-
 // Resolve target spreadsheet: prefer active (bound), else 'sheet_id'/'sid' param, else Script Property 'SHEET_ID'
 function getSpreadsheet_(data) {
   try {
@@ -28,69 +24,64 @@ function getSpreadsheet_(data) {
   } catch (e) {}
   throw new Error('No spreadsheet available. Bind the script to a Sheet or provide sheet_id/sid or Script Property SHEET_ID.');
 }
+
 function ensureAllAnalyticsSheets_(ss, opts) {
   ensureAvgTimeSuccessSheet_(ss, opts);
   ensureAvgTimeFailureSheet_(ss, opts);
-  // Intentionally omit AvgTime_All and AvgTime
   if (opts && opts.prune) {
     pruneAnalyticsSheets_(ss);
   }
 }
 
 function ensureAvgTimeSuccessSheet_(ss, opts) {
-  let sh = ss.getSheetByName("AvgTime_Success");
-  if (!sh) sh = ss.insertSheet("AvgTime_Success");
+  let sh = ss.getSheetByName('AvgTime_Success');
+  if (!sh) sh = ss.insertSheet('AvgTime_Success');
   else if (opts && opts.reset) sh.clear();
 
-  const formula = `=QUERY(Data!A2:E, "select C, avg(E) where D = TRUE and (C='Level1Scene' or C='Level1' or C='Level2Scene' or C='Level2') group by C label C 'level_id', avg(E) 'avg_time_success_s'", 0)`;
-  sh.getRange("A1").setValue(formula);
+  const formula = `=QUERY(Data!A2:E, "select C, avg(E) where D = TRUE and (C='Level1Scene' or C='Level1' or C='Level2Scene' or C='Level2' or C='Level3Scene' or C='Level3') group by C label C 'level_id', avg(E) 'avg_time_success_s'", 0)`;
+  sh.getRange('A1').setValue(formula);
 
   if (opts && opts.reset) sh.getCharts().forEach(c => sh.removeChart(c));
   if (sh.getCharts().length === 0) {
     const chart = sh.newChart()
       .asColumnChart()
-      .addRange(sh.getRange("A:B"))
+      .addRange(sh.getRange('A:B'))
       .setPosition(1, 3, 0, 0)
-      .setOption("title", "Average Time per Level (Success)")
-      .setOption("legend", { position: "none" })
-      .setOption("hAxis", { title: "Level" })
-      .setOption("vAxis", { title: "Average Time (s)" })
+      .setOption('title', 'Average Time per Level (Success)')
+      .setOption('legend', { position: 'none' })
+      .setOption('hAxis', { title: 'Level' })
+      .setOption('vAxis', { title: 'Average Time (s)' })
       .build();
     sh.insertChart(chart);
   }
 }
 
 function ensureAvgTimeFailureSheet_(ss, opts) {
-  let sh = ss.getSheetByName("AvgTime_Failure");
-  if (!sh) sh = ss.insertSheet("AvgTime_Failure");
+  let sh = ss.getSheetByName('AvgTime_Failure');
+  if (!sh) sh = ss.insertSheet('AvgTime_Failure');
   else if (opts && opts.reset) sh.clear();
 
-  const formula = `=QUERY(Data!A2:E, "select C, avg(E) where D = FALSE and (C='Level1Scene' or C='Level1' or C='Level2Scene' or C='Level2') group by C label C 'level_id', avg(E) 'avg_time_failure_s'", 0)`;
-  sh.getRange("A1").setValue(formula);
+  const formula = `=QUERY(Data!A2:E, "select C, avg(E) where D = FALSE and (C='Level1Scene' or C='Level1' or C='Level2Scene' or C='Level2' or C='Level3Scene' or C='Level3') group by C label C 'level_id', avg(E) 'avg_time_failure_s'", 0)`;
+  sh.getRange('A1').setValue(formula);
 
   if (opts && opts.reset) sh.getCharts().forEach(c => sh.removeChart(c));
   if (sh.getCharts().length === 0) {
     const chart = sh.newChart()
       .asColumnChart()
-      .addRange(sh.getRange("A:B"))
+      .addRange(sh.getRange('A:B'))
       .setPosition(1, 3, 0, 0)
-      .setOption("title", "Average Time per Level (Failure)")
-      .setOption("legend", { position: "none" })
-      .setOption("hAxis", { title: "Level" })
-      .setOption("vAxis", { title: "Average Time (s)" })
+      .setOption('title', 'Average Time per Level (Failure)')
+      .setOption('legend', { position: 'none' })
+      .setOption('hAxis', { title: 'Level' })
+      .setOption('vAxis', { title: 'Average Time (s)' })
       .build();
     sh.insertChart(chart);
   }
 }
 
-
-// AvgTime_All and AvgTime builders removed (we keep only Success/Failure)
-
-// Heatmap-related helpers removed
-
 function pruneAnalyticsSheets_(ss, opts) {
-  const essentials = new Set(["Data"]);
-  const withAverages = new Set(["Data", "AvgTime_Success", "AvgTime_Failure", "HeartLoss"]);
+  const essentials = new Set(['Data']);
+  const withAverages = new Set(['Data', 'AvgTime_Success', 'AvgTime_Failure', 'HeartLoss', 'Assist']);
   const keep = (opts && opts.essentialsOnly) ? essentials : withAverages;
   ss.getSheets().forEach(sheet => {
     const name = sheet.getName();
@@ -100,24 +91,24 @@ function pruneAnalyticsSheets_(ss, opts) {
       }
     }
   });
-  // Remove any legacy sheets the user doesn't want
-  ["Success Rate", "Success_Rate", "Median Success", "Median_Success"].forEach(n => {
+  ['Success Rate', 'Success_Rate', 'Median Success', 'Median_Success'].forEach(n => {
     const s = ss.getSheetByName(n);
     if (s && ss.getSheets().length > 1) ss.deleteSheet(s);
   });
 }
 
-
 function onOpen() {
   SpreadsheetApp.getUi()
-    .createMenu("Chef Analytics")
-    .addItem("Rebuild (averages only)", "setupVisualizationWithAverages")
-    .addItem("Prune other sheets (keep averages)", "pruneSheetsCommand_")
-    .addItem("Prune to essentials", "pruneEssentialsCommand_")
-    .addItem("Purge non-whitelisted rows", "purgeNonWhitelistedRows")
+    .createMenu('Chef Analytics')
+    .addItem('Rebuild (averages only)', 'setupVisualizationWithAverages')
+    .addItem('Prune other sheets (keep averages)', 'pruneSheetsCommand_')
+    .addItem('Prune to essentials', 'pruneEssentialsCommand_')
+    .addItem('Purge non-whitelisted rows', 'purgeNonWhitelistedRows')
     .addSeparator()
-    .addItem("Repair Average Formulas", "repairAverageTimeSheets")
-     .addItem("Build Heart Loss Chart", "buildHeartLossCharts").addToUi();
+    .addItem('Repair Average Formulas', 'repairAverageTimeSheets')
+    .addItem('Build Heart Loss Chart', 'buildHeartLossCharts')
+    .addItem('Build Assist Chart', 'buildAssistCharts')
+    .addToUi();
 }
 
 function pruneSheetsCommand_() {
@@ -130,15 +121,9 @@ function pruneEssentialsCommand_() {
   pruneAnalyticsSheets_(ss, { essentialsOnly: true });
 }
 
-// pruneExtraHeatmapGrids removed
-
-
-
-
 function doGet(e) {
-  // Health check with no params
   if (!e || !e.parameter || Object.keys(e.parameter).length === 0) {
-    return ContentService.createTextOutput("OK")
+    return ContentService.createTextOutput('OK')
       .setHeader('Access-Control-Allow-Origin', '*')
       .setHeader('Access-Control-Allow-Headers', 'Content-Type')
       .setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
@@ -156,7 +141,6 @@ function doGet(e) {
   }
 }
 
-// Parse JSON form body or fallback to query params
 function parseIncoming_(e) {
   let data = {};
   try {
@@ -175,7 +159,7 @@ function parseIncoming_(e) {
 function processEvent_(ss, data) {
   const level = String(data.level_id || '').trim();
   const lvlLower = level.toLowerCase();
-  const allowed = new Set(['level1', 'level1scene', 'level2', 'level2scene']);
+  const allowed = new Set(['level1', 'level1scene', 'level2', 'level2scene', 'level3', 'level3scene']);
   if (!allowed.has(lvlLower)) {
     return ContentService.createTextOutput(JSON.stringify({ ok: true, ignored: true }))
       .setMimeType(ContentService.MimeType.JSON)
@@ -185,8 +169,8 @@ function processEvent_(ss, data) {
   }
 
   const evt = String(data.event || '').trim().toLowerCase();
+
   if (evt === 'fail') {
-    // Heatmaps disabled: ignore fail-grid events
     return ContentService.createTextOutput(JSON.stringify({ ok: true, ignored: 'heatmap_disabled' }))
       .setMimeType(ContentService.MimeType.JSON)
       .setHeader('Access-Control-Allow-Origin', '*')
@@ -203,6 +187,21 @@ function processEvent_(ss, data) {
     sh.appendRow([new Date(), session, level, player, cause, tSince]);
 
     return ContentService.createTextOutput(JSON.stringify({ ok: true, type: 'heart_loss' }))
+      .setMimeType(ContentService.MimeType.JSON)
+      .setHeader('Access-Control-Allow-Origin', '*')
+      .setHeader('Access-Control-Allow-Headers', 'Content-Type')
+      .setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  }
+
+  if (evt === 'assist') {
+    const sh2 = ensureAssistSheet_(ss);
+    const actor = String(data.actor || '');
+    const recip = String(data.recipient || '');
+    const kind = String(data.kind || '');
+    const tSince = Number(data.time_since_start_s || data.t_since_start_s || 0) || 0;
+    sh2.appendRow([new Date(), String(data.session_id || ''), level, actor, recip, kind, tSince]);
+
+    return ContentService.createTextOutput(JSON.stringify({ ok: true, type: 'assist' }))
       .setMimeType(ContentService.MimeType.JSON)
       .setHeader('Access-Control-Allow-Origin', '*')
       .setHeader('Access-Control-Allow-Headers', 'Content-Type')
@@ -247,12 +246,10 @@ function ensureDataSheet_(ss) {
   return sh;
 }
 
-// debugInsertSampleHotspot removed
-
-// Remove any Data/Hotspots rows whose level_id is not Level1/Level2
+// Remove rows whose level_id is not Level1/Level2
 function purgeNonWhitelistedRows() {
   const ss = SpreadsheetApp.getActive();
-  const allowed = new Set(['level1', 'level1scene', 'level2', 'level2scene']);
+  const allowed = new Set(['level1', 'level1scene', 'level2', 'level2scene', 'level3', 'level3scene']);
 
   const purgeSheet = (name, levelCol) => {
     const sh = ss.getSheetByName(name);
@@ -263,22 +260,22 @@ function purgeNonWhitelistedRows() {
     const toDelete = [];
     for (let i = 0; i < rng.length; i++) {
       const v = String(rng[i][0] || '').toLowerCase();
-      if (!allowed.has(v)) toDelete.push(i + 2); // 1-based row index
+      if (!allowed.has(v)) toDelete.push(i + 2);
     }
-    // Delete bottom-up
     for (let j = toDelete.length - 1; j >= 0; j--) {
       sh.deleteRow(toDelete[j]);
     }
   };
 
-  purgeSheet('Data', 3);      // C column = level_id
-  purgeSheet('Hotspots', 3);  // C column = level_id
+  purgeSheet('Data', 3);      // C = level_id
+  purgeSheet('HeartLoss', 3); // C = level_id
+  purgeSheet('Assist', 3);    // C = level_id
 }
 
 // Force the AvgTime_* formulas to only include Level1/Level2
 function repairAverageTimeSheets() {
   const ss = SpreadsheetApp.getActive();
-  const where = "(C='Level1Scene' or C='Level1' or C='Level2Scene' or C='Level2')";
+  const where = "(C='Level1Scene' or C='Level1' or C='Level2Scene' or C='Level2' or C='Level3Scene' or C='Level3')";
 
   const setFormula = (name, f) => {
     let sh = ss.getSheetByName(name);
@@ -289,7 +286,6 @@ function repairAverageTimeSheets() {
 
   setFormula('AvgTime_Success', `=QUERY(Data!A2:E, "select C, avg(E) where D = TRUE and ${where} group by C label C 'level_id', avg(E) 'avg_time_success_s'", 0)`);
   setFormula('AvgTime_Failure', `=QUERY(Data!A2:E, "select C, avg(E) where D = FALSE and ${where} group by C label C 'level_id', avg(E) 'avg_time_failure_s'", 0)`);
-  // Omit AvgTime_All and AvgTime per request
 }
 
 // ---------- Heart Loss Metrics ----------
@@ -304,47 +300,53 @@ function ensureHeartLossSheet_(ss) {
   return sh;
 }
 
-// Build per-attempt heart losses and an averaged view (losses per attempt by cause)
-// All heatmap and hotspots-specific functions removed to simplify script
-
-// Build a simple bar chart of heart losses by cause (Level1/Level2 only)
-// Level-wise heart loss charts (two separate sheets for Level1 and Level2)
 // Place two bar charts (Level 1 and Level 2) directly on the HeartLoss sheet
 function ensureHeartLossChartsOnSheet_(ss, opts) {
   const sh = ensureHeartLossSheet_(ss);
-  // Place formulas in side columns to avoid the A:F data range
   const l1Where = "(C='Level1Scene' or C='Level1')";
   const l2Where = "(C='Level2Scene' or C='Level2')";
+  const l3Where = "(C='Level3Scene' or C='Level3')";
   const f1 = `=QUERY(HeartLoss!A2:F, "select E, count(A) where ${l1Where} group by E label E 'cause', count(A) 'loss_count'", 0)`;
   const f2 = `=QUERY(HeartLoss!A2:F, "select E, count(A) where ${l2Where} group by E label E 'cause', count(A) 'loss_count'", 0)`;
-  sh.getRange('H1').setValue(f1); // H:I used for Level 1
-  sh.getRange('K1').setValue(f2); // K:L used for Level 2
+  const f3 = `=QUERY(HeartLoss!A2:F, "select E, count(A) where ${l3Where} group by E label E 'cause', count(A) 'loss_count'", 0)`;
+  sh.getRange('H1').setValue(f1);
+  sh.getRange('K1').setValue(f2);
+  sh.getRange('N1').setValue(f3);
 
   if (opts && opts.reset) sh.getCharts().forEach(c => sh.removeChart(c));
-  if (sh.getCharts().length < 2) {
-    // Chart 1: Level 1 causes
+  if (sh.getCharts().length < 1) {
     const c1 = sh.newChart()
       .asColumnChart()
       .addRange(sh.getRange('H:I'))
-      .setPosition(1, 8, 0, 0) // Row 1, Col H
-      .setOption('title', 'Heart Losses by Cause — Level 1')
+      .setPosition(1, 8, 0, 0)
+      .setOption('title', 'Heart Losses by Cause - Level 1')
       .setOption('legend', { position: 'none' })
       .setOption('hAxis', { title: 'Cause' })
       .setOption('vAxis', { title: 'Loss Count' })
       .build();
     sh.insertChart(c1);
 
-    // Chart 2: Level 2 causes
     const c2 = sh.newChart()
       .asColumnChart()
       .addRange(sh.getRange('K:L'))
-      .setPosition(16, 8, 0, 0) // Place lower on the sheet
-      .setOption('title', 'Heart Losses by Cause — Level 2')
+      .setPosition(16, 8, 0, 0)
+      .setOption('title', 'Heart Losses by Cause - Level 2')
       .setOption('legend', { position: 'none' })
       .setOption('hAxis', { title: 'Cause' })
       .setOption('vAxis', { title: 'Loss Count' })
       .build();
     sh.insertChart(c2);
+
+    const c3 = sh.newChart()
+      .asColumnChart()
+      .addRange(sh.getRange('N:O'))
+      .setPosition(31, 8, 0, 0)
+      .setOption('title', 'Heart Losses by Cause - Level 3')
+      .setOption('legend', { position: 'none' })
+      .setOption('hAxis', { title: 'Cause' })
+      .setOption('vAxis', { title: 'Loss Count' })
+      .build();
+    sh.insertChart(c3);
   }
 }
 
@@ -352,3 +354,42 @@ function buildHeartLossCharts() {
   const ss = SpreadsheetApp.getActive();
   ensureHeartLossChartsOnSheet_(ss, { reset: true });
 }
+
+// ---------- Assist Metrics ----------
+function ensureAssistSheet_(ss) {
+  let sh = ss.getSheetByName('Assist');
+  if (!sh) {
+    sh = ss.insertSheet('Assist');
+    sh.getRange('A1:G1').setValues([[
+      'timestamp', 'session_id', 'level_id', 'actor', 'recipient', 'kind', 'time_since_start_s'
+    ]]);
+  }
+  return sh;
+}
+
+function ensureAssistChartsOnSheet_(ss, opts) {
+  const sh = ensureAssistSheet_(ss);
+  const where = "(C='Level1Scene' or C='Level1' or C='Level2Scene' or C='Level2' or C='Level3Scene' or C='Level3')";
+  const f = `=QUERY(Assist!A2:G, "select C, count(A) where ${where} group by C label C 'level_id', count(A) 'assist_count'", 0)`;
+  sh.getRange('H1').setValue(f);
+
+  if (opts && opts.reset) sh.getCharts().forEach(c => sh.removeChart(c));
+  if (sh.getCharts().length === 0) {
+    const chart = sh.newChart()
+      .asColumnChart()
+      .addRange(sh.getRange('H:I'))
+      .setPosition(1, 8, 0, 0)
+      .setOption('title', 'Assist Interactions per Level')
+      .setOption('legend', { position: 'none' })
+      .setOption('hAxis', { title: 'Level' })
+      .setOption('vAxis', { title: 'Assist Count' })
+      .build();
+    sh.insertChart(chart);
+  }
+}
+
+function buildAssistCharts() {
+  const ss = SpreadsheetApp.getActive();
+  ensureAssistChartsOnSheet_(ss, { reset: true });
+}
+
