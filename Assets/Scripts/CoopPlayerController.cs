@@ -25,8 +25,11 @@ public class CoopPlayerController : MonoBehaviour
     [SerializeField] private float hazardDamageCooldown = 0.5f;
 
     [Header("Feedback")]
-    [SerializeField] private Color hurtFlashColor = new Color(0.7f, 0.7f, 0.7f, 1f);
-    [SerializeField] private float hurtFlashDuration = 0.12f;
+    [SerializeField, Range(1, 6)] private int hurtFlashCount = 4;
+    [SerializeField, Range(0.01f, 0.5f)] private float hurtFlashOnDuration = 0.3f;
+    [SerializeField, Range(0.01f, 0.5f)] private float hurtFlashOffDuration = 0.3f;
+    [SerializeField, Range(0f, 1f)] private float hurtFlashGreyBlend = 0.4f;
+    [SerializeField, Range(0f, 1f)] private float hurtFlashBrightnessBoost = 0.09f;
 
     private Rigidbody2D _rigidbody;
     private Collider2D _collider;
@@ -223,10 +226,37 @@ public class CoopPlayerController : MonoBehaviour
     private IEnumerator HurtFlashRoutine()
     {
         Color originalColor = GetRoleColor();
-        _spriteRenderer.color = hurtFlashColor;
-        yield return new WaitForSeconds(hurtFlashDuration);
-        _spriteRenderer.color = originalColor;
+        Color flashColor = BuildHurtFlashColor(originalColor);
+
+        int flashes = Mathf.Max(1, hurtFlashCount);
+        float onDuration = Mathf.Max(0.01f, hurtFlashOnDuration);
+        float offDuration = Mathf.Max(0.01f, hurtFlashOffDuration);
+
+        for (int i = 0; i < flashes; i++)
+        {
+            _spriteRenderer.color = flashColor;
+            yield return new WaitForSeconds(onDuration);
+            _spriteRenderer.color = originalColor;
+
+            if (i < flashes - 1)
+            {
+                yield return new WaitForSeconds(offDuration);
+            }
+        }
+
         _hurtFlashRoutine = null;
+    }
+
+    private Color BuildHurtFlashColor(Color roleColor)
+    {
+        float brightness = Mathf.Clamp01(hurtFlashBrightnessBoost);
+        float greyBlend = Mathf.Clamp01(hurtFlashGreyBlend);
+
+        Color brightened = Color.Lerp(roleColor, Color.white, brightness);
+        Color greyTarget = Color.Lerp(brightened, Color.gray, greyBlend);
+
+        greyTarget.a = roleColor.a;
+        return greyTarget;
     }
 
     public void SetMovementEnabled(bool enabled)
