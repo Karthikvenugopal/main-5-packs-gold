@@ -1,4 +1,5 @@
 using UnityEngine;
+using System;
 
 [RequireComponent(typeof(Collider2D))]
 public class FireWall : MonoBehaviour
@@ -6,6 +7,9 @@ public class FireWall : MonoBehaviour
     [SerializeField] private ParticleSystem extinguishEffect;
 
     private bool _extinguished;
+
+    // Event fired when Watergirl crosses/extinguishes this firewall
+    public static event Action<FireWall> OnWatergirlCrossed;
 
     private void Awake()
     {
@@ -17,6 +21,10 @@ public class FireWall : MonoBehaviour
     public bool TryExtinguish(PlayerRole role)
     {
         if (_extinguished || role != PlayerRole.Watergirl) return false;
+        
+        // Fire event before extinguishing
+        OnWatergirlCrossed?.Invoke(this);
+        
         Extinguish();
         return true;
     }
