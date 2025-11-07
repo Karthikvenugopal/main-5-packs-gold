@@ -21,57 +21,78 @@ public class Level3Manager : MonoBehaviour
 
     private static readonly string[] Layout =
     {
-        "###########################",
-        "#..............#..#......F#",
-        "#...#....#######..#.......#",
-        "#...#....#.....#..#.###...#",
-        "#...#....#.....#..#.#.....#",
-        "#...#....#.....#..###.#####",
-        "#...#....#..........#.#...#",
-        "#...#.........####..#.#...#",
-        "#...###########..#..#.#...#",
-        "#.............#..#..#.#...#",
-        "#.............#.....#.#...#",
-        "#.............#.....#.#...#",
-        "#...###.......#...........#",
-        "#.....#..........#........#",
-        "#W....#..........#........#",
-        "###########################"
-    };
-
-    private static readonly ChainPairDefinition[] ChainPairs =
-    {
-        new ChainPairDefinition(new Vector2Int(8, 3), new Vector2Int(9, 7)),
-        new ChainPairDefinition(new Vector2Int(11, 5), new Vector2Int(13, 5)),
-        new ChainPairDefinition(new Vector2Int(9, 11), new Vector2Int(5, 13))
+        "###############",
+        "#.....#.#....F#",
+        "#.#.###.#.###.#",
+        "#.#.#.#.#.#...#",
+        "#.#.#.#.#.#.###",
+        "#.#.#.#.###.#.#",
+        "#.#.......#.#.#",
+        "#.#..###..#.#.#",
+        "#.####.#..#.#.#",
+        "#....#.#..#.#.#",
+        "#.##.#....#.#.#",
+        "#W#....#......#",
+        "###############"
     };
 
     private const string FireSpawnName = "FireboySpawn";
     private const string WaterSpawnName = "WatergirlSpawn";
 
+    private static readonly Vector2Int FireSpawnCell = new Vector2Int(13, 1);
+    private static readonly Vector2Int WaterSpawnCell = new Vector2Int(1, 11);
+
+    private static readonly SequenceDefinition[] TriggerSequences =
+    {
+        new SequenceDefinition(
+            "NorthCorridor",
+            new[]
+            {
+                new SequenceStep(SequenceActionType.Ice, new Vector2Int(8, 6)),
+                new SequenceStep(SequenceActionType.Fire, new Vector2Int(11, 6)),
+                new SequenceStep(SequenceActionType.Ice, new Vector2Int(12, 9)),
+                new SequenceStep(SequenceActionType.Fire, new Vector2Int(16, 9)),
+                new SequenceStep(SequenceActionType.Exit, new Vector2Int(24, 2))
+            }
+        )
+    };
+
     private readonly Dictionary<Vector2Int, Vector2> _cellOrigins = new Dictionary<Vector2Int, Vector2>();
+    private readonly HashSet<Vector2Int> _sequenceReservedCells = new HashSet<Vector2Int>();
+    private readonly Dictionary<int, SequenceState> _sequenceStates = new Dictionary<int, SequenceState>();
+    private bool _tearingDown;
 
     private void Start()
     {
+        CacheSequenceReservedCells();
         BuildMaze(Layout);
-        SetupChainPairs();
+        CreateAdditionalSpawnMarkers();
+        InitializeSequences();
         CenterMaze(Layout);
         tokenPlacementManager?.SpawnTokens();
+        DisableComingSoonBanner();
         gameManager?.OnLevelReady();
+    }
+
+    private void CacheSequenceReservedCells()
+    {
+        _sequenceReservedCells.Clear();
+
+        foreach (SequenceDefinition definition in TriggerSequences)
+        {
+            foreach (SequenceStep step in definition.Steps)
+            {
+                if (step.ActionType == SequenceActionType.Ice || step.ActionType == SequenceActionType.Fire)
+                {
+                    _sequenceReservedCells.Add(step.Cell);
+                }
+            }
+        }
     }
 
     private void BuildMaze(string[] layout)
     {
         if (layout == null || layout.Length == 0) return;
-
-        HashSet<Vector2Int> chainIceCells = new HashSet<Vector2Int>();
-        HashSet<Vector2Int> chainFireCells = new HashSet<Vector2Int>();
-
-        foreach (ChainPairDefinition definition in ChainPairs)
-        {
-            chainIceCells.Add(definition.Ice);
-            chainFireCells.Add(definition.Fire);
-        }
 
         for (int y = 0; y < layout.Length; y++)
         {
@@ -82,7 +103,9 @@ public class Level3Manager : MonoBehaviour
                 Vector2 cellPosition = GetCellPosition(gridPosition);
                 _cellOrigins[gridPosition] = cellPosition;
 
+                bool reservedForSequence = _sequenceReservedCells.Contains(gridPosition);
                 char cell = row[x];
+
                 switch (cell)
                 {
                     case '#':
@@ -110,7 +133,7 @@ public class Level3Manager : MonoBehaviour
 
                     case 'I':
                         SpawnFloor(cellPosition);
-                        if (!chainIceCells.Contains(gridPosition))
+                        if (!reservedForSequence)
                         {
                             SpawnIceWall(cellPosition);
                         }
@@ -118,7 +141,13 @@ public class Level3Manager : MonoBehaviour
 
                     case 'F':
                         SpawnFloor(cellPosition);
-                        if (!chainFireCells.Contains(gridPosition))
+                        if (gridPosition == FireSpawnCell)
+                        {
+                            CreateSpawnMarker(cellPosition, FireSpawnName);
+                            break;
+                        }
+
+                        if (!reservedForSequence)
                         {
                             SpawnFireWall(cellPosition);
                         }
@@ -128,30 +157,137 @@ public class Level3Manager : MonoBehaviour
                         SpawnFloor(cellPosition);
                         break;
                 }
+
+                // Additional spawn marker for Fireboy if the layout cell is the chosen coordinate.
+                if (gridPosition == FireSpawnCell && GameObject.Find(FireSpawnName) == null)
+                {
+                    CreateSpawnMarker(cellPosition, FireSpawnName);
+                }
             }
         }
     }
 
-    private void SetupChainPairs()
+    private void CreateAdditionalSpawnMarkers()
     {
-        if (iceWallPrefab == null || fireWallPrefab == null) return;
-
-        foreach (ChainPairDefinition definition in ChainPairs)
+        if (GameObject.Find(FireSpawnName) == null && _cellOrigins.TryGetValue(FireSpawnCell, out Vector2 fireOrigin))
         {
-            if (!_cellOrigins.TryGetValue(definition.Ice, out Vector2 icePosition)) continue;
-            if (!_cellOrigins.TryGetValue(definition.Fire, out Vector2 firePosition)) continue;
-
-            GameObject pairObject = new GameObject($"ChainWallPair_{definition.Ice.x}_{definition.Ice.y}");
-            pairObject.transform.SetParent(transform);
-
-            ChainWallPair pair = pairObject.AddComponent<ChainWallPair>();
-            pair.Initialize(
-                icePosition,
-                firePosition,
-                SpawnIceWall,
-                SpawnFireWall
-            );
+            CreateSpawnMarker(fireOrigin, FireSpawnName);
         }
+
+        if (GameObject.Find(WaterSpawnName) == null && _cellOrigins.TryGetValue(WaterSpawnCell, out Vector2 waterOrigin))
+        {
+            CreateSpawnMarker(waterOrigin, WaterSpawnName);
+        }
+    }
+
+    private void InitializeSequences()
+    {
+        _sequenceStates.Clear();
+
+        for (int i = 0; i < TriggerSequences.Length; i++)
+        {
+            SequenceDefinition definition = TriggerSequences[i];
+            _sequenceStates[i] = new SequenceState(definition);
+            SpawnNextSequenceStep(i);
+        }
+    }
+
+    private void SpawnNextSequenceStep(int sequenceId)
+    {
+        if (!_sequenceStates.TryGetValue(sequenceId, out SequenceState state)) return;
+
+        while (state.CurrentIndex < state.Definition.Steps.Length)
+        {
+            SequenceStep step = state.Definition.Steps[state.CurrentIndex];
+
+            if (!_cellOrigins.TryGetValue(step.Cell, out Vector2 origin))
+            {
+                Debug.LogWarning($"Level3Manager: Missing cell origin for sequence step at {step.Cell}.", this);
+                state.CurrentIndex++;
+                continue;
+            }
+
+            GameObject spawned;
+            switch (step.ActionType)
+            {
+                case SequenceActionType.Ice:
+                    spawned = SpawnIceWall(origin);
+                    break;
+
+                case SequenceActionType.Fire:
+                    spawned = SpawnFireWall(origin);
+                    break;
+
+                case SequenceActionType.Exit:
+                    spawned = SpawnExit(origin);
+                    state.CurrentIndex++;
+                    state.ActiveObject = spawned;
+                    Debug.Log($"Level3Manager: Sequence '{state.Definition.Name}' revealed exit at cell {step.Cell}.", this);
+                    continue;
+
+                default:
+                    Debug.LogWarning($"Level3Manager: Unsupported sequence action {step.ActionType}.", this);
+                    state.CurrentIndex++;
+                    continue;
+            }
+
+            if (spawned == null)
+            {
+                Debug.LogWarning($"Level3Manager: Failed to spawn {step.ActionType} for sequence '{state.Definition.Name}'.", this);
+                state.CurrentIndex++;
+                continue;
+            }
+
+            AttachSequenceMember(spawned, sequenceId);
+            state.ActiveObject = spawned;
+            Debug.Log($"Level3Manager: Sequence '{state.Definition.Name}' spawned {step.ActionType} at cell {step.Cell}.", this);
+            break;
+        }
+
+        _sequenceStates[sequenceId] = state;
+    }
+
+    internal void NotifySequenceHazardCleared(int sequenceId)
+    {
+        if (_tearingDown) return;
+        if (!_sequenceStates.TryGetValue(sequenceId, out SequenceState state)) return;
+
+        state.ActiveObject = null;
+        state.CurrentIndex++;
+        _sequenceStates[sequenceId] = state;
+        SpawnNextSequenceStep(sequenceId);
+    }
+
+    private void AttachSequenceMember(GameObject target, int sequenceId)
+    {
+        if (target == null) return;
+
+        SequentialHazardMember member = target.GetComponent<SequentialHazardMember>();
+        if (member == null)
+        {
+            member = target.AddComponent<SequentialHazardMember>();
+        }
+
+        member.Initialize(this, sequenceId);
+    }
+
+    private void DisableComingSoonBanner()
+    {
+        GameObject banner = GameObject.Find("ComingSoonText");
+        if (banner != null)
+        {
+            banner.SetActive(false);
+        }
+    }
+
+    private void OnDisable()
+    {
+        _tearingDown = true;
+    }
+
+    private void OnDestroy()
+    {
+        _tearingDown = true;
     }
 
     private Vector2 GetCellPosition(Vector2Int gridPosition)
@@ -192,7 +328,7 @@ public class Level3Manager : MonoBehaviour
     {
         if (fireWallPrefab == null)
         {
-            Debug.LogWarning("Fire wall prefab is not assigned.");
+            Debug.LogWarning("Level3Manager: Fire wall prefab is not assigned.", this);
             return null;
         }
 
@@ -201,7 +337,7 @@ public class Level3Manager : MonoBehaviour
         return fireWall;
     }
 
-    private void SpawnExit(Vector2 position)
+    private GameObject SpawnExit(Vector2 position)
     {
         Vector3 center = new Vector3(
             position.x + 0.5f * cellSize,
@@ -222,6 +358,8 @@ public class Level3Manager : MonoBehaviour
             exitZone = exit.AddComponent<ExitZone>();
             exitZone.Initialize(gameManager);
         }
+
+        return exit;
     }
 
     private GameObject CreateFallbackExit(Vector3 center)
@@ -291,15 +429,48 @@ public class Level3Manager : MonoBehaviour
         }
     }
 
-    private readonly struct ChainPairDefinition
+    private readonly struct SequenceDefinition
     {
-        public Vector2Int Ice { get; }
-        public Vector2Int Fire { get; }
-
-        public ChainPairDefinition(Vector2Int ice, Vector2Int fire)
+        public SequenceDefinition(string name, SequenceStep[] steps)
         {
-            Ice = ice;
-            Fire = fire;
+            Name = name;
+            Steps = steps;
         }
+
+        public string Name { get; }
+        public SequenceStep[] Steps { get; }
+    }
+
+    private readonly struct SequenceStep
+    {
+        public SequenceStep(SequenceActionType actionType, Vector2Int cell)
+        {
+            ActionType = actionType;
+            Cell = cell;
+        }
+
+        public SequenceActionType ActionType { get; }
+        public Vector2Int Cell { get; }
+    }
+
+    private struct SequenceState
+    {
+        public SequenceState(SequenceDefinition definition)
+        {
+            Definition = definition;
+            CurrentIndex = 0;
+            ActiveObject = null;
+        }
+
+        public SequenceDefinition Definition { get; }
+        public int CurrentIndex { get; set; }
+        public GameObject ActiveObject { get; set; }
+    }
+
+    private enum SequenceActionType
+    {
+        Ice,
+        Fire,
+        Exit
     }
 }
