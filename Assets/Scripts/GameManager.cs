@@ -65,8 +65,8 @@ public class GameManager : MonoBehaviour
         "Collect maximum number of tokens and exit",
         "",
         "Remember: Ember melts ice; Aqua extinguishes fire.",
-        "Caution: Touch each other -> lose a heart.",
-        "Caution: Touch wrong obstacle -> lose a heart.",
+        "Caution: Touch each other? lose a heart.",
+        "Caution: Touch wrong obstacle? lose a heart.",
         "Work together but never collide!"
     };
     [SerializeField] private string instructionContinuePrompt = "Press Space to start";
@@ -78,6 +78,17 @@ public class GameManager : MonoBehaviour
         "Tip: Opposites protect. Shield your partner from danger."
     };
     [SerializeField] private string level2InstructionContinuePrompt = "Press Space to start";
+    [SerializeField] private string level3InstructionSceneName = "Level3Scene";
+    [SerializeField] private string[] level3InstructionLines = new[]
+    {
+        "<b>Level 3</b>",
+        "",
+        "Dynamic obstacles: Stay Sharp", 
+        "Destroying one obstacle can lead to the creation of a new one",
+        "",
+        "Keep collecting tokens and avoid hazards!"
+    };
+    [SerializeField] private string level3InstructionContinuePrompt = "Press Space to start";
     
     [Header("UI Sprites")]
     [Tooltip("Sprite for Ember's full heart (Red)")]
@@ -449,6 +460,14 @@ public class GameManager : MonoBehaviour
             prompt = string.IsNullOrEmpty(level2InstructionContinuePrompt)
                 ? instructionContinuePrompt
                 : level2InstructionContinuePrompt;
+        }
+        else if (!string.IsNullOrEmpty(level3InstructionSceneName) &&
+                 currentScene == level3InstructionSceneName)
+        {
+            lines = level3InstructionLines;
+            prompt = string.IsNullOrEmpty(level3InstructionContinuePrompt)
+                ? instructionContinuePrompt
+                : level3InstructionContinuePrompt;
         }
         else if (string.IsNullOrEmpty(instructionPanelSceneName))
         {
