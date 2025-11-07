@@ -1096,14 +1096,18 @@ public class GameManager : MonoBehaviour
 
         bool canAdvance = isVictory && hasNextScene;
 
+        bool isFinalLevelVictory = isVictory &&
+                                   !string.IsNullOrEmpty(level3InstructionSceneName) &&
+                                   SceneManager.GetActiveScene().name == level3InstructionSceneName;
+
         if (_victoryNextLevelButton != null)
         {
-            _victoryNextLevelButton.gameObject.SetActive(canAdvance);
+            _victoryNextLevelButton.gameObject.SetActive(!isFinalLevelVictory && canAdvance);
         }
 
         if (_victoryRestartButton != null)
         {
-            bool showRestart = !isVictory || !canAdvance;
+            bool showRestart = !isFinalLevelVictory && (!isVictory || !canAdvance);
             _victoryRestartButton.gameObject.SetActive(showRestart);
         }
 
