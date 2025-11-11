@@ -140,6 +140,12 @@ public class GameManager : MonoBehaviour
     private List<Image> _aquaHeartImages = new List<Image>();
     private List<Image> _emberTokenImages = new List<Image>();
     private List<Image> _aquaTokenImages = new List<Image>();
+    private readonly Dictionary<Image, Vector3> _tokenIconBaseScales = new();
+    private float _tokenBreathTimer;
+    [Header("Token UI Breath")]
+    [SerializeField] private bool enableTokenBreath = true;
+    [SerializeField, Min(0.05f)] private float tokenBreathCycleSeconds = 1.6f;
+    [SerializeField] private Vector2 tokenBreathScaleRange = new Vector2(0.85f, 1.1f);
     
     private int _fireHearts;
     private int _waterHearts;
@@ -212,6 +218,7 @@ public class GameManager : MonoBehaviour
     
     private void Update()
     {
+        UpdateTokenBreathing();
         if (_waitingForInstructionAck)
         {
             if (Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.Return))
@@ -1242,6 +1249,66 @@ public class GameManager : MonoBehaviour
                 _aquaTokenImages[i].sprite = waterTokenEmptySprite;
             }
         }
+
+        RefreshTokenBreathVisuals();
+    }
+    
+    private void UpdateTokenBreathing()
+    {
+        if (!enableTokenBreath) return;
+        if (_emberTokenImages.Count == 0 && _aquaTokenImages.Count == 0) return;
+
+        _tokenBreathTimer += Time.unscaledDeltaTime;
+        ApplyTokenBreathToImages(CalculateTokenBreathMultiplier());
+    }
+
+    private void RefreshTokenBreathVisuals()
+    {
+        if (!enableTokenBreath) return;
+        if (_emberTokenImages.Count == 0 && _aquaTokenImages.Count == 0) return;
+
+        ApplyTokenBreathToImages(CalculateTokenBreathMultiplier());
+    }
+
+    private float CalculateTokenBreathMultiplier()
+    {
+        float duration = Mathf.Max(0.01f, tokenBreathCycleSeconds);
+        float phase = Mathf.Repeat(_tokenBreathTimer / duration, 1f);
+        float normalized = 0.5f + 0.5f * Mathf.Sin(phase * Mathf.PI * 2f);
+        float minScale = Mathf.Min(tokenBreathScaleRange.x, tokenBreathScaleRange.y);
+        float maxScale = Mathf.Max(tokenBreathScaleRange.x, tokenBreathScaleRange.y);
+        return Mathf.Lerp(minScale, maxScale, normalized);
+    }
+
+    private void ApplyTokenBreathToImages(float activeMultiplier)
+    {
+        ApplyTokenBreathToCollection(_emberTokenImages, fireTokensCollected, activeMultiplier);
+        ApplyTokenBreathToCollection(_aquaTokenImages, waterTokensCollected, activeMultiplier);
+    }
+
+    private void ApplyTokenBreathToCollection(List<Image> images, int collectedCount, float activeMultiplier)
+    {
+        for (int i = 0; i < images.Count; i++)
+        {
+            float multiplier = i < collectedCount ? activeMultiplier : 1f;
+            ApplyTokenIconScale(images[i], multiplier);
+        }
+    }
+
+    private void ApplyTokenIconScale(Image image, float multiplier)
+    {
+        if (image == null) return;
+
+        RectTransform rect = image.rectTransform;
+        if (rect == null) return;
+
+        if (!_tokenIconBaseScales.TryGetValue(image, out Vector3 baseScale))
+        {
+            baseScale = rect.localScale;
+            _tokenIconBaseScales[image] = baseScale;
+        }
+
+        rect.localScale = baseScale * multiplier;
     }
 
     // --- MODIFICATION START ---
@@ -1289,13 +1356,21 @@ public class GameManager : MonoBehaviour
         // 2. Clear any old token images (in case of scene restart)
         foreach (Image img in _emberTokenImages)
         {
-            Destroy(img.gameObject);
+            if (img != null)
+            {
+                _tokenIconBaseScales.Remove(img);
+                Destroy(img.gameObject);
+            }
         }
         _emberTokenImages.Clear();
 
         foreach (Image img in _aquaTokenImages)
         {
-            Destroy(img.gameObject);
+            if (img != null)
+            {
+                _tokenIconBaseScales.Remove(img);
+                Destroy(img.gameObject);
+            }
         }
         _aquaTokenImages.Clear();
         
@@ -1311,6 +1386,7 @@ public class GameManager : MonoBehaviour
                 
                 RectTransform tokenRect = tokenImgGO.GetComponent<RectTransform>();
                 tokenRect.sizeDelta = tokenIconSize; 
+                tokenRect.localScale = Vector3.one;
                 
                 // --- BUG FIX ---
                 // This line is CRITICAL and has been re-added.
@@ -1319,6 +1395,7 @@ public class GameManager : MonoBehaviour
                 // --- END BUG FIX ---
                 
                 _emberTokenImages.Add(tokenImg);
+                _tokenIconBaseScales[tokenImg] = tokenRect.localScale;
             }
         }
         
@@ -1333,6 +1410,7 @@ public class GameManager : MonoBehaviour
                 
                 RectTransform tokenRect = tokenImgGO.GetComponent<RectTransform>();
                 tokenRect.sizeDelta = tokenIconSize; 
+                tokenRect.localScale = Vector3.one;
 
                 // --- BUG FIX ---
                 // This line is CRITICAL and has been re-added.
@@ -1340,6 +1418,7 @@ public class GameManager : MonoBehaviour
                 // --- END BUG FIX ---
                 
                 _aquaTokenImages.Add(tokenImg);
+                _tokenIconBaseScales[tokenImg] = tokenRect.localScale;
             }
         }
 

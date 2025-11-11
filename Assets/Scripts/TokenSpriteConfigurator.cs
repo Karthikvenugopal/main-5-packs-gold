@@ -32,10 +32,14 @@ public class TokenSpriteConfigurator : MonoBehaviour
     [SerializeField] private Vector2 breathScaleRange = new Vector2(0.85f, 1.1f);
     [Tooltip("Randomizes the starting phase so nearby tokens do not pulse in sync.")]
     [SerializeField] private bool randomizePhase = true;
+    [Tooltip("Forces every token instance to share the exact same breath timing.")]
+    [SerializeField] private bool useSharedBreathPattern = true;
 
     private SpriteRenderer _spriteRenderer;
     private Vector3 _baseScale = Vector3.one;
     private float _phaseOffset;
+    private static bool s_sharedPhaseInitialized;
+    private static float s_sharedPhaseReferenceTime;
 
     private void Awake()
     {
@@ -84,6 +88,13 @@ public class TokenSpriteConfigurator : MonoBehaviour
 
     private void InitializePhase()
     {
+        if (useSharedBreathPattern)
+        {
+            EnsureSharedPhaseInitialized();
+            _phaseOffset = 0f;
+            return;
+        }
+
         if (!randomizePhase)
         {
             _phaseOffset = 0f;
@@ -127,6 +138,13 @@ public class TokenSpriteConfigurator : MonoBehaviour
         _spriteRenderer.color = colorToUse;
     }
 
+    private static void EnsureSharedPhaseInitialized()
+    {
+        if (s_sharedPhaseInitialized) return;
+        s_sharedPhaseReferenceTime = Application.isPlaying ? Time.time : Time.realtimeSinceStartup;
+        s_sharedPhaseInitialized = true;
+    }
+
     private void ApplyBreathEffect()
     {
         if (!enableBreathEffect)
@@ -146,7 +164,10 @@ public class TokenSpriteConfigurator : MonoBehaviour
         }
 
         float elapsed = Application.isPlaying ? Time.time : Time.realtimeSinceStartup;
-        float normalized = 0.5f + 0.5f * Mathf.Sin((elapsed / duration) * Mathf.PI * 2f + _phaseOffset);
+        float phaseTime = useSharedBreathPattern && s_sharedPhaseInitialized
+            ? elapsed - s_sharedPhaseReferenceTime
+            : elapsed;
+        float normalized = 0.5f + 0.5f * Mathf.Sin((phaseTime / duration) * Mathf.PI * 2f + (useSharedBreathPattern ? 0f : _phaseOffset));
         float scaleMultiplier = Mathf.Lerp(minScale, maxScale, normalized);
 
         transform.localScale = _baseScale * scaleMultiplier;
