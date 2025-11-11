@@ -187,8 +187,6 @@ namespace Analytics
         }
 
         private static bool EnsureWebAppUrlConfigured()
-        // Assist metric removed
-        private static IEnumerator SendFormUrlEncoded(string url, System.Collections.Generic.Dictionary<string, string> data)
         {
             if (!string.IsNullOrWhiteSpace(_webAppUrl)) return true;
 
