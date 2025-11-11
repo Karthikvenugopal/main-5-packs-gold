@@ -182,7 +182,6 @@ public class CoopPlayerController : MonoBehaviour
         {
             if (_role == PlayerRole.Fireboy && iceWall.TryMelt(_role))
             {
-                _gameManager?.RecordAssist(_role, GameManager.AssistType.MeltIce, iceWall.transform.position);
                 return true;
             }
 
@@ -204,7 +203,6 @@ public class CoopPlayerController : MonoBehaviour
 
             if (fireWall.TryExtinguish(_role))
             {
-                _gameManager?.RecordAssist(_role, GameManager.AssistType.ExtinguishFire, fireWall.transform.position);
                 return true;
             }
         }
