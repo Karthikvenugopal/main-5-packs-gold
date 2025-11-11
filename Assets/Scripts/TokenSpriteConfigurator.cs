@@ -17,6 +17,12 @@ public class TokenSpriteConfigurator : MonoBehaviour
     [SerializeField] private TokenType tokenType = TokenType.Fire;
     [SerializeField] private int sortingOrder = 5;
 
+    [Header("Artwork Overrides")]
+    [Tooltip("Optional sprite for Ember tokens. Leave empty to use the procedural sprite.")]
+    [SerializeField] private Sprite fireSpriteOverride;
+    [Tooltip("Optional sprite for Aqua tokens. Leave empty to use the procedural sprite.")]
+    [SerializeField] private Sprite waterSpriteOverride;
+
     [Header("Breath Effect")]
     [Tooltip("Enables a gentle scale up/down animation so tokens feel alive.")]
     [SerializeField] private bool enableBreathEffect = true;
@@ -102,17 +108,23 @@ public class TokenSpriteConfigurator : MonoBehaviour
 
         _spriteRenderer.sortingOrder = sortingOrder;
 
+        Sprite spriteToUse = null;
+        Color colorToUse = Color.white;
+
         switch (tokenType)
         {
             case TokenType.Fire:
-                _spriteRenderer.sprite = TokenSpriteLibrary.GetFireSprite();
-                _spriteRenderer.color = new Color(1f, 0.55f, 0.15f);
+                spriteToUse = fireSpriteOverride != null ? fireSpriteOverride : TokenSpriteLibrary.GetFireSprite();
+                colorToUse = fireSpriteOverride != null ? Color.white : new Color(1f, 0.55f, 0.15f);
                 break;
             case TokenType.Water:
-                _spriteRenderer.sprite = TokenSpriteLibrary.GetWaterSprite();
-                _spriteRenderer.color = new Color(0.3f, 0.6f, 1f);
+                spriteToUse = waterSpriteOverride != null ? waterSpriteOverride : TokenSpriteLibrary.GetWaterSprite();
+                colorToUse = waterSpriteOverride != null ? Color.white : new Color(0.3f, 0.6f, 1f);
                 break;
         }
+
+        _spriteRenderer.sprite = spriteToUse;
+        _spriteRenderer.color = colorToUse;
     }
 
     private void ApplyBreathEffect()
