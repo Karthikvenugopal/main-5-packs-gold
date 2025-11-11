@@ -81,7 +81,7 @@ function ensureAvgTimeFailureSheet_(ss, opts) {
 
 function pruneAnalyticsSheets_(ss, opts) {
   const essentials = new Set(['Data']);
-  const withAverages = new Set(['Data', 'AvgTime_Success', 'AvgTime_Failure', 'HeartLoss', 'Assist']);
+  const withAverages = new Set(['Data', 'AvgTime_Success', 'AvgTime_Failure', 'HeartLoss']);
   const keep = (opts && opts.essentialsOnly) ? essentials : withAverages;
   ss.getSheets().forEach(sheet => {
     const name = sheet.getName();
@@ -107,7 +107,6 @@ function onOpen() {
     .addSeparator()
     .addItem('Repair Average Formulas', 'repairAverageTimeSheets')
     .addItem('Build Heart Loss Chart', 'buildHeartLossCharts')
-    .addItem('Build Assist Chart', 'buildAssistCharts')
     .addToUi();
 }
 
@@ -193,30 +192,19 @@ function processEvent_(ss, data) {
       .setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   }
 
-  if (evt === 'assist') {
-    const sh2 = ensureAssistSheet_(ss);
-    const actor = String(data.actor || '');
-    const recip = String(data.recipient || '');
-    const kind = String(data.kind || '');
-    const tSince = Number(data.time_since_start_s || data.t_since_start_s || 0) || 0;
-    sh2.appendRow([new Date(), String(data.session_id || ''), level, actor, recip, kind, tSince]);
-
-    return ContentService.createTextOutput(JSON.stringify({ ok: true, type: 'assist' }))
-      .setMimeType(ContentService.MimeType.JSON)
-      .setHeader('Access-Control-Allow-Origin', '*')
-      .setHeader('Access-Control-Allow-Headers', 'Content-Type')
-      .setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  }
+  // Assist metric removed
 
   // Default: level result row
   const sh = ensureDataSheet_(ss);
-  const successText = String(data.success || '').toUpperCase();
+  // Normalize success to a boolean so sheet queries (D = TRUE) work reliably
+  const sRaw = (data && data.success);
+  const successBool = (typeof sRaw === 'boolean') ? sRaw : (/^(1|true|yes|y)$/i.test(String(sRaw || '')));
   const timeSpent = Number(data.time_spent_s) || 0;
   sh.appendRow([
     new Date(),
     data.session_id || '',
     level,
-    successText || 'FALSE',
+    successBool,
     timeSpent
   ]);
 
@@ -269,7 +257,6 @@ function purgeNonWhitelistedRows() {
 
   purgeSheet('Data', 3);      // C = level_id
   purgeSheet('HeartLoss', 3); // C = level_id
-  purgeSheet('Assist', 3);    // C = level_id
 }
 
 // Force the AvgTime_* formulas to only include Level1/Level2
@@ -355,41 +342,5 @@ function buildHeartLossCharts() {
   ensureHeartLossChartsOnSheet_(ss, { reset: true });
 }
 
-// ---------- Assist Metrics ----------
-function ensureAssistSheet_(ss) {
-  let sh = ss.getSheetByName('Assist');
-  if (!sh) {
-    sh = ss.insertSheet('Assist');
-    sh.getRange('A1:G1').setValues([[
-      'timestamp', 'session_id', 'level_id', 'actor', 'recipient', 'kind', 'time_since_start_s'
-    ]]);
-  }
-  return sh;
-}
-
-function ensureAssistChartsOnSheet_(ss, opts) {
-  const sh = ensureAssistSheet_(ss);
-  const where = "(C='Level1Scene' or C='Level1' or C='Level2Scene' or C='Level2' or C='Level3Scene' or C='Level3')";
-  const f = `=QUERY(Assist!A2:G, "select C, count(A) where ${where} group by C label C 'level_id', count(A) 'assist_count'", 0)`;
-  sh.getRange('H1').setValue(f);
-
-  if (opts && opts.reset) sh.getCharts().forEach(c => sh.removeChart(c));
-  if (sh.getCharts().length === 0) {
-    const chart = sh.newChart()
-      .asColumnChart()
-      .addRange(sh.getRange('H:I'))
-      .setPosition(1, 8, 0, 0)
-      .setOption('title', 'Assist Interactions per Level')
-      .setOption('legend', { position: 'none' })
-      .setOption('hAxis', { title: 'Level' })
-      .setOption('vAxis', { title: 'Assist Count' })
-      .build();
-    sh.insertChart(chart);
-  }
-}
-
-function buildAssistCharts() {
-  const ss = SpreadsheetApp.getActive();
-  ensureAssistChartsOnSheet_(ss, { reset: true });
-}
+// Assist metrics removed
 
