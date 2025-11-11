@@ -30,6 +30,14 @@ public class CoopPlayerController : MonoBehaviour
     [SerializeField, Range(0.01f, 0.5f)] private float hurtFlashOffDuration = 0.3f;
     [SerializeField, Range(0f, 1f)] private float hurtFlashGreyBlend = 0.4f;
     [SerializeField, Range(0f, 1f)] private float hurtFlashBrightnessBoost = 0.09f;
+    [Tooltip("Seconds spent easing down to the hurt scale.")]
+    [SerializeField, Min(0f)] private float hurtScaleShrinkDuration = 1f;
+    [Tooltip("Seconds spent holding the hurt scale before recovery.")]
+    [SerializeField, Min(0f)] private float hurtScaleHoldDuration = 1f;
+    [Tooltip("Seconds spent easing back to the original scale.")]
+    [SerializeField, Min(0f)] private float hurtScaleRecoverDuration = 1f;
+    [Tooltip("Multiplier applied to local scale when hurt.")]
+    [SerializeField, Range(0.1f, 1f)] private float hurtScaleMultiplier = 0.6f;
     [Header("Hazard Pushback")]
     [Tooltip("Distance (in world units) the player is pushed away from their own obstacle.")]
     [SerializeField, Range(0.1f, 1.5f)] private float hazardPushDistance = 0.45f;
@@ -58,6 +66,8 @@ public class CoopPlayerController : MonoBehaviour
     private Vector2 _bounceVelocity;
     private float _bounceTimeRemaining;
     private float _inputLockRemaining;
+    private Coroutine _hurtScaleRoutine;
+    private Vector3 _initialScale;
 
     private readonly Dictionary<int, float> _lastHazardDamageTimes = new();
 
@@ -72,6 +82,7 @@ public class CoopPlayerController : MonoBehaviour
         _rigidbody.gravityScale = 0f;
         _rigidbody.freezeRotation = true;
         _rigidbody.interpolation = RigidbodyInterpolation2D.Interpolate;
+        _initialScale = transform.localScale;
 
         if (collisionMask == 0)
         {
@@ -88,6 +99,7 @@ public class CoopPlayerController : MonoBehaviour
         _movementEnabled = false;
 
         ApplyRoleVisuals();
+        ResetScaleImmediate();
         _gameManager?.RegisterPlayer(this);
     }
 
@@ -99,6 +111,7 @@ public class CoopPlayerController : MonoBehaviour
         _movementEnabled = false;
 
         ApplyRoleVisuals();
+        ResetScaleImmediate();
         _gameManagerTutorial?.RegisterPlayer(this);
     }
 
@@ -352,6 +365,7 @@ public class CoopPlayerController : MonoBehaviour
         }
 
         _lastHazardDamageTimes[hazardId] = now;
+        TriggerHurtScaleRoutine();
         _gameManagerTutorial?.DamagePlayer(_role, 1);
         GameManager.DamageCause cause = GameManager.DamageCause.Unknown;
         bool shouldPushback = false;
@@ -457,5 +471,86 @@ public class CoopPlayerController : MonoBehaviour
         _bounceVelocity = Vector2.zero;
         _bounceTimeRemaining = 0f;
         _pendingPushOverride = false;
+    }
+
+    private void TriggerHurtScaleRoutine()
+    {
+        if (_hurtScaleRoutine != null)
+        {
+            StopCoroutine(_hurtScaleRoutine);
+        }
+        _hurtScaleRoutine = StartCoroutine(HurtScaleRoutine());
+    }
+
+    private IEnumerator HurtScaleRoutine()
+    {
+        Vector3 baseScale = _initialScale == Vector3.zero ? Vector3.one : _initialScale;
+        Vector3 targetScale = baseScale * hurtScaleMultiplier;
+
+        float shrinkDuration = Mathf.Max(0f, hurtScaleShrinkDuration);
+        if (shrinkDuration <= 0f)
+        {
+            transform.localScale = targetScale;
+        }
+        else
+        {
+            float elapsed = 0f;
+            while (elapsed < shrinkDuration)
+            {
+                float t = Mathf.Clamp01(elapsed / Mathf.Max(0.0001f, shrinkDuration));
+                float eased = EaseOutQuad(t);
+                transform.localScale = Vector3.Lerp(baseScale, targetScale, eased);
+                elapsed += Time.deltaTime;
+                yield return null;
+            }
+            transform.localScale = targetScale;
+        }
+
+        if (hurtScaleHoldDuration > 0f)
+        {
+            yield return new WaitForSeconds(hurtScaleHoldDuration);
+        }
+
+        float recoverDuration = Mathf.Max(0f, hurtScaleRecoverDuration);
+        if (recoverDuration <= 0f)
+        {
+            transform.localScale = baseScale;
+        }
+        else
+        {
+            float elapsed = 0f;
+            while (elapsed < recoverDuration)
+            {
+                float t = Mathf.Clamp01(elapsed / Mathf.Max(0.0001f, recoverDuration));
+                float eased = EaseInQuad(t);
+                transform.localScale = Vector3.Lerp(targetScale, baseScale, eased);
+                elapsed += Time.deltaTime;
+                yield return null;
+            }
+            transform.localScale = baseScale;
+        }
+
+        _hurtScaleRoutine = null;
+    }
+
+    private void ResetScaleImmediate()
+    {
+        if (_hurtScaleRoutine != null)
+        {
+            StopCoroutine(_hurtScaleRoutine);
+            _hurtScaleRoutine = null;
+        }
+        Vector3 baseScale = _initialScale == Vector3.zero ? Vector3.one : _initialScale;
+        transform.localScale = baseScale;
+    }
+
+    private static float EaseOutQuad(float t)
+    {
+        return 1f - (1f - t) * (1f - t);
+    }
+
+    private static float EaseInQuad(float t)
+    {
+        return t * t;
     }
 }
