@@ -5,14 +5,10 @@ function doPost(e) {
     return processEvent_(ss, data);
   } catch (err) {
     return ContentService.createTextOutput(JSON.stringify({ ok: false, error: String(err) }))
-      .setMimeType(ContentService.MimeType.JSON)
-      .setHeader('Access-Control-Allow-Origin', '*')
-      .setHeader('Access-Control-Allow-Headers', 'Content-Type')
-      .setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+      .setMimeType(ContentService.MimeType.JSON);
   }
 }
 
-// Resolve target spreadsheet: prefer active (bound), else 'sheet_id'/'sid' param, else Script Property 'SHEET_ID'
 function getSpreadsheet_(data) {
   try {
     const ss = SpreadsheetApp.getActiveSpreadsheet();
@@ -28,6 +24,7 @@ function getSpreadsheet_(data) {
 function ensureAllAnalyticsSheets_(ss, opts) {
   ensureAvgTimeSuccessSheet_(ss, opts);
   ensureAvgTimeFailureSheet_(ss, opts);
+  ensureRetryDensitySheet_(ss, opts);
   if (opts && opts.prune) {
     pruneAnalyticsSheets_(ss);
   }
@@ -79,9 +76,65 @@ function ensureAvgTimeFailureSheet_(ss, opts) {
   }
 }
 
+// Retry Density = fail_count / total_count 
+function ensureRetryDensitySheet_(ss, opts) {
+  let sh = ss.getSheetByName('RetryDensity');
+  if (!sh) sh = ss.insertSheet('RetryDensity');
+  else if (opts && opts.reset) sh.clear();
+
+  const dataSh = ss.getSheetByName('Data') || ensureDataSheet_(ss);
+  const last = dataSh.getLastRow();
+  const rows = last > 1 ? dataSh.getRange(2, 1, last - 1, 5).getValues() : [];
+
+  const allowed = new Set(['level1','level1scene','level2','level2scene','level3','level3scene']);
+  const stats = new Map(); // level -> { total, fail }
+  rows.forEach(r => {
+    const level = String(r[2] || '').trim();
+    const lvlLower = level.toLowerCase();
+    if (!allowed.has(lvlLower)) return;
+    let success = r[3];
+    if (typeof success !== 'boolean') success = /^(1|true|yes|y)$/i.test(String(success || ''));
+    const s = stats.get(level) || { total: 0, fail: 0 };
+    s.total += 1;
+    if (!success) s.fail += 1;
+    stats.set(level, s);
+  });
+
+  sh.clear();
+  const out = [['level_id','fail_count','total_count','retry_density']];
+  Array.from(stats.entries()).forEach(([level, s]) => {
+    const density = s.total ? s.fail / s.total : '';
+    out.push([level, s.fail, s.total, density]);
+  });
+  sh.getRange(1, 1, out.length, 4).setValues(out);
+
+  try { sh.setConditionalFormatRules([]); } catch (e) {}
+
+  sh.getRange('D:D').setNumberFormat('0.00');
+
+  if (opts && opts.reset) {
+    sh.getCharts().forEach(function(c){ sh.removeChart(c); });
+  }
+  if (sh.getCharts().length === 0) {
+    var chart = sh.newChart()
+      .asColumnChart()
+      .addRange(sh.getRange('A:A'))
+      .addRange(sh.getRange('D:D'))
+      .setNumHeaders(1)
+      .setPosition(1, 6, 0, 0) 
+      .setOption('title', 'Retry Density by Level')
+      .setOption('legend', { position: 'none' })
+      .setOption('vAxis', { title: 'Retry Density', viewWindow: { min: 0, max: 1 } })
+      .setOption('hAxis', { title: 'Level' })
+      .setOption('series', { 0: { dataLabel: 'value' } })
+      .build();
+    sh.insertChart(chart);
+  }
+}
+
 function pruneAnalyticsSheets_(ss, opts) {
   const essentials = new Set(['Data']);
-  const withAverages = new Set(['Data', 'AvgTime_Success', 'AvgTime_Failure', 'HeartLoss']);
+  const withAverages = new Set(['Data', 'AvgTime_Success', 'AvgTime_Failure', 'RetryDensity', 'HeartLoss']);
   const keep = (opts && opts.essentialsOnly) ? essentials : withAverages;
   ss.getSheets().forEach(sheet => {
     const name = sheet.getName();
@@ -122,10 +175,7 @@ function pruneEssentialsCommand_() {
 
 function doGet(e) {
   if (!e || !e.parameter || Object.keys(e.parameter).length === 0) {
-    return ContentService.createTextOutput('OK')
-      .setHeader('Access-Control-Allow-Origin', '*')
-      .setHeader('Access-Control-Allow-Headers', 'Content-Type')
-      .setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    return ContentService.createTextOutput('OK');
   }
   const data = e.parameter || {};
   try {
@@ -133,10 +183,7 @@ function doGet(e) {
     return processEvent_(ss, data);
   } catch (err) {
     return ContentService.createTextOutput(JSON.stringify({ ok: false, error: String(err) }))
-      .setMimeType(ContentService.MimeType.JSON)
-      .setHeader('Access-Control-Allow-Origin', '*')
-      .setHeader('Access-Control-Allow-Headers', 'Content-Type')
-      .setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+      .setMimeType(ContentService.MimeType.JSON);
   }
 }
 
@@ -154,27 +201,31 @@ function parseIncoming_(e) {
   return data || {};
 }
 
-// Central event handler for GET/POST
+
 function processEvent_(ss, data) {
   const level = String(data.level_id || '').trim();
   const lvlLower = level.toLowerCase();
   const allowed = new Set(['level1', 'level1scene', 'level2', 'level2scene', 'level3', 'level3scene']);
   if (!allowed.has(lvlLower)) {
     return ContentService.createTextOutput(JSON.stringify({ ok: true, ignored: true }))
-      .setMimeType(ContentService.MimeType.JSON)
-      .setHeader('Access-Control-Allow-Origin', '*')
-      .setHeader('Access-Control-Allow-Headers', 'Content-Type')
-      .setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+      .setMimeType(ContentService.MimeType.JSON);
   }
 
   const evt = String(data.event || '').trim().toLowerCase();
 
-  if (evt === 'fail') {
-    return ContentService.createTextOutput(JSON.stringify({ ok: true, ignored: 'heatmap_disabled' }))
-      .setMimeType(ContentService.MimeType.JSON)
-      .setHeader('Access-Control-Allow-Origin', '*')
-      .setHeader('Access-Control-Allow-Headers', 'Content-Type')
-      .setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  if (evt === 'fail' || /^restart/.test(evt) || evt === 'retry') {
+    const shFail = ensureDataSheet_(ss);
+    const tSinceFail = Number(data.time_since_start_s || data.t_since_start_s || data.time_spent_s || 0) || 0;
+    shFail.appendRow([
+      new Date(),
+      data.session_id || '',
+      level,
+      false, 
+      tSinceFail
+    ]);
+    try { ensureRetryDensitySheet_(ss, { reset: false }); } catch (e) { Logger.log(e); }
+    return ContentService.createTextOutput(JSON.stringify({ ok: true, type: 'result', recorded: 'failure', reason: evt }))
+      .setMimeType(ContentService.MimeType.JSON);
   }
 
   if (evt === 'heart_lost') {
@@ -186,17 +237,10 @@ function processEvent_(ss, data) {
     sh.appendRow([new Date(), session, level, player, cause, tSince]);
 
     return ContentService.createTextOutput(JSON.stringify({ ok: true, type: 'heart_loss' }))
-      .setMimeType(ContentService.MimeType.JSON)
-      .setHeader('Access-Control-Allow-Origin', '*')
-      .setHeader('Access-Control-Allow-Headers', 'Content-Type')
-      .setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+      .setMimeType(ContentService.MimeType.JSON);
   }
 
-  // Assist metric removed
-
-  // Default: level result row
   const sh = ensureDataSheet_(ss);
-  // Normalize success to a boolean so sheet queries (D = TRUE) work reliably
   const sRaw = (data && data.success);
   const successBool = (typeof sRaw === 'boolean') ? sRaw : (/^(1|true|yes|y)$/i.test(String(sRaw || '')));
   const timeSpent = Number(data.time_spent_s) || 0;
@@ -207,22 +251,19 @@ function processEvent_(ss, data) {
     successBool,
     timeSpent
   ]);
+  try { ensureRetryDensitySheet_(ss, { reset: false }); } catch (e) { Logger.log(e); }
 
   return ContentService.createTextOutput(JSON.stringify({ ok: true, type: 'result' }))
-    .setMimeType(ContentService.MimeType.JSON)
-    .setHeader('Access-Control-Allow-Origin', '*')
-    .setHeader('Access-Control-Allow-Headers', 'Content-Type')
-    .setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    .setMimeType(ContentService.MimeType.JSON);
 }
 
-// Rebuild and keep average time sheets too
 function setupVisualizationWithAverages() {
   const ss = SpreadsheetApp.getActive();
   ensureDataSheet_(ss);
   ensureAllAnalyticsSheets_(ss, { reset: true, prune: true });
 }
 
-// Ensure the main Data sheet exists with headers
+// Ensure the main Data sheet 
 function ensureDataSheet_(ss) {
   let sh = ss.getSheetByName('Data');
   if (!sh) {
@@ -234,7 +275,6 @@ function ensureDataSheet_(ss) {
   return sh;
 }
 
-// Remove rows whose level_id is not Level1/Level2
 function purgeNonWhitelistedRows() {
   const ss = SpreadsheetApp.getActive();
   const allowed = new Set(['level1', 'level1scene', 'level2', 'level2scene', 'level3', 'level3scene']);
@@ -255,8 +295,8 @@ function purgeNonWhitelistedRows() {
     }
   };
 
-  purgeSheet('Data', 3);      // C = level_id
-  purgeSheet('HeartLoss', 3); // C = level_id
+  purgeSheet('Data', 3);      
+  purgeSheet('HeartLoss', 3); 
 }
 
 // Force the AvgTime_* formulas to only include Level1/Level2
@@ -287,7 +327,6 @@ function ensureHeartLossSheet_(ss) {
   return sh;
 }
 
-// Place two bar charts (Level 1 and Level 2) directly on the HeartLoss sheet
 function ensureHeartLossChartsOnSheet_(ss, opts) {
   const sh = ensureHeartLossSheet_(ss);
   const l1Where = "(C='Level1Scene' or C='Level1')";
@@ -342,5 +381,4 @@ function buildHeartLossCharts() {
   ensureHeartLossChartsOnSheet_(ss, { reset: true });
 }
 
-// Assist metrics removed
 
