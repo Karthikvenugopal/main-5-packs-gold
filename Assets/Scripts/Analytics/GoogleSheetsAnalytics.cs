@@ -91,6 +91,7 @@ namespace Analytics
             };
 
             TryAddSheetId(data);
+            // Single POST send; no coroutine wrapper required for this sender
             SendFormUrlEncoded(_webAppUrl, data);
         }
 
@@ -133,6 +134,8 @@ namespace Analytics
             TryAddSheetId(data);
             SendGetQuery(_webAppUrl, data);
         }
+
+        // Retry click analytics removed per request
 
         public static void SendHeartLoss(
             string levelId,
@@ -284,7 +287,15 @@ namespace Analytics
                 else
                 {
                     var body = request.downloadHandler != null ? request.downloadHandler.text : string.Empty;
-                    if (!string.IsNullOrEmpty(body))
+                    var contentType = request.GetResponseHeader("content-type") ?? string.Empty;
+                    bool looksHtmlError = (!string.IsNullOrEmpty(body) && body.IndexOf("<html", StringComparison.OrdinalIgnoreCase) >= 0)
+                        || contentType.IndexOf("text/html", StringComparison.OrdinalIgnoreCase) >= 0;
+                    if (looksHtmlError)
+                    {
+                        var prefix = body != null && body.Length > 140 ? body.Substring(0, 140) + "…" : body;
+                        Debug.LogWarning($"[Analytics] {(isGet ? "GET" : "POST")} returned HTML (Apps Script error page). Check your script. Snippet: {prefix}");
+                    }
+                    else if (!string.IsNullOrEmpty(body))
                     {
                         Debug.Log($"[Analytics] {(isGet ? "GET" : "POST")} ok: {body}");
                     }
