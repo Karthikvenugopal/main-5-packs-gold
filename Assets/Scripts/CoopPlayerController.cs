@@ -379,7 +379,10 @@ public class CoopPlayerController : MonoBehaviour
             cause = GameManager.DamageCause.IceWall;
             shouldPushback = _role == PlayerRole.Watergirl;
         }
-        _gameManager.DamagePlayer(_role, 1, cause, hazard.transform.position);
+        if (_gameManager != null)
+        {
+            _gameManager.DamagePlayer(_role, 1, cause, hazard.transform.position);
+        }
         if (shouldPushback)
         {
             ApplyHazardPushback(hazard);

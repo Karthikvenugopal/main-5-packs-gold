@@ -181,6 +181,7 @@ public static class TokenSpriteLibrary
 {
     private static Sprite _fireSprite;
     private static Sprite _waterSprite;
+    private static Sprite _shockwaveSprite;
 
     public static Sprite GetFireSprite()
     {
@@ -202,6 +203,17 @@ public static class TokenSpriteLibrary
 
         _waterSprite = CreateWaterSprite();
         return _waterSprite;
+    }
+
+    public static Sprite GetShockwaveSprite()
+    {
+        if (_shockwaveSprite != null)
+        {
+            return _shockwaveSprite;
+        }
+
+        _shockwaveSprite = CreateShockwaveSprite();
+        return _shockwaveSprite;
     }
 
     private static Sprite CreateFireSprite()
@@ -296,5 +308,41 @@ public static class TokenSpriteLibrary
         texture.SetPixels32(pixels);
         texture.Apply();
         return texture;
+    }
+
+    private static Sprite CreateShockwaveSprite()
+    {
+        const int size = 64;
+        var texture = CreateBlankTexture(size);
+        var pixels = texture.GetPixels32();
+        int index = 0;
+
+        Vector2 center = new Vector2((size - 1) * 0.5f, (size - 1) * 0.5f);
+        float radius = size * 0.42f;
+        float thickness = size * 0.05f;
+        float innerRadius = Mathf.Max(0f, radius - thickness);
+        float outerRadius = radius + thickness;
+        float innerSqr = innerRadius * innerRadius;
+        float outerSqr = outerRadius * outerRadius;
+
+        for (int y = 0; y < size; y++)
+        {
+            for (int x = 0; x < size; x++, index++)
+            {
+                float distSqr = (new Vector2(x, y) - center).sqrMagnitude;
+                if (distSqr >= innerSqr && distSqr <= outerSqr)
+                {
+                    pixels[index] = Color.white;
+                }
+                else
+                {
+                    pixels[index] = Color.clear;
+                }
+            }
+        }
+
+        texture.SetPixels32(pixels);
+        texture.Apply();
+        return Sprite.Create(texture, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f), size);
     }
 }
