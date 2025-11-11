@@ -15,11 +15,27 @@ public class TokenSpriteConfigurator : MonoBehaviour
 
     [Header("Token Appearance")]
     [SerializeField] private TokenType tokenType = TokenType.Fire;
+    [SerializeField] private int sortingOrder = 5;
+
+    [Header("Breath Effect")]
+    [Tooltip("Enables a gentle scale up/down animation so tokens feel alive.")]
+    [SerializeField] private bool enableBreathEffect = true;
+    [Tooltip("Time in seconds for a full shrink -> grow cycle.")]
+    [SerializeField, Min(0.1f)] private float breathCycleDuration = 1.6f;
+    [Tooltip("Range of the scale multiplier that will be applied on top of the prefab scale (x = min, y = max).")]
+    [SerializeField] private Vector2 breathScaleRange = new Vector2(0.85f, 1.1f);
+    [Tooltip("Randomizes the starting phase so nearby tokens do not pulse in sync.")]
+    [SerializeField] private bool randomizePhase = true;
 
     private SpriteRenderer _spriteRenderer;
+    private Vector3 _baseScale = Vector3.one;
+    private float _phaseOffset;
 
     private void Awake()
     {
+        CacheRenderer();
+        CaptureBaseScale(force: true);
+        InitializePhase();
         ApplySprite();
     }
 
@@ -30,17 +46,61 @@ public class TokenSpriteConfigurator : MonoBehaviour
 
     private void OnValidate()
     {
+        CacheRenderer();
+        CaptureBaseScale(force: !Application.isPlaying);
         ApplySprite();
     }
 
-    private void ApplySprite()
+    private void OnEnable()
+    {
+        CaptureBaseScale(force: true);
+        InitializePhase();
+    }
+
+    private void Update()
+    {
+        ApplyBreathEffect();
+    }
+
+    private void CacheRenderer()
     {
         if (_spriteRenderer == null)
         {
             _spriteRenderer = GetComponent<SpriteRenderer>();
         }
+    }
 
-        _spriteRenderer.sortingOrder = 5;
+    private void CaptureBaseScale(bool force)
+    {
+        if (!force && Application.isPlaying) return;
+        _baseScale = transform.localScale;
+    }
+
+    private void InitializePhase()
+    {
+        if (!randomizePhase)
+        {
+            _phaseOffset = 0f;
+            return;
+        }
+
+        // Use position-based hash in edit mode so each token keeps a stable phase without relying on Random state.
+        if (!Application.isPlaying)
+        {
+            int hash = transform.GetInstanceID();
+            _phaseOffset = (hash & 1023) / 1023f * Mathf.PI * 2f;
+            return;
+        }
+
+        _phaseOffset = UnityEngine.Random.value * Mathf.PI * 2f;
+    }
+
+    private void ApplySprite()
+    {
+        CacheRenderer();
+        if (_spriteRenderer == null) return;
+
+        _spriteRenderer.sortingOrder = sortingOrder;
 
         switch (tokenType)
         {
@@ -53,6 +113,31 @@ public class TokenSpriteConfigurator : MonoBehaviour
                 _spriteRenderer.color = new Color(0.3f, 0.6f, 1f);
                 break;
         }
+    }
+
+    private void ApplyBreathEffect()
+    {
+        if (!enableBreathEffect)
+        {
+            transform.localScale = _baseScale;
+            return;
+        }
+
+        float duration = Mathf.Max(0.01f, breathCycleDuration);
+        float minScale = Mathf.Min(breathScaleRange.x, breathScaleRange.y);
+        float maxScale = Mathf.Max(breathScaleRange.x, breathScaleRange.y);
+
+        if (Mathf.Approximately(minScale, maxScale))
+        {
+            transform.localScale = _baseScale * minScale;
+            return;
+        }
+
+        float elapsed = Application.isPlaying ? Time.time : Time.realtimeSinceStartup;
+        float normalized = 0.5f + 0.5f * Mathf.Sin((elapsed / duration) * Mathf.PI * 2f + _phaseOffset);
+        float scaleMultiplier = Mathf.Lerp(minScale, maxScale, normalized);
+
+        transform.localScale = _baseScale * scaleMultiplier;
     }
 }
 

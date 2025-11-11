@@ -1,25 +1,37 @@
 using System;
-using System.Collections;
+using System.Collections.Generic;
+using System.Text;
 using UnityEngine;
 using UnityEngine.Networking;
+using UnityEngine.SceneManagement;
 
 namespace Analytics
 {
     public static class GoogleSheetsAnalytics
     {
         private const string ConfigResourceName = "google_sheets_config"; // Resources/google_sheets_config.json
+
+        private static readonly HashSet<string> AllowedLevels = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            "level1scene",
+            "level2scene",
+            "level3scene",
+            "level1",
+            "level2",
+            "level3"
+        };
+
         private static string _webAppUrl;
-                private static string _sheetId; // Optional spreadsheet id for standalone Apps Script
-private static string _sessionId;
+        private static string _sheetId; // Optional spreadsheet id for standalone Apps Script
+        private static string _sessionId;
         private static bool _initialized;
 
         [Serializable]
         private class Config
         {
             public string webAppUrl;
-        
             public string sheetId; // optional
-}
+        }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         private static void Initialize()
@@ -31,11 +43,15 @@ private static string _sessionId;
 
             try
             {
-                var ta = Resources.Load<TextAsset>(ConfigResourceName);
-                if (ta != null && !string.IsNullOrEmpty(ta.text))
+                var configAsset = Resources.Load<TextAsset>(ConfigResourceName);
+                if (configAsset != null && !string.IsNullOrEmpty(configAsset.text))
                 {
-                    var cfg = JsonUtility.FromJson<Config>(ta.text);
-                    if (cfg != null) { _webAppUrl = cfg.webAppUrl; _sheetId = cfg.sheetId; }
+                    var cfg = JsonUtility.FromJson<Config>(configAsset.text);
+                    if (cfg != null)
+                    {
+                        _webAppUrl = cfg.webAppUrl;
+                        _sheetId = cfg.sheetId;
+                    }
                 }
             }
             catch (Exception e)
@@ -54,34 +70,19 @@ private static string _sessionId;
             _webAppUrl = url;
         }
 
-        
         public static void SetSheetId(string sheetId)
         {
             _sheetId = sheetId;
         }
-public static void SendLevelResult(string levelId, bool success, float timeSpentSeconds)
+
+        public static void SendLevelResult(string levelId, bool success, float timeSpentSeconds)
         {
-            if (string.IsNullOrWhiteSpace(_webAppUrl))
-            {
-                Debug.LogWarning("[Analytics] Cannot send analytics: Web App URL is empty.");
-                return;
-            }
+            if (!EnsureWebAppUrlConfigured()) return;
 
-            if (string.IsNullOrEmpty(levelId))
-            {
-                levelId = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
-            }
+            levelId = ResolveLevelId(levelId);
+            if (!EnsureLevelAllowed(levelId, "level result")) return;
 
-            // Client-side whitelist to avoid Tutorial or other scenes
-            var idLower = levelId != null ? levelId.ToLowerInvariant() : string.Empty;
-            bool allowed = idLower == "level1scene" || idLower == "level2scene" || idLower == "level3scene" || idLower == "level1" || idLower == "level2" || idLower == "level3";
-            if (!allowed)
-            {
-                Debug.Log($"[Analytics] Skipping level result for scene '{levelId}'. Only Level1/Level2/Level3 allowed.");
-                return;
-            }
-
-            var data = new System.Collections.Generic.Dictionary<string, string>
+            var data = new Dictionary<string, string>
             {
                 { "session_id", _sessionId },
                 { "level_id", levelId },
@@ -89,9 +90,7 @@ public static void SendLevelResult(string levelId, bool success, float timeSpent
                 { "time_spent_s", Mathf.RoundToInt(timeSpentSeconds).ToString() }
             };
 
-            
-            if (!string.IsNullOrWhiteSpace(_sheetId)) data["sid"] = _sheetId;
-CoroutineHost.Run(SendFormUrlEncoded(_webAppUrl, data));
+            TryAddSheetId(data);
             SendFormUrlEncoded(_webAppUrl, data);
         }
 
@@ -106,31 +105,16 @@ CoroutineHost.Run(SendFormUrlEncoded(_webAppUrl, data));
             string victimRole = null,
             string cause = null)
         {
-            if (string.IsNullOrWhiteSpace(_webAppUrl))
-            {
-                Debug.LogWarning("[Analytics] Cannot send analytics: Web App URL is empty.");
-                return;
-            }
+            if (!EnsureWebAppUrlConfigured()) return;
 
-            if (string.IsNullOrEmpty(levelId))
-            {
-                levelId = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
-            }
-
-            // Client-side whitelist to ensure Tutorial is never logged
-            var idLower = levelId != null ? levelId.ToLowerInvariant() : string.Empty;
-            bool allowed = idLower == "level1scene" || idLower == "level2scene" || idLower == "level3scene" || idLower == "level1" || idLower == "level2" || idLower == "level3";
-            if (!allowed)
-            {
-                Debug.Log($"[Analytics] Skipping hotspot for scene '{levelId}'. Only Level1/Level2/Level3 allowed.");
-                return;
-            }
+            levelId = ResolveLevelId(levelId);
+            if (!EnsureLevelAllowed(levelId, "hotspot")) return;
 
             if (cellSize <= 0f) cellSize = 1f;
             int gridX = Mathf.FloorToInt(worldPosition.x / cellSize);
             int gridY = Mathf.FloorToInt(worldPosition.y / cellSize);
 
-            var data = new System.Collections.Generic.Dictionary<string, string>
+            var data = new Dictionary<string, string>
             {
                 { "event", "fail" },
                 { "session_id", _sessionId },
@@ -143,13 +127,11 @@ CoroutineHost.Run(SendFormUrlEncoded(_webAppUrl, data));
                 { "water_tokens", Mathf.Max(0, waterTokensCollected).ToString() }
             };
 
-            
-            if (!string.IsNullOrWhiteSpace(_sheetId)) data["sid"] = _sheetId;
-if (!string.IsNullOrEmpty(victimRole)) data["victim_role"] = victimRole;
+            if (!string.IsNullOrEmpty(victimRole)) data["victim_role"] = victimRole;
             if (!string.IsNullOrEmpty(cause)) data["cause"] = cause;
 
-            // Use GET for robustness across Editor/WebGL/Standalone
-            CoroutineHost.Run(SendGetQuery(_webAppUrl, data));
+            TryAddSheetId(data);
+            SendGetQuery(_webAppUrl, data);
         }
 
         public static void SendHeartLoss(
@@ -158,26 +140,12 @@ if (!string.IsNullOrEmpty(victimRole)) data["victim_role"] = victimRole;
             string cause,
             float timeSinceStartSeconds)
         {
-            if (string.IsNullOrWhiteSpace(_webAppUrl))
-            {
-                Debug.LogWarning("[Analytics] Cannot send analytics: Web App URL is empty.");
-                return;
-            }
+            if (!EnsureWebAppUrlConfigured()) return;
 
-            if (string.IsNullOrEmpty(levelId))
-            {
-                levelId = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
-            }
+            levelId = ResolveLevelId(levelId);
+            if (!EnsureLevelAllowed(levelId, "heart loss")) return;
 
-            var idLower = levelId != null ? levelId.ToLowerInvariant() : string.Empty;
-            bool allowed = idLower == "level1scene" || idLower == "level2scene" || idLower == "level3scene" || idLower == "level1" || idLower == "level2" || idLower == "level3";
-            if (!allowed)
-            {
-                Debug.Log($"[Analytics] Skipping heart loss for scene '{levelId}'. Only Level1/Level2/Level3 allowed.");
-                return;
-            }
-
-            var data = new System.Collections.Generic.Dictionary<string, string>
+            var data = new Dictionary<string, string>
             {
                 { "event", "heart_lost" },
                 { "session_id", _sessionId },
@@ -187,38 +155,23 @@ if (!string.IsNullOrEmpty(victimRole)) data["victim_role"] = victimRole;
                 { "time_since_start_s", Mathf.RoundToInt(timeSinceStartSeconds).ToString() }
             };
 
-            
-            if (!string.IsNullOrWhiteSpace(_sheetId)) data["sid"] = _sheetId;
-CoroutineHost.Run(SendGetQuery(_webAppUrl, data));
+            TryAddSheetId(data);
+            SendGetQuery(_webAppUrl, data);
         }
 
-                public static void SendAssist(
+        public static void SendAssist(
             string levelId,
             string actor,
             string recipient,
             string kind,
             float timeSinceStartSeconds)
         {
-            if (string.IsNullOrWhiteSpace(_webAppUrl))
-            {
-                Debug.LogWarning("[Analytics] Cannot send analytics: Web App URL is empty.");
-                return;
-            }
+            if (!EnsureWebAppUrlConfigured()) return;
 
-            if (string.IsNullOrEmpty(levelId))
-            {
-                levelId = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
-            }
+            levelId = ResolveLevelId(levelId);
+            if (!EnsureLevelAllowed(levelId, "assist")) return;
 
-            var idLower = levelId != null ? levelId.ToLowerInvariant() : string.Empty;
-            bool allowed = idLower == "level1scene" || idLower == "level2scene" || idLower == "level3scene" || idLower == "level1" || idLower == "level2" || idLower == "level3";
-            if (!allowed)
-            {
-                Debug.Log($"[Analytics] Skipping assist for scene '{levelId}'. Only Level1/Level2/Level3 allowed.");
-                return;
-            }
-
-            var data = new System.Collections.Generic.Dictionary<string, string>
+            var data = new Dictionary<string, string>
             {
                 { "event", "assist" },
                 { "session_id", _sessionId },
@@ -229,15 +182,91 @@ CoroutineHost.Run(SendGetQuery(_webAppUrl, data));
                 { "time_since_start_s", Mathf.RoundToInt(timeSinceStartSeconds).ToString() }
             };
 
-            if (!string.IsNullOrWhiteSpace(_sheetId)) data["sid"] = _sheetId;
+            TryAddSheetId(data);
+            SendGetQuery(_webAppUrl, data);
+        }
 
-            CoroutineHost.Run(SendGetQuery(_webAppUrl, data));
-        }private static IEnumerator SendFormUrlEncoded(string url, System.Collections.Generic.Dictionary<string, string> data)
+        private static bool EnsureWebAppUrlConfigured()
         {
-            using (var request = UnityWebRequest.Post(url, data))
-            {
-                yield return request.SendWebRequest();
+            if (!string.IsNullOrWhiteSpace(_webAppUrl)) return true;
 
+            Debug.LogWarning("[Analytics] Cannot send analytics: Web App URL is empty.");
+            return false;
+        }
+
+        private static string ResolveLevelId(string levelId)
+        {
+            return string.IsNullOrEmpty(levelId) ? SceneManager.GetActiveScene().name : levelId;
+        }
+
+        private static bool EnsureLevelAllowed(string levelId, string context)
+        {
+            if (AllowedLevels.Contains(levelId ?? string.Empty)) return true;
+
+            Debug.Log($"[Analytics] Skipping {context} for scene '{levelId}'. Only Level1/Level2/Level3 allowed.");
+            return false;
+        }
+
+        private static void TryAddSheetId(Dictionary<string, string> data)
+        {
+            if (!string.IsNullOrWhiteSpace(_sheetId))
+            {
+                data["sid"] = _sheetId;
+            }
+        }
+
+        private static void SendFormUrlEncoded(string url, Dictionary<string, string> data)
+        {
+            if (string.IsNullOrWhiteSpace(url)) return;
+
+            try
+            {
+                var request = UnityWebRequest.Post(url, data);
+                var operation = request.SendWebRequest();
+                operation.completed += _ => HandleUnityWebRequestResult(request, isGet: false);
+            }
+            catch (Exception e)
+            {
+                Debug.LogWarning($"[Analytics] Failed to start POST: {e.Message}");
+            }
+        }
+
+        private static void SendGetQuery(string url, Dictionary<string, string> data)
+        {
+            if (string.IsNullOrWhiteSpace(url)) return;
+
+            try
+            {
+                var sb = new StringBuilder();
+                sb.Append(url);
+                sb.Append(url.Contains("?") ? '&' : '?');
+
+                bool first = true;
+                foreach (var kv in data)
+                {
+                    if (!first) sb.Append('&');
+                    first = false;
+                    sb.Append(UnityWebRequest.EscapeURL(kv.Key));
+                    sb.Append('=');
+                    sb.Append(UnityWebRequest.EscapeURL(kv.Value));
+                }
+
+                var request = UnityWebRequest.Get(sb.ToString());
+                var operation = request.SendWebRequest();
+                operation.completed += _ => HandleUnityWebRequestResult(request, isGet: true);
+            }
+            catch (Exception e)
+            {
+                Debug.LogWarning($"[Analytics] Failed to start GET request: {e.Message}");
+            }
+        }
+
+        private static void HandleUnityWebRequestResult(UnityWebRequest request, bool isGet)
+        {
+            if (request == null) return;
+
+            try
+            {
                 bool failed;
                 string errorSummary;
 #if UNITY_2020_2_OR_NEWER
@@ -250,70 +279,20 @@ CoroutineHost.Run(SendGetQuery(_webAppUrl, data));
 
                 if (failed)
                 {
-                    Debug.LogWarning($"[Analytics] Post failed: {errorSummary}");
+                    Debug.LogWarning($"[Analytics] {(isGet ? "GET" : "POST")} failed: {errorSummary}");
                 }
                 else
                 {
                     var body = request.downloadHandler != null ? request.downloadHandler.text : string.Empty;
                     if (!string.IsNullOrEmpty(body))
                     {
-                        Debug.Log($"[Analytics] Post ok: {body}");
+                        Debug.Log($"[Analytics] {(isGet ? "GET" : "POST")} ok: {body}");
                     }
                 }
             }
-        }
-
-        private static IEnumerator SendGetQuery(string url, System.Collections.Generic.Dictionary<string, string> data)
-        {
-            var sb = new System.Text.StringBuilder();
-            sb.Append(url);
-            if (!url.Contains("?")) sb.Append('?'); else sb.Append('&');
-            bool first = true;
-            foreach (var kv in data)
+            finally
             {
-                if (!first) sb.Append('&');
-                first = false;
-                sb.Append(UnityWebRequest.EscapeURL(kv.Key));
-                sb.Append('=');
-                sb.Append(UnityWebRequest.EscapeURL(kv.Value));
-            }
-
-            using (var req = UnityWebRequest.Get(sb.ToString()))
-            {
-                yield return req.SendWebRequest();
-                if (req.result != UnityWebRequest.Result.Success)
-                {
-                    Debug.LogWarning($"[Analytics] GET failed: {(int)req.responseCode} {req.result} {req.error}");
-                }
-                else
-                {
-                    var body = req.downloadHandler != null ? req.downloadHandler.text : string.Empty;
-                    if (!string.IsNullOrEmpty(body))
-                        Debug.Log($"[Analytics] GET ok: {body}");
-                }
-            }
-        }
-
-        private class CoroutineHost : MonoBehaviour
-        {
-            private static CoroutineHost _instance;
-
-            [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
-            private static void Ensure()
-            {
-                if (_instance != null) return;
-                var go = new GameObject("__AnalyticsCoroutineHost");
-                UnityEngine.Object.DontDestroyOnLoad(go);
-                _instance = go.AddComponent<CoroutineHost>();
-            }
-
-            public static void Run(IEnumerator routine)
-            {
-                if (_instance == null)
-                {
-                    Ensure();
-                }
-                _instance.StartCoroutine(routine);
+                request.Dispose();
             }
         }
     }
