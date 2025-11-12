@@ -51,6 +51,16 @@ public class GameManager : MonoBehaviour
     [SerializeField] private string levelDefeatMessage = "Out of hearts! Choose an option.";
     [Header("Session Tracking")]
     [SerializeField] private bool resetGlobalTokenTotalsOnLoad = false;
+    [Header("Scoring System")]
+    [SerializeField] private bool enableScoring = true;
+    [SerializeField] private int basePoints = 1000;
+    [SerializeField] private int pointsPerToken = 100;
+    [SerializeField] private float timeBonusMultiplier = 50f;
+    [SerializeField] private float targetTimeSeconds = 60f; // Level 1: 1 minute
+    [Tooltip("Target time for Level 2. Set to 0 to use targetTimeSeconds.")]
+    [SerializeField] private float level2TargetTimeSeconds = 180f; // Level 2: 3 minutes
+    [Tooltip("Target time for Level 3. Set to 0 to use targetTimeSeconds.")]
+    [SerializeField] private float level3TargetTimeSeconds = 120f; // Level 3: 2 minutes
     [Header("Level Intro Instructions")]
     [SerializeField] private bool showInstructionPanel = true;
     [SerializeField] private string instructionPanelSceneName = "Level1Scene";
@@ -180,6 +190,10 @@ public class GameManager : MonoBehaviour
     private bool _waitingForInstructionAck;
     private bool _instructionPausedTime;
     private float _previousTimeScale = 1f;
+    
+    // Scoring timer - tracks actual gameplay time (separate from analytics timer)
+    private float _scoringStartTime;
+    private bool _scoringTimerStarted;
 
     private void Awake()
     {
@@ -211,6 +225,10 @@ public class GameManager : MonoBehaviour
         
         EnsureLevelTimer();
         CreateInstructionPanelIfNeeded();
+        
+        // Initialize scoring timer (will start when level actually begins)
+        _scoringTimerStarted = false;
+        _scoringStartTime = 0f;
     }
 
     // ... (Update, RegisterPlayer, OnLevelReady, TryStartLevel, etc. are UNCHANGED) ...
@@ -276,6 +294,10 @@ public class GameManager : MonoBehaviour
         _gameActive = true;
         _gameFinished = false;
         _playersAtExit.Clear();
+
+        // Start the scoring timer when the level actually begins (separate from analytics timer)
+        _scoringStartTime = Time.realtimeSinceStartup;
+        _scoringTimerStarted = true;
 
         foreach (var player in _players)
         {
@@ -930,11 +952,12 @@ public class GameManager : MonoBehaviour
         bodyRect.anchorMax = new Vector2(1f, 0.5f);
         bodyRect.sizeDelta = new Vector2(0f, 50f);
         LayoutElement bodyLayout = bodyGO.AddComponent<LayoutElement>();
-        bodyLayout.preferredHeight = 60f;
+        bodyLayout.preferredHeight = 120f; // Increased to accommodate multiple lines for score display
 
         _victoryBodyLabel = bodyGO.AddComponent<TextMeshProUGUI>();
         _victoryBodyLabel.alignment = TextAlignmentOptions.Center;
         _victoryBodyLabel.fontSize = 28f;
+        _victoryBodyLabel.enableWordWrapping = true;
         _victoryBodyLabel.text = victoryBodyText;
 
         GameObject summaryGroup = new GameObject("TokenSummary");
@@ -1078,7 +1101,15 @@ public class GameManager : MonoBehaviour
 
         if (_victoryBodyLabel != null)
         {
-            _victoryBodyLabel.text = isVictory ? victoryBodyText : defeatBodyText;
+            // Check if we're in a scored level and scoring is enabled
+            if (isVictory && enableScoring && IsScoredLevel())
+            {
+                _victoryBodyLabel.text = BuildScoreDisplayText();
+            }
+            else
+            {
+                _victoryBodyLabel.text = isVictory ? victoryBodyText : defeatBodyText;
+            }
         }
 
         if (_fireSummaryRoot != null)
@@ -1705,5 +1736,80 @@ public class GameManager : MonoBehaviour
     {
         if (string.IsNullOrEmpty(text)) return text;
         return text.Replace("Fireboy", "Ember").Replace("Watergirl", "Aqua");
+    }
+
+    private bool IsScoredLevel()
+    {
+        string currentScene = SceneManager.GetActiveScene().name;
+        // Check if we're in any of the main level scenes (Level1, Level2, or Level3)
+        // Tutorial uses GameManagerTutorial, so it's automatically excluded
+        return (!string.IsNullOrEmpty(instructionPanelSceneName) && currentScene == instructionPanelSceneName) ||
+               (!string.IsNullOrEmpty(level2InstructionSceneName) && currentScene == level2InstructionSceneName) ||
+               (!string.IsNullOrEmpty(level3InstructionSceneName) && currentScene == level3InstructionSceneName);
+    }
+
+    private float GetTargetTimeForCurrentLevel()
+    {
+        string currentScene = SceneManager.GetActiveScene().name;
+        
+        // Check for level-specific target times
+        if (!string.IsNullOrEmpty(level2InstructionSceneName) && currentScene == level2InstructionSceneName)
+        {
+            return level2TargetTimeSeconds > 0f ? level2TargetTimeSeconds : targetTimeSeconds;
+        }
+        
+        if (!string.IsNullOrEmpty(level3InstructionSceneName) && currentScene == level3InstructionSceneName)
+        {
+            return level3TargetTimeSeconds > 0f ? level3TargetTimeSeconds : targetTimeSeconds;
+        }
+        
+        // Default to Level 1 target time (or general target time)
+        return targetTimeSeconds;
+    }
+
+    private string BuildScoreDisplayText()
+    {
+        // Use the scoring timer (actual gameplay time) instead of analytics timer
+        float elapsedSecondsRaw = _scoringTimerStarted 
+            ? Mathf.Max(0f, Time.realtimeSinceStartup - _scoringStartTime) 
+            : 0f;
+        // Round to whole seconds to match the display format (MM:SS)
+        float elapsedSeconds = Mathf.Floor(elapsedSecondsRaw);
+        float levelTargetTime = GetTargetTimeForCurrentLevel();
+        
+        // Calculate score components
+        int totalTokens = fireTokensCollected + waterTokensCollected;
+        int tokenBonus = totalTokens * pointsPerToken;
+        float timeBonus = Mathf.Max(0f, (levelTargetTime - elapsedSeconds) * timeBonusMultiplier);
+        int timeBonusInt = Mathf.RoundToInt(timeBonus);
+        int totalScore = basePoints + tokenBonus + timeBonusInt;
+        
+        // Format time as MM:SS
+        string timeFormatted = FormatTime(elapsedSeconds);
+        string timeBonusFormatted = FormatNumber(timeBonusInt);
+        
+        // Format token display (X/Y)
+        int totalTokensInLevel = _totalFireTokens + _totalWaterTokens;
+        string tokenBonusFormatted = FormatNumber(tokenBonus);
+        
+        // Format total score
+        string totalScoreFormatted = FormatNumber(totalScore);
+        
+        // Build the display text
+        return $"Time: {timeFormatted} (Bonus +{timeBonusFormatted})\n" +
+               $"Tokens: {totalTokens}/{totalTokensInLevel} (+{tokenBonusFormatted})\n" +
+               $"Total Score: {totalScoreFormatted} points";
+    }
+
+    private string FormatTime(float seconds)
+    {
+        int minutes = Mathf.FloorToInt(seconds / 60f);
+        int secs = Mathf.FloorToInt(seconds % 60f);
+        return $"{minutes:00}:{secs:00}";
+    }
+
+    private string FormatNumber(int number)
+    {
+        return number.ToString("N0");
     }
 }
