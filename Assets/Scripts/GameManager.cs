@@ -760,6 +760,7 @@ public class GameManager : MonoBehaviour
         UpdateHeartsUI();
 
         _heartLossAnimator = heartsMasterContainer.AddComponent<HeartLossAnimator>();
+        _heartLossAnimator.HeartAnimationFinished += UpdateHeartsUI;
     }
     // --- MODIFICATION END ---
     
@@ -1686,6 +1687,11 @@ public class GameManager : MonoBehaviour
 
     private void OnDestroy()
     {
+        if (_heartLossAnimator != null)
+        {
+            _heartLossAnimator.HeartAnimationFinished -= UpdateHeartsUI;
+        }
+
         RestoreTimeScaleIfNeeded();
 
         if (_victoryRestartButton != null)

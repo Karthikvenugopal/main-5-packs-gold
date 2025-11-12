@@ -15,7 +15,7 @@ public class HeartLossAnimator : MonoBehaviour
     [SerializeField] private string aquaContainerName = "AquaHeartsContainer";
 
     [Header("Animation Settings")]
-    [SerializeField] private float popScaleMultiplier = 1.45f;
+    [SerializeField] private float popScaleMultiplier = 1.6f;
     [SerializeField] private float popDuration = 0.12f;
     [SerializeField] private float highlightDuration = 0.18f;
     [SerializeField] private float shatterDuration = 0.16f;
@@ -26,6 +26,8 @@ public class HeartLossAnimator : MonoBehaviour
     private readonly List<GameObject> emberHearts = new();
     private readonly List<GameObject> aquaHearts = new();
     private readonly Dictionary<GameObject, HeartVisual> heartLookup = new();
+
+    public event Action HeartAnimationFinished;
 
     public IReadOnlyList<GameObject> EmberHearts => emberHearts;
     public IReadOnlyList<GameObject> AquaHearts => aquaHearts;
@@ -121,6 +123,7 @@ public class HeartLossAnimator : MonoBehaviour
         heart.Transform.localScale = defaultScale;
         heart.ResetColor();
         heart.IsAnimating = false;
+        HeartAnimationFinished?.Invoke();
     }
 
     private IEnumerator AnimateScale(Transform target, Vector3 from, Vector3 to, float duration)
