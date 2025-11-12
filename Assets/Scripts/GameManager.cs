@@ -120,6 +120,10 @@ public class GameManager : MonoBehaviour
     [SerializeField] private Color topUiBarColor = new Color(0.1f, 0.1f, 0.1f, 0.8f);
     // --- MODIFICATION END ---
 
+    [Header("Audio")]
+    [SerializeField] private AudioClip heartLossSfx;
+    [SerializeField, Range(0f, 1f)] private float heartLossSfxVolume = 0.9f;
+
 
     // Keeps a visible record of how many fire tokens the team has picked up.
     public int fireTokensCollected = 0;
@@ -135,6 +139,7 @@ public class GameManager : MonoBehaviour
     // We add a reference for the top UI bar's RectTransform.
     private RectTransform _topUiBar;
     // --- MODIFICATION END ---
+    private HeartLossAnimator _heartLossAnimator;
     
     private List<Image> _emberHeartImages = new List<Image>();
     private List<Image> _aquaHeartImages = new List<Image>();
@@ -180,6 +185,7 @@ public class GameManager : MonoBehaviour
     private bool _waitingForInstructionAck;
     private bool _instructionPausedTime;
     private float _previousTimeScale = 1f;
+    private AudioClip _generatedHeartLossClip;
 
     private void Awake()
     {
@@ -757,6 +763,16 @@ public class GameManager : MonoBehaviour
         }
         
         UpdateHeartsUI();
+
+        _heartLossAnimator = heartsMasterContainer.AddComponent<HeartLossAnimator>();
+
+        var heartLossAudioSource = heartsMasterContainer.AddComponent<AudioSource>();
+        heartLossAudioSource.playOnAwake = false;
+        heartLossAudioSource.loop = false;
+        heartLossAudioSource.spatialBlend = 0f;
+
+        _heartLossAnimator.ConfigureAudio(GetHeartLossClip(), heartLossAudioSource, heartLossSfxVolume);
+        _heartLossAnimator.HeartAnimationFinished += UpdateHeartsUI;
     }
     // --- MODIFICATION END ---
     
@@ -1171,51 +1187,84 @@ public class GameManager : MonoBehaviour
         // Loop through all of Ember's heart images
         for (int i = 0; i < _emberHeartImages.Count; i++)
         {
+            var heartImage = _emberHeartImages[i];
+            if (heartImage == null)
+            {
+                continue;
+            }
+
+            if (_heartLossAnimator != null && _heartLossAnimator.IsAnimatingHeart(heartImage.gameObject))
+            {
+                continue;
+            }
+
+            heartImage.gameObject.SetActive(true);
+
             if (i < _fireHearts)
             {
-                // This index is less than the current health, show Ember's "full" heart
-                _emberHeartImages[i].sprite = emberHeartFullSprite;
-                _emberHeartImages[i].gameObject.SetActive(true);
+                heartImage.sprite = emberHeartFullSprite;
+                heartImage.enabled = true;
+            }
+            else if (emberHeartEmptySprite != null)
+            {
+                heartImage.sprite = emberHeartEmptySprite;
+                heartImage.enabled = true;
             }
             else
             {
-                // This index is equal or greater, show Ember's "empty" heart
-                if (emberHeartEmptySprite != null)
-                {
-                    // If an "empty" sprite is provided, show it
-                    _emberHeartImages[i].sprite = emberHeartEmptySprite;
-                }
-                else
-                {
-                    // Otherwise, just hide this heart image
-                    _emberHeartImages[i].gameObject.SetActive(false);
-                }
+                heartImage.enabled = false;
             }
         }
 
         // Loop through all of Aqua's heart images
         for (int i = 0; i < _aquaHeartImages.Count; i++)
         {
+            var heartImage = _aquaHeartImages[i];
+            if (heartImage == null)
+            {
+                continue;
+            }
+
+            if (_heartLossAnimator != null && _heartLossAnimator.IsAnimatingHeart(heartImage.gameObject))
+            {
+                continue;
+            }
+
+            heartImage.gameObject.SetActive(true);
+
             if (i < _waterHearts)
             {
-                // This index is less than the current health, show Aqua's "full" heart
-                _aquaHeartImages[i].sprite = aquaHeartFullSprite;
-                _aquaHeartImages[i].gameObject.SetActive(true);
+                heartImage.sprite = aquaHeartFullSprite;
+                heartImage.enabled = true;
+            }
+            else if (aquaHeartEmptySprite != null)
+            {
+                heartImage.sprite = aquaHeartEmptySprite;
+                heartImage.enabled = true;
             }
             else
             {
-                // This index is equal or greater, show Aqua's "empty" heart
-                if (aquaHeartEmptySprite != null)
-                {
-                    // If an "empty" sprite is provided, show it
-                    _aquaHeartImages[i].sprite = aquaHeartEmptySprite;
-                }
-                else
-                {
-                    // Otherwise, just hide this heart image
-                    _aquaHeartImages[i].gameObject.SetActive(false);
-                }
+                heartImage.enabled = false;
             }
+        }
+    }
+
+    private void TriggerHeartLossAnimations(bool isEmber, int previousHeartCount, int heartsLost)
+    {
+        if (_heartLossAnimator == null || heartsLost <= 0 || previousHeartCount <= 0)
+        {
+            return;
+        }
+
+        for (int i = 0; i < heartsLost; i++)
+        {
+            int heartIndex = previousHeartCount - 1 - i;
+            if (heartIndex < 0)
+            {
+                break;
+            }
+
+            _heartLossAnimator.LoseHeart(isEmber, heartIndex);
         }
     }
 
@@ -1260,6 +1309,58 @@ public class GameManager : MonoBehaviour
 
         _tokenBreathTimer += Time.unscaledDeltaTime;
         ApplyTokenBreathToImages(CalculateTokenBreathMultiplier());
+    }
+
+    private AudioClip GetHeartLossClip()
+    {
+        if (heartLossSfx != null)
+        {
+            return heartLossSfx;
+        }
+
+        if (_generatedHeartLossClip == null)
+        {
+            _generatedHeartLossClip = BuildProceduralHeartLossClip();
+        }
+
+        return _generatedHeartLossClip;
+    }
+
+    private static AudioClip BuildProceduralHeartLossClip()
+    {
+        const int sampleRate = 44100;
+        const float duration = 0.35f;
+        int sampleCount = Mathf.CeilToInt(sampleRate * duration);
+        float[] samples = new float[sampleCount];
+
+        double phasePrimary = 0d;
+        double phaseSecondary = 0d;
+
+        const float startFreq = 1100f;
+        const float endFreq = 280f;
+        const float secondaryOffset = 180f;
+
+        for (int i = 0; i < sampleCount; i++)
+        {
+            float progress = i / (float)sampleCount;
+            float freq = Mathf.Lerp(startFreq, endFreq, progress);
+            float envelope = Mathf.SmoothStep(1f, 0f, progress) * Mathf.Clamp01(progress * 4f);
+
+            phasePrimary += freq / sampleRate;
+            phaseSecondary += (freq + secondaryOffset) / sampleRate;
+
+            if (phasePrimary > 1d) phasePrimary -= 1d;
+            if (phaseSecondary > 1d) phaseSecondary -= 1d;
+
+            float sample = (Mathf.Sin((float)(phasePrimary * 2d * System.Math.PI)) * 0.8f +
+                            Mathf.Sin((float)(phaseSecondary * 2d * System.Math.PI)) * 0.2f) * envelope;
+
+            samples[i] = sample;
+        }
+
+        var clip = AudioClip.Create("ProceduralHeartLoss", sampleCount, 1, sampleRate, false);
+        clip.SetData(samples, 0);
+        return clip;
     }
 
     private void RefreshTokenBreathVisuals()
@@ -1456,14 +1557,18 @@ public class GameManager : MonoBehaviour
     private void ApplyDamage(PlayerRole role, int amount, bool suppressCheck, DamageCause cause = DamageCause.Unknown, Vector3? worldOverride = null)
     {
         if (amount <= 0) return;
+        int previousFireHearts = _fireHearts;
+        int previousWaterHearts = _waterHearts;
 
         switch (role)
         {
             case PlayerRole.Fireboy:
                 _fireHearts = Mathf.Max(0, _fireHearts - amount);
+                TriggerHeartLossAnimations(true, previousFireHearts, previousFireHearts - _fireHearts);
                 break;
             case PlayerRole.Watergirl: // This is the line I fixed for you before
                 _waterHearts = Mathf.Max(0, _waterHearts - amount);
+                TriggerHeartLossAnimations(false, previousWaterHearts, previousWaterHearts - _waterHearts);
                 break;
             default:
                  Debug.LogWarning($"ApplyDamage called with unhandled role: {role}");
@@ -1646,6 +1751,11 @@ public class GameManager : MonoBehaviour
 
     private void OnDestroy()
     {
+        if (_heartLossAnimator != null)
+        {
+            _heartLossAnimator.HeartAnimationFinished -= UpdateHeartsUI;
+        }
+
         RestoreTimeScaleIfNeeded();
 
         if (_victoryRestartButton != null)
