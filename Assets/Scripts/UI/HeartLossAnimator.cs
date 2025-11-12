@@ -23,6 +23,16 @@ public class HeartLossAnimator : MonoBehaviour
     [SerializeField] private Color highlightColor = new Color(1f, 0.85f, 0.35f, 1f);
     [SerializeField] private ParticleSystem shatterEffectPrefab;
 
+    [Header("Enhanced Feedback")]
+    [SerializeField] private float popScaleBoost = 1.35f;
+    [SerializeField, Range(0f, 1f)] private float highlightBlendBoost = 0.2f;
+    [SerializeField] private float highlightHoldDuration = 0.08f;
+
+    [Header("Audio")]
+    [SerializeField] private AudioSource audioSource;
+    [SerializeField] private AudioClip heartLossClip;
+    [SerializeField, Range(0f, 1f)] private float heartLossVolume = 0.9f;
+
     private readonly List<GameObject> emberHearts = new();
     private readonly List<GameObject> aquaHearts = new();
     private readonly Dictionary<GameObject, HeartVisual> heartLookup = new();
@@ -84,6 +94,7 @@ public class HeartLossAnimator : MonoBehaviour
         if (!heartVisual.IsAnimating)
         {
             heartVisual.ShowRenderer();
+            PlayHeartLossSound();
             StartCoroutine(PlayHeartLoss(heartVisual));
         }
     }
@@ -93,13 +104,19 @@ public class HeartLossAnimator : MonoBehaviour
         heart.IsAnimating = true;
         var defaultScale = heart.DefaultScale;
 
-        yield return AnimateScale(heart.Transform, defaultScale, defaultScale * popScaleMultiplier, popDuration);
+        var enhancedPopScale = popScaleMultiplier * Mathf.Max(popScaleBoost, 1f);
+        yield return AnimateScale(heart.Transform, defaultScale, defaultScale * enhancedPopScale, popDuration);
 
         if (heart.SupportsColor && highlightDuration > 0f)
         {
             var baseColor = heart.DefaultColor;
-            var targetColor = Color.Lerp(baseColor, highlightColor, highlightBlend);
+            var targetBlend = Mathf.Clamp01(highlightBlend + highlightBlendBoost);
+            var targetColor = Color.Lerp(baseColor, highlightColor, targetBlend);
             yield return AnimateColor(heart, baseColor, targetColor, highlightDuration * 0.5f);
+            if (highlightHoldDuration > 0f)
+            {
+                yield return new WaitForSeconds(highlightHoldDuration);
+            }
             yield return AnimateColor(heart, targetColor, baseColor, highlightDuration * 0.5f);
         }
 
@@ -124,6 +141,23 @@ public class HeartLossAnimator : MonoBehaviour
         heart.ResetColor();
         heart.IsAnimating = false;
         HeartAnimationFinished?.Invoke();
+    }
+
+    private void PlayHeartLossSound()
+    {
+        if (heartLossClip == null)
+        {
+            return;
+        }
+
+        if (audioSource != null)
+        {
+            audioSource.PlayOneShot(heartLossClip, heartLossVolume);
+        }
+        else
+        {
+            AudioSource.PlayClipAtPoint(heartLossClip, transform.position, heartLossVolume);
+        }
     }
 
     private IEnumerator AnimateScale(Transform target, Vector3 from, Vector3 to, float duration)
