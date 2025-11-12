@@ -145,6 +145,11 @@ MonoBehaviour:
   waterPlayerTag: WaterPlayer
   fireTokenTag: FireToken
   waterTokenTag: WaterToken
+  fireShockwaveColor: {r: 1, g: 0.55, b: 0.15, a: 1}
+  waterShockwaveColor: {r: 0.2, g: 0.45, b: 0.95, a: 1}
+  shockwaveStartScale: 0.15
+  shockwaveEndScale: 1.2
+  shockwaveDuration: 0.45
 --- !u!114 &9034946466281601550
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -165,3 +170,4 @@ MonoBehaviour:
   breathCycleDuration: 1.6
   breathScaleRange: {x: 0.85, y: 1.1}
   randomizePhase: 1
+  useSharedBreathPattern: 1
