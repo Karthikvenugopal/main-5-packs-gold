@@ -160,6 +160,16 @@ public class HeartLossAnimator : MonoBehaviour
         }
     }
 
+    public void ConfigureAudio(AudioClip clip, AudioSource source = null, float volume = -1f)
+    {
+        heartLossClip = clip;
+        audioSource = source;
+        if (volume >= 0f)
+        {
+            heartLossVolume = Mathf.Clamp01(volume);
+        }
+    }
+
     private IEnumerator AnimateScale(Transform target, Vector3 from, Vector3 to, float duration)
     {
         if (duration <= 0f)
