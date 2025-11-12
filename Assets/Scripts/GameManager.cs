@@ -18,11 +18,7 @@ public class GameManager : MonoBehaviour
         ProjectileFire = 4,
         ProjectileIce = 5
     }
-    public enum AssistType
-    {
-        ExtinguishFire = 1,
-        MeltIce = 2
-    }
+    // Assist metrics removed
 
     // --- MODIFICATION START ---
     // ... (你所有的 [Header] 和 [SerializeField] 变量都保持不变) ...
@@ -55,6 +51,16 @@ public class GameManager : MonoBehaviour
     [SerializeField] private string levelDefeatMessage = "Out of hearts! Choose an option.";
     [Header("Session Tracking")]
     [SerializeField] private bool resetGlobalTokenTotalsOnLoad = false;
+    [Header("Scoring System")]
+    [SerializeField] private bool enableScoring = true;
+    [SerializeField] private int basePoints = 1000;
+    [SerializeField] private int pointsPerToken = 100;
+    [SerializeField] private float timeBonusMultiplier = 50f;
+    [SerializeField] private float targetTimeSeconds = 60f; // Level 1: 1 minute
+    [Tooltip("Target time for Level 2. Set to 0 to use targetTimeSeconds.")]
+    [SerializeField] private float level2TargetTimeSeconds = 180f; // Level 2: 3 minutes
+    [Tooltip("Target time for Level 3. Set to 0 to use targetTimeSeconds.")]
+    [SerializeField] private float level3TargetTimeSeconds = 120f; // Level 3: 2 minutes
     [Header("Level Intro Instructions")]
     [SerializeField] private bool showInstructionPanel = true;
     [SerializeField] private string instructionPanelSceneName = "Level1Scene";
@@ -124,6 +130,10 @@ public class GameManager : MonoBehaviour
     [SerializeField] private Color topUiBarColor = new Color(0.1f, 0.1f, 0.1f, 0.8f);
     // --- MODIFICATION END ---
 
+    [Header("Audio")]
+    [SerializeField] private AudioClip heartLossSfx;
+    [SerializeField, Range(0f, 1f)] private float heartLossSfxVolume = 0.9f;
+
 
     // Keeps a visible record of how many fire tokens the team has picked up.
     public int fireTokensCollected = 0;
@@ -139,11 +149,18 @@ public class GameManager : MonoBehaviour
     // We add a reference for the top UI bar's RectTransform.
     private RectTransform _topUiBar;
     // --- MODIFICATION END ---
+    private HeartLossAnimator _heartLossAnimator;
     
     private List<Image> _emberHeartImages = new List<Image>();
     private List<Image> _aquaHeartImages = new List<Image>();
     private List<Image> _emberTokenImages = new List<Image>();
     private List<Image> _aquaTokenImages = new List<Image>();
+    private readonly Dictionary<Image, Vector3> _tokenIconBaseScales = new();
+    private float _tokenBreathTimer;
+    [Header("Token UI Breath")]
+    [SerializeField] private bool enableTokenBreath = true;
+    [SerializeField, Min(0.05f)] private float tokenBreathCycleSeconds = 1.6f;
+    [SerializeField] private Vector2 tokenBreathScaleRange = new Vector2(0.85f, 1.1f);
     
     private int _fireHearts;
     private int _waterHearts;
@@ -178,6 +195,13 @@ public class GameManager : MonoBehaviour
     private bool _waitingForInstructionAck;
     private bool _instructionPausedTime;
     private float _previousTimeScale = 1f;
+    
+    // Scoring system fields
+    private bool _scoringTimerStarted;
+    private float _scoringStartTime;
+    
+    // Audio fields
+    private AudioClip _generatedHeartLossClip;
 
     private void Awake()
     {
@@ -209,6 +233,10 @@ public class GameManager : MonoBehaviour
         
         EnsureLevelTimer();
         CreateInstructionPanelIfNeeded();
+        
+        // Initialize scoring timer (will start when level actually begins)
+        _scoringTimerStarted = false;
+        _scoringStartTime = 0f;
     }
 
     // ... (Update, RegisterPlayer, OnLevelReady, TryStartLevel, etc. are UNCHANGED) ...
@@ -216,6 +244,7 @@ public class GameManager : MonoBehaviour
     
     private void Update()
     {
+        UpdateTokenBreathing();
         if (_waitingForInstructionAck)
         {
             if (Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.Return))
@@ -273,6 +302,10 @@ public class GameManager : MonoBehaviour
         _gameActive = true;
         _gameFinished = false;
         _playersAtExit.Clear();
+
+        // Start the scoring timer when the level actually begins (separate from analytics timer)
+        _scoringStartTime = Time.realtimeSinceStartup;
+        _scoringTimerStarted = true;
 
         foreach (var player in _players)
         {
@@ -754,6 +787,16 @@ public class GameManager : MonoBehaviour
         }
         
         UpdateHeartsUI();
+
+        _heartLossAnimator = heartsMasterContainer.AddComponent<HeartLossAnimator>();
+
+        var heartLossAudioSource = heartsMasterContainer.AddComponent<AudioSource>();
+        heartLossAudioSource.playOnAwake = false;
+        heartLossAudioSource.loop = false;
+        heartLossAudioSource.spatialBlend = 0f;
+
+        _heartLossAnimator.ConfigureAudio(GetHeartLossClip(), heartLossAudioSource, heartLossSfxVolume);
+        _heartLossAnimator.HeartAnimationFinished += UpdateHeartsUI;
     }
     // --- MODIFICATION END ---
     
@@ -927,11 +970,12 @@ public class GameManager : MonoBehaviour
         bodyRect.anchorMax = new Vector2(1f, 0.5f);
         bodyRect.sizeDelta = new Vector2(0f, 50f);
         LayoutElement bodyLayout = bodyGO.AddComponent<LayoutElement>();
-        bodyLayout.preferredHeight = 60f;
+        bodyLayout.preferredHeight = 120f; // Increased to accommodate multiple lines for score display
 
         _victoryBodyLabel = bodyGO.AddComponent<TextMeshProUGUI>();
         _victoryBodyLabel.alignment = TextAlignmentOptions.Center;
         _victoryBodyLabel.fontSize = 28f;
+        _victoryBodyLabel.enableWordWrapping = true;
         _victoryBodyLabel.text = victoryBodyText;
 
         GameObject summaryGroup = new GameObject("TokenSummary");
@@ -1075,7 +1119,15 @@ public class GameManager : MonoBehaviour
 
         if (_victoryBodyLabel != null)
         {
-            _victoryBodyLabel.text = isVictory ? victoryBodyText : defeatBodyText;
+            // Check if we're in a scored level and scoring is enabled
+            if (isVictory && enableScoring && IsScoredLevel())
+            {
+                _victoryBodyLabel.text = BuildScoreDisplayText();
+            }
+            else
+            {
+                _victoryBodyLabel.text = isVictory ? victoryBodyText : defeatBodyText;
+            }
         }
 
         if (_fireSummaryRoot != null)
@@ -1168,51 +1220,84 @@ public class GameManager : MonoBehaviour
         // Loop through all of Ember's heart images
         for (int i = 0; i < _emberHeartImages.Count; i++)
         {
+            var heartImage = _emberHeartImages[i];
+            if (heartImage == null)
+            {
+                continue;
+            }
+
+            if (_heartLossAnimator != null && _heartLossAnimator.IsAnimatingHeart(heartImage.gameObject))
+            {
+                continue;
+            }
+
+            heartImage.gameObject.SetActive(true);
+
             if (i < _fireHearts)
             {
-                // This index is less than the current health, show Ember's "full" heart
-                _emberHeartImages[i].sprite = emberHeartFullSprite;
-                _emberHeartImages[i].gameObject.SetActive(true);
+                heartImage.sprite = emberHeartFullSprite;
+                heartImage.enabled = true;
+            }
+            else if (emberHeartEmptySprite != null)
+            {
+                heartImage.sprite = emberHeartEmptySprite;
+                heartImage.enabled = true;
             }
             else
             {
-                // This index is equal or greater, show Ember's "empty" heart
-                if (emberHeartEmptySprite != null)
-                {
-                    // If an "empty" sprite is provided, show it
-                    _emberHeartImages[i].sprite = emberHeartEmptySprite;
-                }
-                else
-                {
-                    // Otherwise, just hide this heart image
-                    _emberHeartImages[i].gameObject.SetActive(false);
-                }
+                heartImage.enabled = false;
             }
         }
 
         // Loop through all of Aqua's heart images
         for (int i = 0; i < _aquaHeartImages.Count; i++)
         {
+            var heartImage = _aquaHeartImages[i];
+            if (heartImage == null)
+            {
+                continue;
+            }
+
+            if (_heartLossAnimator != null && _heartLossAnimator.IsAnimatingHeart(heartImage.gameObject))
+            {
+                continue;
+            }
+
+            heartImage.gameObject.SetActive(true);
+
             if (i < _waterHearts)
             {
-                // This index is less than the current health, show Aqua's "full" heart
-                _aquaHeartImages[i].sprite = aquaHeartFullSprite;
-                _aquaHeartImages[i].gameObject.SetActive(true);
+                heartImage.sprite = aquaHeartFullSprite;
+                heartImage.enabled = true;
+            }
+            else if (aquaHeartEmptySprite != null)
+            {
+                heartImage.sprite = aquaHeartEmptySprite;
+                heartImage.enabled = true;
             }
             else
             {
-                // This index is equal or greater, show Aqua's "empty" heart
-                if (aquaHeartEmptySprite != null)
-                {
-                    // If an "empty" sprite is provided, show it
-                    _aquaHeartImages[i].sprite = aquaHeartEmptySprite;
-                }
-                else
-                {
-                    // Otherwise, just hide this heart image
-                    _aquaHeartImages[i].gameObject.SetActive(false);
-                }
+                heartImage.enabled = false;
             }
+        }
+    }
+
+    private void TriggerHeartLossAnimations(bool isEmber, int previousHeartCount, int heartsLost)
+    {
+        if (_heartLossAnimator == null || heartsLost <= 0 || previousHeartCount <= 0)
+        {
+            return;
+        }
+
+        for (int i = 0; i < heartsLost; i++)
+        {
+            int heartIndex = previousHeartCount - 1 - i;
+            if (heartIndex < 0)
+            {
+                break;
+            }
+
+            _heartLossAnimator.LoseHeart(isEmber, heartIndex);
         }
     }
 
@@ -1246,6 +1331,118 @@ public class GameManager : MonoBehaviour
                 _aquaTokenImages[i].sprite = waterTokenEmptySprite;
             }
         }
+
+        RefreshTokenBreathVisuals();
+    }
+    
+    private void UpdateTokenBreathing()
+    {
+        if (!enableTokenBreath) return;
+        if (_emberTokenImages.Count == 0 && _aquaTokenImages.Count == 0) return;
+
+        _tokenBreathTimer += Time.unscaledDeltaTime;
+        ApplyTokenBreathToImages(CalculateTokenBreathMultiplier());
+    }
+
+    private AudioClip GetHeartLossClip()
+    {
+        if (heartLossSfx != null)
+        {
+            return heartLossSfx;
+        }
+
+        if (_generatedHeartLossClip == null)
+        {
+            _generatedHeartLossClip = BuildProceduralHeartLossClip();
+        }
+
+        return _generatedHeartLossClip;
+    }
+
+    private static AudioClip BuildProceduralHeartLossClip()
+    {
+        const int sampleRate = 44100;
+        const float duration = 0.35f;
+        int sampleCount = Mathf.CeilToInt(sampleRate * duration);
+        float[] samples = new float[sampleCount];
+
+        double phasePrimary = 0d;
+        double phaseSecondary = 0d;
+
+        const float startFreq = 1100f;
+        const float endFreq = 280f;
+        const float secondaryOffset = 180f;
+
+        for (int i = 0; i < sampleCount; i++)
+        {
+            float progress = i / (float)sampleCount;
+            float freq = Mathf.Lerp(startFreq, endFreq, progress);
+            float envelope = Mathf.SmoothStep(1f, 0f, progress) * Mathf.Clamp01(progress * 4f);
+
+            phasePrimary += freq / sampleRate;
+            phaseSecondary += (freq + secondaryOffset) / sampleRate;
+
+            if (phasePrimary > 1d) phasePrimary -= 1d;
+            if (phaseSecondary > 1d) phaseSecondary -= 1d;
+
+            float sample = (Mathf.Sin((float)(phasePrimary * 2d * System.Math.PI)) * 0.8f +
+                            Mathf.Sin((float)(phaseSecondary * 2d * System.Math.PI)) * 0.2f) * envelope;
+
+            samples[i] = sample;
+        }
+
+        var clip = AudioClip.Create("ProceduralHeartLoss", sampleCount, 1, sampleRate, false);
+        clip.SetData(samples, 0);
+        return clip;
+    }
+
+    private void RefreshTokenBreathVisuals()
+    {
+        if (!enableTokenBreath) return;
+        if (_emberTokenImages.Count == 0 && _aquaTokenImages.Count == 0) return;
+
+        ApplyTokenBreathToImages(CalculateTokenBreathMultiplier());
+    }
+
+    private float CalculateTokenBreathMultiplier()
+    {
+        float duration = Mathf.Max(0.01f, tokenBreathCycleSeconds);
+        float phase = Mathf.Repeat(_tokenBreathTimer / duration, 1f);
+        float normalized = 0.5f + 0.5f * Mathf.Sin(phase * Mathf.PI * 2f);
+        float minScale = Mathf.Min(tokenBreathScaleRange.x, tokenBreathScaleRange.y);
+        float maxScale = Mathf.Max(tokenBreathScaleRange.x, tokenBreathScaleRange.y);
+        return Mathf.Lerp(minScale, maxScale, normalized);
+    }
+
+    private void ApplyTokenBreathToImages(float activeMultiplier)
+    {
+        ApplyTokenBreathToCollection(_emberTokenImages, fireTokensCollected, activeMultiplier);
+        ApplyTokenBreathToCollection(_aquaTokenImages, waterTokensCollected, activeMultiplier);
+    }
+
+    private void ApplyTokenBreathToCollection(List<Image> images, int collectedCount, float activeMultiplier)
+    {
+        for (int i = 0; i < images.Count; i++)
+        {
+            float multiplier = i < collectedCount ? activeMultiplier : 1f;
+            ApplyTokenIconScale(images[i], multiplier);
+        }
+    }
+
+    private void ApplyTokenIconScale(Image image, float multiplier)
+    {
+        if (image == null) return;
+
+        RectTransform rect = image.rectTransform;
+        if (rect == null) return;
+
+        if (!_tokenIconBaseScales.TryGetValue(image, out Vector3 baseScale))
+        {
+            baseScale = rect.localScale;
+            _tokenIconBaseScales[image] = baseScale;
+        }
+
+        rect.localScale = baseScale * multiplier;
     }
 
     // --- MODIFICATION START ---
@@ -1293,13 +1490,21 @@ public class GameManager : MonoBehaviour
         // 2. Clear any old token images (in case of scene restart)
         foreach (Image img in _emberTokenImages)
         {
-            Destroy(img.gameObject);
+            if (img != null)
+            {
+                _tokenIconBaseScales.Remove(img);
+                Destroy(img.gameObject);
+            }
         }
         _emberTokenImages.Clear();
 
         foreach (Image img in _aquaTokenImages)
         {
-            Destroy(img.gameObject);
+            if (img != null)
+            {
+                _tokenIconBaseScales.Remove(img);
+                Destroy(img.gameObject);
+            }
         }
         _aquaTokenImages.Clear();
         
@@ -1315,6 +1520,7 @@ public class GameManager : MonoBehaviour
                 
                 RectTransform tokenRect = tokenImgGO.GetComponent<RectTransform>();
                 tokenRect.sizeDelta = tokenIconSize; 
+                tokenRect.localScale = Vector3.one;
                 
                 // --- BUG FIX ---
                 // This line is CRITICAL and has been re-added.
@@ -1323,6 +1529,7 @@ public class GameManager : MonoBehaviour
                 // --- END BUG FIX ---
                 
                 _emberTokenImages.Add(tokenImg);
+                _tokenIconBaseScales[tokenImg] = tokenRect.localScale;
             }
         }
         
@@ -1337,6 +1544,7 @@ public class GameManager : MonoBehaviour
                 
                 RectTransform tokenRect = tokenImgGO.GetComponent<RectTransform>();
                 tokenRect.sizeDelta = tokenIconSize; 
+                tokenRect.localScale = Vector3.one;
 
                 // --- BUG FIX ---
                 // This line is CRITICAL and has been re-added.
@@ -1344,6 +1552,7 @@ public class GameManager : MonoBehaviour
                 // --- END BUG FIX ---
                 
                 _aquaTokenImages.Add(tokenImg);
+                _tokenIconBaseScales[tokenImg] = tokenRect.localScale;
             }
         }
 
@@ -1381,14 +1590,18 @@ public class GameManager : MonoBehaviour
     private void ApplyDamage(PlayerRole role, int amount, bool suppressCheck, DamageCause cause = DamageCause.Unknown, Vector3? worldOverride = null)
     {
         if (amount <= 0) return;
+        int previousFireHearts = _fireHearts;
+        int previousWaterHearts = _waterHearts;
 
         switch (role)
         {
             case PlayerRole.Fireboy:
                 _fireHearts = Mathf.Max(0, _fireHearts - amount);
+                TriggerHeartLossAnimations(true, previousFireHearts, previousFireHearts - _fireHearts);
                 break;
             case PlayerRole.Watergirl: // This is the line I fixed for you before
                 _waterHearts = Mathf.Max(0, _waterHearts - amount);
+                TriggerHeartLossAnimations(false, previousWaterHearts, previousWaterHearts - _waterHearts);
                 break;
             default:
                  Debug.LogWarning($"ApplyDamage called with unhandled role: {role}");
@@ -1491,20 +1704,7 @@ public class GameManager : MonoBehaviour
 
     // analytics code
     
-    // analytics: assist interaction
-    public void RecordAssist(PlayerRole actor, AssistType type, Vector3? world = null)
-    {
-        try
-        {
-            EnsureLevelTimer();
-            float elapsed = levelTimer != null ? levelTimer.ElapsedSeconds : 0f;
-            string actorStr = actor == PlayerRole.Fireboy ? "fire" : "water";
-            string recipStr = actor == PlayerRole.Fireboy ? "water" : "fire";
-            string kind = type == AssistType.ExtinguishFire ? "extinguish_fire" : "melt_ice";
-            Analytics.GoogleSheetsAnalytics.SendAssist(null, actorStr, recipStr, kind, elapsed);
-        }
-        catch { }
-    }private void EnsureLevelTimer()
+    private void EnsureLevelTimer()
     {
         if (levelTimer != null) return;
 
@@ -1584,6 +1784,11 @@ public class GameManager : MonoBehaviour
 
     private void OnDestroy()
     {
+        if (_heartLossAnimator != null)
+        {
+            _heartLossAnimator.HeartAnimationFinished -= UpdateHeartsUI;
+        }
+
         RestoreTimeScaleIfNeeded();
 
         if (_victoryRestartButton != null)
@@ -1643,5 +1848,80 @@ public class GameManager : MonoBehaviour
     {
         if (string.IsNullOrEmpty(text)) return text;
         return text.Replace("Fireboy", "Ember").Replace("Watergirl", "Aqua");
+    }
+
+    private bool IsScoredLevel()
+    {
+        string currentScene = SceneManager.GetActiveScene().name;
+        // Check if we're in any of the main level scenes (Level1, Level2, or Level3)
+        // Tutorial uses GameManagerTutorial, so it's automatically excluded
+        return (!string.IsNullOrEmpty(instructionPanelSceneName) && currentScene == instructionPanelSceneName) ||
+               (!string.IsNullOrEmpty(level2InstructionSceneName) && currentScene == level2InstructionSceneName) ||
+               (!string.IsNullOrEmpty(level3InstructionSceneName) && currentScene == level3InstructionSceneName);
+    }
+
+    private float GetTargetTimeForCurrentLevel()
+    {
+        string currentScene = SceneManager.GetActiveScene().name;
+        
+        // Check for level-specific target times
+        if (!string.IsNullOrEmpty(level2InstructionSceneName) && currentScene == level2InstructionSceneName)
+        {
+            return level2TargetTimeSeconds > 0f ? level2TargetTimeSeconds : targetTimeSeconds;
+        }
+        
+        if (!string.IsNullOrEmpty(level3InstructionSceneName) && currentScene == level3InstructionSceneName)
+        {
+            return level3TargetTimeSeconds > 0f ? level3TargetTimeSeconds : targetTimeSeconds;
+        }
+        
+        // Default to Level 1 target time (or general target time)
+        return targetTimeSeconds;
+    }
+
+    private string BuildScoreDisplayText()
+    {
+        // Use the scoring timer (actual gameplay time) instead of analytics timer
+        float elapsedSecondsRaw = _scoringTimerStarted 
+            ? Mathf.Max(0f, Time.realtimeSinceStartup - _scoringStartTime) 
+            : 0f;
+        // Round to whole seconds to match the display format (MM:SS)
+        float elapsedSeconds = Mathf.Floor(elapsedSecondsRaw);
+        float levelTargetTime = GetTargetTimeForCurrentLevel();
+        
+        // Calculate score components
+        int totalTokens = fireTokensCollected + waterTokensCollected;
+        int tokenBonus = totalTokens * pointsPerToken;
+        float timeBonus = Mathf.Max(0f, (levelTargetTime - elapsedSeconds) * timeBonusMultiplier);
+        int timeBonusInt = Mathf.RoundToInt(timeBonus);
+        int totalScore = basePoints + tokenBonus + timeBonusInt;
+        
+        // Format time as MM:SS
+        string timeFormatted = FormatTime(elapsedSeconds);
+        string timeBonusFormatted = FormatNumber(timeBonusInt);
+        
+        // Format token display (X/Y)
+        int totalTokensInLevel = _totalFireTokens + _totalWaterTokens;
+        string tokenBonusFormatted = FormatNumber(tokenBonus);
+        
+        // Format total score
+        string totalScoreFormatted = FormatNumber(totalScore);
+        
+        // Build the display text
+        return $"Time: {timeFormatted} (Bonus +{timeBonusFormatted})\n" +
+               $"Tokens: {totalTokens}/{totalTokensInLevel} (+{tokenBonusFormatted})\n" +
+               $"Total Score: {totalScoreFormatted} points";
+    }
+
+    private string FormatTime(float seconds)
+    {
+        int minutes = Mathf.FloorToInt(seconds / 60f);
+        int secs = Mathf.FloorToInt(seconds % 60f);
+        return $"{minutes:00}:{secs:00}";
+    }
+
+    private string FormatNumber(int number)
+    {
+        return number.ToString("N0");
     }
 }
