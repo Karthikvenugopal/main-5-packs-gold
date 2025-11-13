@@ -14,6 +14,7 @@ public class CannonProjectile : MonoBehaviour
     private GameManager _gameManager;
     private GameObject _hitEffectPrefab;
     private Collider2D _collider;
+    private Rigidbody2D _rigidbody;
     private float _maxTravelDistance = float.PositiveInfinity;
     private Color _impactColor = new Color(1f, 0.6f, 0.1f, 0.85f);
     private CannonVariant _variant = CannonVariant.Fire;
@@ -53,6 +54,15 @@ public class CannonProjectile : MonoBehaviour
         {
             _collider.isTrigger = true;
         }
+
+        _rigidbody = GetComponent<Rigidbody2D>();
+        if (_rigidbody == null)
+        {
+            _rigidbody = gameObject.AddComponent<Rigidbody2D>();
+        }
+
+        ConfigureRigidbody();
+        EnsureCollisionMask();
 
         _startPosition = transform.position;
     }
@@ -121,6 +131,42 @@ public class CannonProjectile : MonoBehaviour
         {
             Destroy(gameObject);
         }
+    }
+
+    private void ConfigureRigidbody()
+    {
+        if (_rigidbody == null) return;
+
+        _rigidbody.bodyType = RigidbodyType2D.Kinematic;
+        _rigidbody.useFullKinematicContacts = true;
+        _rigidbody.gravityScale = 0f;
+        _rigidbody.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
+        _rigidbody.interpolation = RigidbodyInterpolation2D.Interpolate;
+        _rigidbody.freezeRotation = true;
+    }
+
+    private void EnsureCollisionMask()
+    {
+        int mask = collisionMask.value;
+        if (mask == 0)
+        {
+            mask = Physics2D.AllLayers;
+        }
+
+        mask = IncludeLayer(mask, "Wall");
+        mask = IncludeLayer(mask, "Default");
+        collisionMask = mask;
+    }
+
+    private static int IncludeLayer(int mask, string layerName)
+    {
+        int layer = LayerMask.NameToLayer(layerName);
+        if (layer >= 0)
+        {
+            mask |= 1 << layer;
+        }
+
+        return mask;
     }
 
     private void OnTriggerEnter2D(Collider2D other)

@@ -14,7 +14,6 @@ namespace Analytics
 
         private float _startTime;
         private bool _sent;
-
         private void OnEnable()
         {
             _startTime = Time.realtimeSinceStartup;
@@ -68,7 +67,17 @@ namespace Analytics
                 return;
             }
 
+            bool hasTokenStats = TryCaptureTokenCompletion(levelId, out float completionRate, out int tokensCollected, out int tokensAvailable);
+
             GoogleSheetsAnalytics.SendLevelResult(levelId, success, elapsed);
+
+            if (hasTokenStats)
+            {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+                Debug.Log($"[Analytics] Sending token_completion level={levelId} collected={tokensCollected} available={tokensAvailable} rate={completionRate:0.###} time={elapsed:0.0}s");
+#endif
+                GoogleSheetsAnalytics.SendTokenCompletion(levelId, completionRate, tokensCollected, tokensAvailable, elapsed);
+            }
         }
 
         public float ElapsedSeconds => Mathf.Max(0f, Time.realtimeSinceStartup - _startTime);
@@ -76,5 +85,35 @@ namespace Analytics
         public string ResolvedLevelId => string.IsNullOrWhiteSpace(overrideLevelId)
             ? SceneManager.GetActiveScene().name
             : overrideLevelId.Trim();
+
+        private bool TryCaptureTokenCompletion(string levelId, out float completionRate, out int tokensCollected, out int tokensAvailable)
+        {
+            completionRate = 0f;
+            tokensCollected = 0;
+            tokensAvailable = 0;
+
+            var tracker = TokenTracker.TryGetInstance();
+            if (tracker != null && tracker.TryGetSnapshot(levelId, out var cachedSnapshot))
+            {
+                completionRate = cachedSnapshot.completionRate;
+                tokensCollected = cachedSnapshot.tokensCollected;
+                tokensAvailable = cachedSnapshot.tokensAvailable;
+                return true;
+            }
+
+            var manager = FindAnyObjectByType<GameManager>();
+            if (manager != null && manager.TryGetTokenCompletionSnapshot(out var snapshot))
+            {
+                completionRate = snapshot.completionRate;
+                tokensCollected = snapshot.tokensCollected;
+                tokensAvailable = snapshot.tokensAvailable;
+                return true;
+            }
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            Debug.Log($"[Analytics] Token stats unavailable for level '{levelId}'. tracker={(tracker != null ? "present" : "null")}");
+#endif
+            return false;
+        }
     }
 }

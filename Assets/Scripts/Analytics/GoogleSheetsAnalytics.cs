@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Text;
 using UnityEngine;
 using UnityEngine.Networking;
@@ -93,6 +94,33 @@ namespace Analytics
             TryAddSheetId(data);
             // Single POST send; no coroutine wrapper required for this sender
             SendFormUrlEncoded(_webAppUrl, data);
+        }
+
+        public static void SendTokenCompletion(
+            string levelId,
+            float completionRate,
+            int tokensCollected,
+            int tokensAvailable,
+            float timeSpentSeconds)
+        {
+            if (!EnsureWebAppUrlConfigured()) return;
+
+            levelId = ResolveLevelId(levelId);
+            if (!EnsureLevelAllowed(levelId, "token completion")) return;
+
+            var data = new Dictionary<string, string>
+            {
+                { "event", "token_completion" },
+                { "session_id", _sessionId },
+                { "level_id", levelId },
+                { "token_completion_rate", Mathf.Clamp01(completionRate).ToString("0.###", CultureInfo.InvariantCulture) },
+                { "tokens_collected", Mathf.Max(0, tokensCollected).ToString() },
+                { "tokens_available", Mathf.Max(0, tokensAvailable).ToString() },
+                { "time_spent_s", Mathf.RoundToInt(timeSpentSeconds).ToString() }
+            };
+
+            TryAddSheetId(data);
+            SendGetQuery(_webAppUrl, data);
         }
 
         public static void SendFailureHotspot(
@@ -254,6 +282,9 @@ namespace Analytics
                     sb.Append(UnityWebRequest.EscapeURL(kv.Value));
                 }
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+                Debug.Log($"[Analytics] GET -> {sb}");
+#endif
                 var request = UnityWebRequest.Get(sb.ToString());
                 var operation = request.SendWebRequest();
                 operation.completed += _ => HandleUnityWebRequestResult(request, isGet: true);
