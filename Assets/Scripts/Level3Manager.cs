@@ -29,7 +29,7 @@ public class Level3Manager : MonoBehaviour
     [SerializeField] private GameObject iceHitEffectPrefab;
     [SerializeField] private Vector2 fireCannonPositionOffset = Vector2.zero;
     [SerializeField] private Vector2 iceCannonPositionOffset = new Vector2(-0.15f, 0f);
-    [SerializeField] private float iceCannonHorizontalShift = -0.15f;
+    [SerializeField] private float iceCannonHorizontalShift = -0.3f;
 
     [Header("Dependencies")]
     [SerializeField] private GameManager gameManager;

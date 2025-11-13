@@ -442,7 +442,7 @@ MonoBehaviour:
   fireHitEffectPrefab: {fileID: 0}
   iceHitEffectPrefab: {fileID: 0}
   fireCannonPositionOffset: {x: -0.5, y: 0}
-  iceCannonPositionOffset: {x: -0.25, y: 0}
+  iceCannonPositionOffset: {x: -0.2, y: 0}
   gameManager: {fileID: 1746984134}
   tokenPlacementManager: {fileID: 2110000000000000002}
 --- !u!4 &920500693
