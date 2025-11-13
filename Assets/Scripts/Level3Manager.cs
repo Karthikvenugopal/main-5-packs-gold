@@ -28,7 +28,7 @@ public class Level3Manager : MonoBehaviour
     [SerializeField] private GameObject fireHitEffectPrefab;
     [SerializeField] private GameObject iceHitEffectPrefab;
     [SerializeField] private Vector2 fireCannonPositionOffset = Vector2.zero;
-    [SerializeField] private Vector2 iceCannonPositionOffset = new Vector2(-0.15f, 0f);
+    [SerializeField] private Vector2 iceCannonPositionOffset = new Vector2(-0.2f, 0.5f);
     [SerializeField] private float iceCannonHorizontalShift = -0.3f;
 
     [Header("Dependencies")]
@@ -720,7 +720,9 @@ public class Level3Manager : MonoBehaviour
             selectedPrefab = cannonPrefab;
         }
 
-        Quaternion spawnRotation = Quaternion.identity;
+        Quaternion spawnRotation = variant == CannonVariant.Ice
+            ? Quaternion.Euler(0f, 0f, 180f)
+            : Quaternion.identity;
 
         GameObject cannon = selectedPrefab != null
             ? Instantiate(selectedPrefab, worldPosition, spawnRotation, transform)
