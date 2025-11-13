@@ -82,6 +82,14 @@ public class CannonHazard : MonoBehaviour
     private void Fire()
     {
         GameObject projectileGO;
+        Vector2 fireDirection = Vector2.up;
+        float muzzleSign = 1f;
+
+        if (_variant == CannonVariant.Ice)
+        {
+            fireDirection = Vector2.down;
+            muzzleSign = -1f;
+        }
 
         if (_projectilePrefabToUse != null)
         {
@@ -93,7 +101,7 @@ public class CannonHazard : MonoBehaviour
         }
 
         projectileGO.transform.SetParent(transform.parent, true);
-        projectileGO.transform.position = transform.position + Vector3.up * (_cellSize * muzzleOffset);
+        projectileGO.transform.position = transform.position + Vector3.up * (_cellSize * muzzleOffset * muzzleSign);
 
         if (!projectileGO.TryGetComponent(out CannonProjectile projectile))
         {
@@ -102,7 +110,7 @@ public class CannonHazard : MonoBehaviour
 
         float travelDistance = Mathf.Max(_cellSize * projectileTravelHeight, _cellSize);
         projectile.Initialize(
-            Vector2.up,
+            fireDirection,
             projectileSpeed,
             projectileLifetime,
             _gameManager,
@@ -180,16 +188,21 @@ public class CannonHazard : MonoBehaviour
     {
         Color bodyColor = _variant == CannonVariant.Fire ? fireBodyColor : iceBodyColor;
         Color barrelColor = _variant == CannonVariant.Fire ? fireBarrelColor : iceBarrelColor;
+        float zRotation = _variant == CannonVariant.Ice ? 180f : 0f;
 
         if (_bodyRenderer != null)
         {
             _bodyRenderer.color = bodyColor;
+            _bodyRenderer.flipY = false;
         }
 
         if (_barrelRenderer != null)
         {
             _barrelRenderer.color = barrelColor;
+            _barrelRenderer.flipY = false;
         }
+
+        transform.localRotation = Quaternion.Euler(0f, 0f, zRotation);
     }
 
     private static Sprite GetFallbackSprite()
