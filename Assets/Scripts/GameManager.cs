@@ -203,6 +203,20 @@ public class GameManager : MonoBehaviour
     // Audio fields
     private AudioClip _generatedHeartLossClip;
 
+    public bool TryGetTokenCompletionSnapshot(out Analytics.TokenCompletionSnapshot snapshot)
+    {
+        int tokensAvailable = Mathf.Max(0, _totalFireTokens + _totalWaterTokens);
+        int tokensCollected = Mathf.Max(0, fireTokensCollected + waterTokensCollected);
+        if (tokensAvailable <= 0 && tokensCollected <= 0)
+        {
+            snapshot = default;
+            return false;
+        }
+
+        snapshot = new Analytics.TokenCompletionSnapshot(tokensCollected, tokensAvailable);
+        return true;
+    }
+
     private void Awake()
     {
         NormalizeDisplayStrings();
@@ -280,20 +294,21 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    public void OnLevelReady()
-    {
-        _levelReady = true;
-        if (!isTutorialMode)
+        public void OnLevelReady()
         {
-            UpdateStatus(levelIntroMessage);
+            _levelReady = true;
+            if (!isTutorialMode)
+            {
+                UpdateStatus(levelIntroMessage);
+            }
+            ResetTokenTracking();
+            RecountTokensInScene();
+            SyncTokenTracker(resetLevelState: true);
+            if (_players.Count >= 2)
+            {
+                TryStartLevel();
+            }
         }
-        ResetTokenTracking();
-        RecountTokensInScene();
-        if (_players.Count >= 2)
-        {
-            TryStartLevel();
-        }
-    }
 
     private void TryStartLevel()
     {
@@ -374,29 +389,31 @@ public class GameManager : MonoBehaviour
         DamagePlayer(player.Role, 1, cause);
     }
 
-    public void OnFireTokenCollected()
-    {
-        fireTokensCollected++;
-        s_totalFireTokensCollected++;
-        if (_totalFireTokens < fireTokensCollected)
+        public void OnFireTokenCollected()
         {
-            _totalFireTokens = fireTokensCollected;
+            fireTokensCollected++;
+            s_totalFireTokensCollected++;
+            if (_totalFireTokens < fireTokensCollected)
+            {
+                _totalFireTokens = fireTokensCollected;
+            }
+
+            UpdateTokensUI();
+            SyncTokenTracker(resetLevelState: false);
         }
 
-        UpdateTokensUI();
-    }
-
-    public void OnWaterTokenCollected()
-    {
-        waterTokensCollected++;
-        s_totalWaterTokensCollected++;
-        if (_totalWaterTokens < waterTokensCollected)
+        public void OnWaterTokenCollected()
         {
-            _totalWaterTokens = waterTokensCollected;
-        }
+            waterTokensCollected++;
+            s_totalWaterTokensCollected++;
+            if (_totalWaterTokens < waterTokensCollected)
+            {
+                _totalWaterTokens = waterTokensCollected;
+            }
 
-        UpdateTokensUI();
-    }
+            UpdateTokensUI();
+            SyncTokenTracker(resetLevelState: false);
+        }
 
     public void OnExitReached()
     {
@@ -1449,10 +1466,10 @@ public class GameManager : MonoBehaviour
     // This function is modified to FIX the bug where token icons were not appearing.
     // The line "AddComponent<LayoutElement>()" was accidentally removed in the previous
     // version and has been RESTORED. This is required for the ContentSizeFitter.
-    private void RecountTokensInScene()
-    {
-        int fireCount = 0;
-        int waterCount = 0;
+        private void RecountTokensInScene()
+        {
+            int fireCount = 0;
+            int waterCount = 0;
 
         TokenCollect[] tokens = FindObjectsOfType<TokenCollect>(includeInactive: true);
         foreach (var token in tokens)
@@ -1557,6 +1574,7 @@ public class GameManager : MonoBehaviour
         }
 
         UpdateTokensUI();
+        SyncTokenTracker(resetLevelState: false);
     }
     // --- MODIFICATION END ---
 
@@ -1636,16 +1654,18 @@ public class GameManager : MonoBehaviour
         HandleOutOfHearts();
     }
 
-    private void HandleOutOfHearts()
-    {
-        if (_gameFinished) return;
+        private void HandleOutOfHearts()
+        {
+            if (_gameFinished) return;
 
-        _gameFinished = true;
-        _gameActive = false;
-        FreezePlayers();
-        CancelNextSceneLoad();
-        UpdateStatus(levelDefeatMessage);
-        ShowEndPanel(EndGameState.Defeat);
+            _gameFinished = true;
+            _gameActive = false;
+            EnsureLevelTimer();
+            levelTimer?.MarkFailure();
+            FreezePlayers();
+            CancelNextSceneLoad();
+            UpdateStatus(levelDefeatMessage);
+            ShowEndPanel(EndGameState.Defeat);
     }
 
     private void OnVictoryRestartClicked()
@@ -1687,44 +1707,75 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    private void HandleVictory()
-    {
-        if (_gameFinished) return;
+        private void HandleVictory()
+        {
+            if (_gameFinished) return;
 
-        _gameFinished = true;
-        _gameActive = false;
-        // analytics code
-        EnsureLevelTimer();
-        (levelTimer ?? FindAnyObjectByType<Analytics.LevelTimer>())?.MarkSuccess();
-        UpdateStatus(levelVictoryMessage);
-        FreezePlayers();
-        CancelNextSceneLoad();
-        ShowEndPanel(EndGameState.Victory);
-    }
+            _gameFinished = true;
+            _gameActive = false;
+            // analytics code
+            EnsureLevelTimer();
+            (levelTimer ?? FindAnyObjectByType<Analytics.LevelTimer>())?.MarkSuccess();
+            UpdateStatus(levelVictoryMessage);
+            FreezePlayers();
+            CancelNextSceneLoad();
+            ShowEndPanel(EndGameState.Victory);
+        }
 
     // analytics code
     
-    private void EnsureLevelTimer()
-    {
-        if (levelTimer != null) return;
-
-        var active = SceneManager.GetActiveScene().name;
-        if (string.Equals(active, "MainMenu", System.StringComparison.OrdinalIgnoreCase)) return;
-
-        var existing = FindAnyObjectByType<Analytics.LevelTimer>();
-        if (existing != null)
+        private void EnsureLevelTimer()
         {
-            levelTimer = existing;
-            // Ensures abandon/quit attempts are captured
+            if (levelTimer != null) return;
+
+            var active = SceneManager.GetActiveScene().name;
+            if (string.Equals(active, "MainMenu", System.StringComparison.OrdinalIgnoreCase)) return;
+
+            var existing = FindAnyObjectByType<Analytics.LevelTimer>();
+            if (existing != null)
+            {
+                levelTimer = existing;
+                // Ensures abandon/quit attempts are captured
+                levelTimer.autoSendFailureOnDestroy = true;
+                return;
+            }
+
+            var go = new GameObject("LevelAnalytics");
+            levelTimer = go.AddComponent<Analytics.LevelTimer>();
             levelTimer.autoSendFailureOnDestroy = true;
-            return;
+
         }
 
-        var go = new GameObject("LevelAnalytics");
-        levelTimer = go.AddComponent<Analytics.LevelTimer>();
-        levelTimer.autoSendFailureOnDestroy = true;
+        private void SyncTokenTracker(bool resetLevelState)
+        {
+            var tracker = Analytics.TokenTracker.Instance;
+            string levelId = GetAnalyticsLevelId();
+            int tokensCollected = Mathf.Max(0, fireTokensCollected + waterTokensCollected);
+            int tokensAvailable = Mathf.Max(0, _totalFireTokens + _totalWaterTokens);
 
-    }
+            if (resetLevelState)
+            {
+                tracker.ResetForLevel(levelId, tokensAvailable, tokensCollected);
+            }
+            else
+            {
+                tracker.UpdateTotals(levelId, tokensCollected, tokensAvailable);
+            }
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            Debug.Log($"[Analytics][TokenTracker] {(resetLevelState ? "Reset" : "Update")} level={levelId} collected={tokensCollected} available={tokensAvailable}");
+#endif
+        }
+
+        private string GetAnalyticsLevelId()
+        {
+            if (levelTimer != null && !string.IsNullOrWhiteSpace(levelTimer.ResolvedLevelId))
+            {
+                return levelTimer.ResolvedLevelId;
+            }
+
+            return SceneManager.GetActiveScene().name;
+        }
 
     private IEnumerator LoadNextSceneAfterDelay()
     {
