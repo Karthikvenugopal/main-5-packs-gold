@@ -29,6 +29,8 @@ public class Level3Manager : MonoBehaviour
     [SerializeField] private GameObject iceHitEffectPrefab;
     [SerializeField] private Vector2 fireCannonPositionOffset = Vector2.zero;
     [SerializeField] private Vector2 iceCannonPositionOffset = Vector2.zero;
+    [SerializeField] private Vector2 fireProjectileSpawnOffset = Vector2.zero;
+    [SerializeField] private Vector2 iceProjectileSpawnOffset = new Vector2(0f, 0.5f);
 
     [Header("Dependencies")]
     [SerializeField] private GameManager gameManager;
@@ -703,6 +705,7 @@ public class Level3Manager : MonoBehaviour
             position.y - 0.5f * cellSize,
             0f
         );
+        worldPosition.y += cellSize * 0.5f;
         Vector2 offsetUnits = variant == CannonVariant.Fire ? fireCannonPositionOffset : iceCannonPositionOffset;
         if (offsetUnits.sqrMagnitude > 0f)
         {
@@ -749,6 +752,8 @@ public class Level3Manager : MonoBehaviour
         }
 
         hazard.Initialize(gameManager, cellSize, variant, projectileOverride, hitEffectOverride);
+        Vector2 projectileOffset = variant == CannonVariant.Fire ? fireProjectileSpawnOffset : iceProjectileSpawnOffset;
+        hazard.SetProjectileSpawnOffset(projectileOffset);
     }
 
     private void CreateSpawnMarker(Vector2 position, string name)

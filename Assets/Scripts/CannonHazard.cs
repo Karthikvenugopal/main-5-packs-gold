@@ -40,6 +40,7 @@ public class CannonHazard : MonoBehaviour
     private SpriteRenderer _bodyRenderer;
     private SpriteRenderer _barrelRenderer;
     private BoxCollider2D _solidCollider;
+    private Vector2 _projectileSpawnOffset = Vector2.zero;
 
     private static Sprite _fallbackSprite;
 
@@ -110,6 +111,10 @@ public class CannonHazard : MonoBehaviour
         }
 
         projectileGO.transform.position = transform.position + aimVector3 * (_cellSize * muzzleOffset);
+        if (_projectileSpawnOffset.sqrMagnitude > 0f)
+        {
+            projectileGO.transform.position += new Vector3(_projectileSpawnOffset.x * _cellSize, _projectileSpawnOffset.y * _cellSize, 0f);
+        }
 
         if (!projectileGO.TryGetComponent(out CannonProjectile projectile))
         {
@@ -150,6 +155,11 @@ public class CannonHazard : MonoBehaviour
         projectile.transform.localScale = new Vector3(_cellSize * 0.14f, _cellSize * 0.45f, 1f);
 
         return projectile;
+    }
+
+    public void SetProjectileSpawnOffset(Vector2 offsetInCells)
+    {
+        _projectileSpawnOffset = offsetInCells;
     }
 
     private void EnsureVisuals()
