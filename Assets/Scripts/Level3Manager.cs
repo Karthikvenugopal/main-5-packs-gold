@@ -27,10 +27,6 @@ public class Level3Manager : MonoBehaviour
     [SerializeField] private GameObject fireHitEffectPrefab;
     [SerializeField] private GameObject iceHitEffectPrefab;
 
-    [Header("Placement Offsets")]
-    [SerializeField] private Vector2 spawnMarkerOffsetAdjust = Vector2.zero;
-    [SerializeField] private Vector2 cannonOffsetAdjust = Vector2.zero;
-
     [Header("Dependencies")]
     [SerializeField] private GameManager gameManager;
     [SerializeField] private TokenPlacementManager tokenPlacementManager;
@@ -130,7 +126,6 @@ public class Level3Manager : MonoBehaviour
     private readonly Dictionary<Vector2Int, GameObject> _hazardOutlines = new Dictionary<Vector2Int, GameObject>();
     private readonly Dictionary<int, SequenceState> _sequenceStates = new Dictionary<int, SequenceState>();
     private readonly Dictionary<int, Coroutine> _pendingSpawnCoroutines = new Dictionary<int, Coroutine>();
-    private readonly Dictionary<GameObject, Vector2> _prefabCenterOffsets = new Dictionary<GameObject, Vector2>();
     private bool _tearingDown;
     private bool _exitPlaced;
     private Material _outlineMaterial;
@@ -138,14 +133,9 @@ public class Level3Manager : MonoBehaviour
     private Vector2 _iceOutlineOffset = Vector2.zero;
     private Vector2 _fireOutlineSize = Vector2.one;
     private Vector2 _iceOutlineSize = Vector2.one;
-    private Vector2 _defaultCellCenterOffset = Vector2.zero;
-    private Vector2 _floorCenterOffset = Vector2.zero;
 
     private void Start()
     {
-        _defaultCellCenterOffset = new Vector2(0.5f * cellSize, -0.5f * cellSize);
-        _floorCenterOffset = GetPrefabCenterOffset(floorPrefab);
-
         CacheSequenceReservedCells();
         CacheHazardOutlineData();
         BuildMaze(Layout);
@@ -631,19 +621,17 @@ public class Level3Manager : MonoBehaviour
 
     private void SpawnCannon(Vector2 position, CannonVariant variant)
     {
+        Vector3 worldPosition = new Vector3(
+            position.x + 0.5f * cellSize,
+            position.y - 0.5f * cellSize,
+            0f
+        );
+
         GameObject selectedPrefab = variant == CannonVariant.Fire ? fireCannonPrefab : iceCannonPrefab;
         if (selectedPrefab == null)
         {
             selectedPrefab = cannonPrefab;
         }
-
-        Vector2 centerOffset = GetPrefabCenterOffset(selectedPrefab);
-
-        Vector3 worldPosition = new Vector3(
-            position.x + centerOffset.x + cannonOffsetAdjust.x,
-            position.y + centerOffset.y + cannonOffsetAdjust.y,
-            0f
-        );
 
         GameObject cannon = selectedPrefab != null
             ? Instantiate(selectedPrefab, worldPosition, Quaternion.identity, transform)
@@ -673,8 +661,7 @@ public class Level3Manager : MonoBehaviour
             hitEffect = cannonHitEffectPrefab;
         }
 
-        bool invertShots = variant == CannonVariant.Ice;
-        hazard.Initialize(gameManager, cellSize, variant, projectile, hitEffect, invertShots);
+        hazard.Initialize(gameManager, cellSize, variant, projectile, hitEffect);
     }
 
     private GameObject SpawnExit(Vector2 position)
@@ -743,23 +730,13 @@ public class Level3Manager : MonoBehaviour
 
     private void CreateSpawnMarker(Vector2 position, string name)
     {
-        GameObject marker = GameObject.Find(name);
-        if (marker == null)
-        {
-            marker = new GameObject(name);
-            marker.transform.SetParent(transform);
-        }
-        else if (marker.transform.parent != transform)
-        {
-            marker.transform.SetParent(transform);
-        }
-
-        Vector3 center = new Vector3(
-            position.x + _floorCenterOffset.x + spawnMarkerOffsetAdjust.x,
-            position.y + _floorCenterOffset.y + spawnMarkerOffsetAdjust.y,
+        GameObject marker = new GameObject(name);
+        marker.transform.position = new Vector3(
+            position.x + 0.5f * cellSize,
+            position.y - 0.5f * cellSize,
             0f
         );
-        marker.transform.position = center;
+        marker.transform.SetParent(transform);
     }
 
     private void CenterMaze(string[] layout)
@@ -783,44 +760,6 @@ public class Level3Manager : MonoBehaviour
             float horizontalSize = ((width / 2f) + 1f) / Camera.main.aspect;
             Camera.main.orthographicSize = Mathf.Max(verticalSize, horizontalSize);
         }
-    }
-
-    private Vector2 GetPrefabCenterOffset(GameObject prefab)
-    {
-        if (prefab == null)
-        {
-            return _defaultCellCenterOffset;
-        }
-
-        if (_prefabCenterOffsets.TryGetValue(prefab, out Vector2 cached))
-        {
-            return cached;
-        }
-
-        Vector2 calculated = CalculatePrefabCenterOffset(prefab);
-        _prefabCenterOffsets[prefab] = calculated;
-        return calculated;
-    }
-
-    private Vector2 CalculatePrefabCenterOffset(GameObject prefab)
-    {
-        if (prefab == null) return _defaultCellCenterOffset;
-
-        GameObject instance = Instantiate(prefab, Vector3.zero, Quaternion.identity);
-        instance.hideFlags = HideFlags.HideAndDontSave;
-        instance.SetActive(false);
-
-        Vector2 result = _defaultCellCenterOffset;
-        SpriteRenderer renderer = instance.GetComponentInChildren<SpriteRenderer>();
-
-        if (renderer != null)
-        {
-            Vector3 center = renderer.bounds.center;
-            result = new Vector2(center.x - instance.transform.position.x, center.y - instance.transform.position.y);
-        }
-
-        Destroy(instance);
-        return result;
     }
 
     private readonly struct SequenceDefinition
