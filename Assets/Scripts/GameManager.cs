@@ -203,6 +203,20 @@ public class GameManager : MonoBehaviour
     // Audio fields
     private AudioClip _generatedHeartLossClip;
 
+    public bool TryGetTokenCompletionSnapshot(out Analytics.TokenCompletionSnapshot snapshot)
+    {
+        int tokensAvailable = Mathf.Max(0, _totalFireTokens + _totalWaterTokens);
+        int tokensCollected = Mathf.Max(0, fireTokensCollected + waterTokensCollected);
+        if (tokensAvailable <= 0 && tokensCollected <= 0)
+        {
+            snapshot = default;
+            return false;
+        }
+
+        snapshot = new Analytics.TokenCompletionSnapshot(tokensCollected, tokensAvailable);
+        return true;
+    }
+
     private void Awake()
     {
         NormalizeDisplayStrings();
@@ -280,20 +294,21 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    public void OnLevelReady()
-    {
-        _levelReady = true;
-        if (!isTutorialMode)
+        public void OnLevelReady()
         {
-            UpdateStatus(levelIntroMessage);
+            _levelReady = true;
+            if (!isTutorialMode)
+            {
+                UpdateStatus(levelIntroMessage);
+            }
+            ResetTokenTracking();
+            RecountTokensInScene();
+            SyncTokenTracker(resetLevelState: true);
+            if (_players.Count >= 2)
+            {
+                TryStartLevel();
+            }
         }
-        ResetTokenTracking();
-        RecountTokensInScene();
-        if (_players.Count >= 2)
-        {
-            TryStartLevel();
-        }
-    }
 
     private void TryStartLevel()
     {
@@ -374,29 +389,31 @@ public class GameManager : MonoBehaviour
         DamagePlayer(player.Role, 1, cause);
     }
 
-    public void OnFireTokenCollected()
-    {
-        fireTokensCollected++;
-        s_totalFireTokensCollected++;
-        if (_totalFireTokens < fireTokensCollected)
+        public void OnFireTokenCollected()
         {
-            _totalFireTokens = fireTokensCollected;
+            fireTokensCollected++;
+            s_totalFireTokensCollected++;
+            if (_totalFireTokens < fireTokensCollected)
+            {
+                _totalFireTokens = fireTokensCollected;
+            }
+
+            UpdateTokensUI();
+            SyncTokenTracker(resetLevelState: false);
         }
 
-        UpdateTokensUI();
-    }
-
-    public void OnWaterTokenCollected()
-    {
-        waterTokensCollected++;
-        s_totalWaterTokensCollected++;
-        if (_totalWaterTokens < waterTokensCollected)
+        public void OnWaterTokenCollected()
         {
-            _totalWaterTokens = waterTokensCollected;
-        }
+            waterTokensCollected++;
+            s_totalWaterTokensCollected++;
+            if (_totalWaterTokens < waterTokensCollected)
+            {
+                _totalWaterTokens = waterTokensCollected;
+            }
 
-        UpdateTokensUI();
-    }
+            UpdateTokensUI();
+            SyncTokenTracker(resetLevelState: false);
+        }
 
     public void OnExitReached()
     {
@@ -922,11 +939,7 @@ public class GameManager : MonoBehaviour
         _victoryPanel.transform.SetParent(_hudCanvas.transform, false);
 
         RectTransform rect = _victoryPanel.AddComponent<RectTransform>();
-        rect.anchorMin = new Vector2(0.5f, 0.5f);
-        rect.anchorMax = new Vector2(0.5f, 0.5f);
-        rect.pivot = new Vector2(0.5f, 0.5f);
-        rect.sizeDelta = new Vector2(640f, 420f);
-        rect.anchoredPosition = Vector2.zero;
+        ConfigureVictoryPanelRect(rect, new Vector2(900f, 560f));
 
         Image background = _victoryPanel.AddComponent<Image>();
         background.color = new Color(0f, 0f, 0f, 0.78f);
@@ -936,13 +949,13 @@ public class GameManager : MonoBehaviour
         RectTransform contentRect = content.AddComponent<RectTransform>();
         contentRect.anchorMin = Vector2.zero;
         contentRect.anchorMax = Vector2.one;
-        contentRect.offsetMin = new Vector2(32f, 32f);
-        contentRect.offsetMax = new Vector2(-32f, -32f);
+        contentRect.offsetMin = new Vector2(48f, 48f);
+        contentRect.offsetMax = new Vector2(-48f, -48f);
 
         _victoryContentLayout = content.AddComponent<VerticalLayoutGroup>();
         _victoryContentLayout.childAlignment = TextAnchor.UpperCenter;
-        _victoryContentLayout.spacing = 18f;
-        _victoryContentLayout.padding = new RectOffset(0, 0, 0, 0);
+        _victoryContentLayout.spacing = 24f;
+        _victoryContentLayout.padding = new RectOffset(0, 0, 8, 8);
         _victoryContentLayout.childControlWidth = true;
         _victoryContentLayout.childForceExpandWidth = true;
         _victoryContentLayout.childControlHeight = false;
@@ -953,13 +966,13 @@ public class GameManager : MonoBehaviour
         RectTransform titleRect = titleGO.AddComponent<RectTransform>();
         titleRect.anchorMin = new Vector2(0f, 0.5f);
         titleRect.anchorMax = new Vector2(1f, 0.5f);
-        titleRect.sizeDelta = new Vector2(0f, 60f);
+        titleRect.sizeDelta = new Vector2(0f, 90f);
         LayoutElement titleLayout = titleGO.AddComponent<LayoutElement>();
-        titleLayout.preferredHeight = 60f;
+        titleLayout.preferredHeight = 90f;
 
         _victoryTitleLabel = titleGO.AddComponent<TextMeshProUGUI>();
         _victoryTitleLabel.alignment = TextAlignmentOptions.Center;
-        _victoryTitleLabel.fontSize = 42f;
+        _victoryTitleLabel.fontSize = 56f;
         _victoryTitleLabel.fontStyle = FontStyles.Bold;
         _victoryTitleLabel.text = victoryTitleText;
 
@@ -968,13 +981,13 @@ public class GameManager : MonoBehaviour
         RectTransform bodyRect = bodyGO.AddComponent<RectTransform>();
         bodyRect.anchorMin = new Vector2(0f, 0.5f);
         bodyRect.anchorMax = new Vector2(1f, 0.5f);
-        bodyRect.sizeDelta = new Vector2(0f, 50f);
+        bodyRect.sizeDelta = new Vector2(0f, 150f);
         LayoutElement bodyLayout = bodyGO.AddComponent<LayoutElement>();
-        bodyLayout.preferredHeight = 120f; // Increased to accommodate multiple lines for score display
+        bodyLayout.preferredHeight = 150f; // Increased to accommodate multiple lines for score display
 
         _victoryBodyLabel = bodyGO.AddComponent<TextMeshProUGUI>();
         _victoryBodyLabel.alignment = TextAlignmentOptions.Center;
-        _victoryBodyLabel.fontSize = 28f;
+        _victoryBodyLabel.fontSize = 40f;
         _victoryBodyLabel.enableWordWrapping = true;
         _victoryBodyLabel.text = victoryBodyText;
 
@@ -983,13 +996,13 @@ public class GameManager : MonoBehaviour
         RectTransform summaryRect = summaryGroup.AddComponent<RectTransform>();
         summaryRect.anchorMin = new Vector2(0f, 0.5f);
         summaryRect.anchorMax = new Vector2(1f, 0.5f);
-        summaryRect.sizeDelta = new Vector2(0f, 100f);
+        summaryRect.sizeDelta = new Vector2(0f, 0f);
         LayoutElement summaryLayoutElement = summaryGroup.AddComponent<LayoutElement>();
-        summaryLayoutElement.preferredHeight = 110f;
+        summaryLayoutElement.preferredHeight = 160f;
 
         VerticalLayoutGroup summaryLayout = summaryGroup.AddComponent<VerticalLayoutGroup>();
         summaryLayout.childAlignment = TextAnchor.MiddleCenter;
-        summaryLayout.spacing = 6f;
+        summaryLayout.spacing = 12f;
         summaryLayout.childControlWidth = true;
         summaryLayout.childForceExpandWidth = true;
         summaryLayout.childControlHeight = false;
@@ -1000,12 +1013,12 @@ public class GameManager : MonoBehaviour
         RectTransform fireRect = _fireSummaryRoot.AddComponent<RectTransform>();
         fireRect.anchorMin = new Vector2(0f, 0.5f);
         fireRect.anchorMax = new Vector2(1f, 0.5f);
-        fireRect.sizeDelta = new Vector2(0f, 40f);
-        _fireSummaryRoot.AddComponent<LayoutElement>().preferredHeight = 40f;
+        fireRect.sizeDelta = new Vector2(0f, 50f);
+        _fireSummaryRoot.AddComponent<LayoutElement>().preferredHeight = 50f;
 
         _fireVictoryLabel = _fireSummaryRoot.AddComponent<TextMeshProUGUI>();
         _fireVictoryLabel.alignment = TextAlignmentOptions.Center;
-        _fireVictoryLabel.fontSize = 30f;
+        _fireVictoryLabel.fontSize = 34f;
         _fireVictoryLabel.text = string.Empty;
 
         _waterSummaryRoot = new GameObject("WaterSummary");
@@ -1013,12 +1026,12 @@ public class GameManager : MonoBehaviour
         RectTransform waterRect = _waterSummaryRoot.AddComponent<RectTransform>();
         waterRect.anchorMin = new Vector2(0f, 0.5f);
         waterRect.anchorMax = new Vector2(1f, 0.5f);
-        waterRect.sizeDelta = new Vector2(0f, 40f);
-        _waterSummaryRoot.AddComponent<LayoutElement>().preferredHeight = 40f;
+        waterRect.sizeDelta = new Vector2(0f, 50f);
+        _waterSummaryRoot.AddComponent<LayoutElement>().preferredHeight = 50f;
 
         _waterVictoryLabel = _waterSummaryRoot.AddComponent<TextMeshProUGUI>();
         _waterVictoryLabel.alignment = TextAlignmentOptions.Center;
-        _waterVictoryLabel.fontSize = 30f;
+        _waterVictoryLabel.fontSize = 34f;
         _waterVictoryLabel.text = string.Empty;
 
         GameObject buttonRow = new GameObject("Buttons");
@@ -1058,6 +1071,19 @@ public class GameManager : MonoBehaviour
         }
 
         _victoryPanel.SetActive(false);
+    }
+
+    private static void ConfigureVictoryPanelRect(RectTransform rect, Vector2 size)
+    {
+        if (rect == null) return;
+
+        Vector2 center = new Vector2(0.5f, 0.5f);
+        rect.anchorMin = center;
+        rect.anchorMax = center;
+        rect.pivot = center;
+        rect.sizeDelta = size;
+        rect.anchoredPosition = Vector2.zero;
+        rect.localPosition = Vector3.zero;
     }
 
     private Button CreateEndPanelButton(string name, Transform parent, string labelText)
@@ -1132,12 +1158,14 @@ public class GameManager : MonoBehaviour
 
         if (_fireSummaryRoot != null)
         {
-            _fireSummaryRoot.SetActive(isVictory);
+            // Hide token count display for all levels
+            _fireSummaryRoot.SetActive(false);
         }
 
         if (_waterSummaryRoot != null)
         {
-            _waterSummaryRoot.SetActive(isVictory);
+            // Hide token count display for all levels
+            _waterSummaryRoot.SetActive(false);
         }
 
         if (_victoryContentLayout != null)
@@ -1449,10 +1477,10 @@ public class GameManager : MonoBehaviour
     // This function is modified to FIX the bug where token icons were not appearing.
     // The line "AddComponent<LayoutElement>()" was accidentally removed in the previous
     // version and has been RESTORED. This is required for the ContentSizeFitter.
-    private void RecountTokensInScene()
-    {
-        int fireCount = 0;
-        int waterCount = 0;
+        private void RecountTokensInScene()
+        {
+            int fireCount = 0;
+            int waterCount = 0;
 
         TokenCollect[] tokens = FindObjectsOfType<TokenCollect>(includeInactive: true);
         foreach (var token in tokens)
@@ -1557,6 +1585,7 @@ public class GameManager : MonoBehaviour
         }
 
         UpdateTokensUI();
+        SyncTokenTracker(resetLevelState: false);
     }
     // --- MODIFICATION END ---
 
@@ -1636,16 +1665,18 @@ public class GameManager : MonoBehaviour
         HandleOutOfHearts();
     }
 
-    private void HandleOutOfHearts()
-    {
-        if (_gameFinished) return;
+        private void HandleOutOfHearts()
+        {
+            if (_gameFinished) return;
 
-        _gameFinished = true;
-        _gameActive = false;
-        FreezePlayers();
-        CancelNextSceneLoad();
-        UpdateStatus(levelDefeatMessage);
-        ShowEndPanel(EndGameState.Defeat);
+            _gameFinished = true;
+            _gameActive = false;
+            EnsureLevelTimer();
+            levelTimer?.MarkFailure();
+            FreezePlayers();
+            CancelNextSceneLoad();
+            UpdateStatus(levelDefeatMessage);
+            ShowEndPanel(EndGameState.Defeat);
     }
 
     private void OnVictoryRestartClicked()
@@ -1687,44 +1718,75 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    private void HandleVictory()
-    {
-        if (_gameFinished) return;
+        private void HandleVictory()
+        {
+            if (_gameFinished) return;
 
-        _gameFinished = true;
-        _gameActive = false;
-        // analytics code
-        EnsureLevelTimer();
-        (levelTimer ?? FindAnyObjectByType<Analytics.LevelTimer>())?.MarkSuccess();
-        UpdateStatus(levelVictoryMessage);
-        FreezePlayers();
-        CancelNextSceneLoad();
-        ShowEndPanel(EndGameState.Victory);
-    }
+            _gameFinished = true;
+            _gameActive = false;
+            // analytics code
+            EnsureLevelTimer();
+            (levelTimer ?? FindAnyObjectByType<Analytics.LevelTimer>())?.MarkSuccess();
+            UpdateStatus(levelVictoryMessage);
+            FreezePlayers();
+            CancelNextSceneLoad();
+            ShowEndPanel(EndGameState.Victory);
+        }
 
     // analytics code
     
-    private void EnsureLevelTimer()
-    {
-        if (levelTimer != null) return;
-
-        var active = SceneManager.GetActiveScene().name;
-        if (string.Equals(active, "MainMenu", System.StringComparison.OrdinalIgnoreCase)) return;
-
-        var existing = FindAnyObjectByType<Analytics.LevelTimer>();
-        if (existing != null)
+        private void EnsureLevelTimer()
         {
-            levelTimer = existing;
-            // Ensures abandon/quit attempts are captured
+            if (levelTimer != null) return;
+
+            var active = SceneManager.GetActiveScene().name;
+            if (string.Equals(active, "MainMenu", System.StringComparison.OrdinalIgnoreCase)) return;
+
+            var existing = FindAnyObjectByType<Analytics.LevelTimer>();
+            if (existing != null)
+            {
+                levelTimer = existing;
+                // Ensures abandon/quit attempts are captured
+                levelTimer.autoSendFailureOnDestroy = true;
+                return;
+            }
+
+            var go = new GameObject("LevelAnalytics");
+            levelTimer = go.AddComponent<Analytics.LevelTimer>();
             levelTimer.autoSendFailureOnDestroy = true;
-            return;
+
         }
 
-        var go = new GameObject("LevelAnalytics");
-        levelTimer = go.AddComponent<Analytics.LevelTimer>();
-        levelTimer.autoSendFailureOnDestroy = true;
+        private void SyncTokenTracker(bool resetLevelState)
+        {
+            var tracker = Analytics.TokenTracker.Instance;
+            string levelId = GetAnalyticsLevelId();
+            int tokensCollected = Mathf.Max(0, fireTokensCollected + waterTokensCollected);
+            int tokensAvailable = Mathf.Max(0, _totalFireTokens + _totalWaterTokens);
 
-    }
+            if (resetLevelState)
+            {
+                tracker.ResetForLevel(levelId, tokensAvailable, tokensCollected);
+            }
+            else
+            {
+                tracker.UpdateTotals(levelId, tokensCollected, tokensAvailable);
+            }
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            Debug.Log($"[Analytics][TokenTracker] {(resetLevelState ? "Reset" : "Update")} level={levelId} collected={tokensCollected} available={tokensAvailable}");
+#endif
+        }
+
+        private string GetAnalyticsLevelId()
+        {
+            if (levelTimer != null && !string.IsNullOrWhiteSpace(levelTimer.ResolvedLevelId))
+            {
+                return levelTimer.ResolvedLevelId;
+            }
+
+            return SceneManager.GetActiveScene().name;
+        }
 
     private IEnumerator LoadNextSceneAfterDelay()
     {

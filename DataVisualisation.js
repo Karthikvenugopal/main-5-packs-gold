@@ -25,6 +25,7 @@ function ensureAllAnalyticsSheets_(ss, opts) {
   ensureAvgTimeSuccessSheet_(ss, opts);
   ensureAvgTimeFailureSheet_(ss, opts);
   ensureRetryDensitySheet_(ss, opts);
+  ensureTokenCompletionSheet_(ss, opts);
   if (opts && opts.prune) {
     pruneAnalyticsSheets_(ss);
   }
@@ -132,9 +133,42 @@ function ensureRetryDensitySheet_(ss, opts) {
   }
 }
 
+function ensureTokenCompletionSheet_(ss, opts) {
+  let sh = ss.getSheetByName('TokenCompletion');
+  if (!sh) {
+    sh = ss.insertSheet('TokenCompletion');
+  }
+  sh.getRange('A1:G1').setValues([[
+    'timestamp', 'session_id', 'level_id', 'token_completion_rate', 'tokens_collected', 'tokens_available', 'time_spent_s'
+  ]]);
+
+  const summaryFormula = `=IF(COUNTA(TokenCompletion!D2:D)=0,"",QUERY(TokenCompletion!A2:G,"select C, avg(D), count(D) where D is not null group by C label C 'level_id', avg(D) 'avg_token_completion_rate', count(D) 'attempt_count'",0))`;
+  sh.getRange('I1').setValue(summaryFormula);
+
+  if (opts && opts.reset) sh.getCharts().forEach(c => sh.removeChart(c));
+  if (sh.getCharts().length === 0) {
+    const chart = sh.newChart()
+      .asColumnChart()
+      .addRange(sh.getRange('I:J'))
+      .setPosition(1, 5, 0, 0)
+      .setOption('title', 'Average Token Completion Rate by Level')
+      .setOption('legend', { position: 'none' })
+      .setOption('vAxis', { title: 'Completion Rate', viewWindow: { min: 0, max: 1 } })
+      .setOption('hAxis', { title: 'Level' })
+      .build();
+    sh.insertChart(chart);
+  }
+  return sh;
+}
+
+function buildTokenCompletionCharts() {
+  const ss = SpreadsheetApp.getActive();
+  ensureTokenCompletionSheet_(ss, { reset: true });
+}
+
 function pruneAnalyticsSheets_(ss, opts) {
   const essentials = new Set(['Data']);
-  const withAverages = new Set(['Data', 'AvgTime_Success', 'AvgTime_Failure', 'RetryDensity', 'HeartLoss']);
+  const withAverages = new Set(['Data', 'AvgTime_Success', 'AvgTime_Failure', 'RetryDensity', 'HeartLoss', 'TokenCompletion']);
   const keep = (opts && opts.essentialsOnly) ? essentials : withAverages;
   ss.getSheets().forEach(sheet => {
     const name = sheet.getName();
@@ -160,6 +194,7 @@ function onOpen() {
     .addSeparator()
     .addItem('Repair Average Formulas', 'repairAverageTimeSheets')
     .addItem('Build Heart Loss Chart', 'buildHeartLossCharts')
+    .addItem('Build Token Completion Chart', 'buildTokenCompletionCharts')
     .addToUi();
 }
 
@@ -201,6 +236,24 @@ function parseIncoming_(e) {
   return data || {};
 }
 
+function toNumberOrBlank_(value) {
+  if (value === undefined || value === null || value === '') return '';
+  const num = Number(value);
+  return isFinite(num) ? num : '';
+}
+
+function extractTokenCompletionStats_(data) {
+  const rateRaw = toNumberOrBlank_(data && data.token_completion_rate);
+  const tokensCollectedRaw = toNumberOrBlank_(data && data.tokens_collected);
+  const tokensAvailableRaw = toNumberOrBlank_(data && data.tokens_available);
+
+  const rate = rateRaw === '' ? '' : Math.max(0, Math.min(1, rateRaw));
+  const tokensCollected = tokensCollectedRaw === '' ? '' : Math.max(0, Math.round(tokensCollectedRaw));
+  const tokensAvailable = tokensAvailableRaw === '' ? '' : Math.max(0, Math.round(tokensAvailableRaw));
+
+  return [rate, tokensCollected, tokensAvailable];
+}
+
 
 function processEvent_(ss, data) {
   const level = String(data.level_id || '').trim();
@@ -237,6 +290,28 @@ function processEvent_(ss, data) {
     sh.appendRow([new Date(), session, level, player, cause, tSince]);
 
     return ContentService.createTextOutput(JSON.stringify({ ok: true, type: 'heart_loss' }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+  
+  if (evt === 'token_completion') {
+    const shTokens = ensureTokenCompletionSheet_(ss);
+    const [tokenCompletionRate, tokensCollected, tokensAvailable] = extractTokenCompletionStats_(data);
+    const tRaw = (data.time_spent_s !== undefined && data.time_spent_s !== null)
+      ? data.time_spent_s
+      : (data.time_since_start_s !== undefined && data.time_since_start_s !== null)
+        ? data.time_since_start_s
+        : data.t_since_start_s;
+    const tSpent = toNumberOrBlank_(tRaw);
+    shTokens.appendRow([
+      new Date(),
+      data.session_id || '',
+      level,
+      tokenCompletionRate,
+      tokensCollected,
+      tokensAvailable,
+      tSpent
+    ]);
+    return ContentService.createTextOutput(JSON.stringify({ ok: true, type: 'token_completion' }))
       .setMimeType(ContentService.MimeType.JSON);
   }
 
@@ -297,6 +372,7 @@ function purgeNonWhitelistedRows() {
 
   purgeSheet('Data', 3);      
   purgeSheet('HeartLoss', 3); 
+  purgeSheet('TokenCompletion', 3);
 }
 
 // Force the AvgTime_* formulas to only include Level1/Level2
