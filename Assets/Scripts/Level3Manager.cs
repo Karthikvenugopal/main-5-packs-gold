@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -20,21 +21,27 @@ public class Level3Manager : MonoBehaviour
     [SerializeField] private GameManager gameManager;
     [SerializeField] private TokenPlacementManager tokenPlacementManager;
 
+    [Header("Hazard Outlines")]
+    [SerializeField] private bool showSequenceOutlines = true;
+    [SerializeField] private Color fireOutlineColor = new Color(0.95f, 0.45f, 0.15f, 0.9f);
+    [SerializeField] private Color iceOutlineColor = new Color(0.4f, 0.75f, 1f, 0.9f);
+    [SerializeField, Min(0.001f)] private float outlineWidth = 0.05f;
+
     private static readonly string[] Layout =
     {
-        "###############",
-        "#.....#.#....F#",
-        "#.#.###.#.###.#",
-        "#.#.#.#.#.#...#",
-        "#.#.#.#.#.#.###",
-        "#.#.#.#.###.#.#",
-        "#.#.......#.#.#",
-        "#.#.####..#.#.#",
-        "#.####.#..#.#.#",
-        "#....#.#..#.#.#",
-        "#.##.#....#.#.#",
-        "#W#....#......#",
-        "###############"
+        "#########################",
+        "##222#.#.#.............##",
+        "#W...#.#.#.#.#.#.#.#....#",
+        "##...#...#.#.#.#.#.#...##",
+        "##...#.#...#.#.#.#.#...##",
+        "##...#.#.#.#.#.#.#.#...##",
+        "##...#.###.#...#.#.#....#",
+        "#....#...#.#.#.#.#.#...##",
+        "##...#.#.#.#.#.#.#.#...##",
+        "##...#.#.#.#.#...#.#...##",
+        "##.....#.....#.#...#111##",
+        "#########################"
+   
     };
 
     private const string FireSpawnName = "FireboySpawn";
@@ -48,65 +55,56 @@ public class Level3Manager : MonoBehaviour
     private static readonly SequenceDefinition[] TriggerSequences =
     {
         new SequenceDefinition(
-            "FireThenIce",
+            "FireIcePair_(11,1)-(10,2)",
             new[]
             {
-                new SequenceStep(SequenceActionType.Fire, new Vector2Int(2, 9)),
-                new SequenceStep(SequenceActionType.Ice, new Vector2Int(12, 3))
+                new SequenceStep(SequenceActionType.Fire, new Vector2Int(11, 1)),
+                new SequenceStep(SequenceActionType.Ice, new Vector2Int(10, 2))
             },
             loop: true
         ),
         new SequenceDefinition(
-            "IceThenFire",
+            "IceFirePair_(15,1)-(14,3)",
             new[]
             {
-                new SequenceStep(SequenceActionType.Ice, new Vector2Int(5, 11)),
-                new SequenceStep(SequenceActionType.Fire, new Vector2Int(7, 10))
+                new SequenceStep(SequenceActionType.Ice, new Vector2Int(15, 1)),
+                new SequenceStep(SequenceActionType.Fire, new Vector2Int(14, 3))
             },
             loop: true
         ),
         new SequenceDefinition(
-            "FireThenIce_Top",
+            "IceFirePair_(9,4)-(10,5)",
             new[]
             {
-                new SequenceStep(SequenceActionType.Fire, new Vector2Int(3, 5)),
-                new SequenceStep(SequenceActionType.Ice, new Vector2Int(4, 1))
+                new SequenceStep(SequenceActionType.Ice, new Vector2Int(9, 4)),
+                new SequenceStep(SequenceActionType.Fire, new Vector2Int(10, 5))
             },
             loop: true
         ),
         new SequenceDefinition(
-            "FireThenIce_MidLeft",
+            "FireIcePair_(7,7)-(9,10)",
             new[]
             {
-                new SequenceStep(SequenceActionType.Fire, new Vector2Int(4, 6)),
-                new SequenceStep(SequenceActionType.Ice, new Vector2Int(5, 5))
+                new SequenceStep(SequenceActionType.Fire, new Vector2Int(7, 7)),
+                new SequenceStep(SequenceActionType.Ice, new Vector2Int(9, 10))
             },
             loop: true
         ),
         new SequenceDefinition(
-            "FireThenIce_CenterTop",
+            "FireIcePair_(14,7)-(15,9)",
             new[]
             {
-                new SequenceStep(SequenceActionType.Fire, new Vector2Int(7, 5)),
-                new SequenceStep(SequenceActionType.Ice, new Vector2Int(8, 6))
+                new SequenceStep(SequenceActionType.Fire, new Vector2Int(14, 7)),
+                new SequenceStep(SequenceActionType.Ice, new Vector2Int(15, 9))
             },
             loop: true
         ),
         new SequenceDefinition(
-            "IceThenFire_BottomRight",
+            "IceFirePair_(19,1)-(18,9)",
             new[]
             {
-                new SequenceStep(SequenceActionType.Ice, new Vector2Int(11, 10)),
-                new SequenceStep(SequenceActionType.Fire, new Vector2Int(12, 11))
-            },
-            loop: true
-        ),
-        new SequenceDefinition(
-            "IceThenFire_TopRight",
-            new[]
-            {
-                new SequenceStep(SequenceActionType.Ice, new Vector2Int(9, 2)),
-                new SequenceStep(SequenceActionType.Fire, new Vector2Int(10, 1))
+                new SequenceStep(SequenceActionType.Ice, new Vector2Int(19, 1)),
+                new SequenceStep(SequenceActionType.Fire, new Vector2Int(18, 9))
             },
             loop: true
         )
@@ -114,14 +112,22 @@ public class Level3Manager : MonoBehaviour
 
     private readonly Dictionary<Vector2Int, Vector2> _cellOrigins = new Dictionary<Vector2Int, Vector2>();
     private readonly HashSet<Vector2Int> _sequenceReservedCells = new HashSet<Vector2Int>();
+    private readonly Dictionary<Vector2Int, SequenceActionType> _sequenceCellTypes = new Dictionary<Vector2Int, SequenceActionType>();
+    private readonly Dictionary<Vector2Int, GameObject> _hazardOutlines = new Dictionary<Vector2Int, GameObject>();
     private readonly Dictionary<int, SequenceState> _sequenceStates = new Dictionary<int, SequenceState>();
     private readonly Dictionary<int, Coroutine> _pendingSpawnCoroutines = new Dictionary<int, Coroutine>();
     private bool _tearingDown;
     private bool _exitPlaced;
+    private Material _outlineMaterial;
+    private Vector2 _fireOutlineOffset = Vector2.zero;
+    private Vector2 _iceOutlineOffset = Vector2.zero;
+    private Vector2 _fireOutlineSize = Vector2.one;
+    private Vector2 _iceOutlineSize = Vector2.one;
 
     private void Start()
     {
         CacheSequenceReservedCells();
+        CacheHazardOutlineData();
         BuildMaze(Layout);
         CreateAdditionalSpawnMarkers();
         PlaceCentralExit();
@@ -132,9 +138,39 @@ public class Level3Manager : MonoBehaviour
         gameManager?.OnLevelReady();
     }
 
+    private void CacheHazardOutlineData()
+    {
+        _fireOutlineOffset = Vector2.zero;
+        _iceOutlineOffset = Vector2.zero;
+        _fireOutlineSize = Vector2.one * cellSize;
+        _iceOutlineSize = Vector2.one * cellSize;
+
+        PopulateOutlineDataForPrefab(fireWallPrefab, ref _fireOutlineOffset, ref _fireOutlineSize);
+        PopulateOutlineDataForPrefab(iceWallPrefab, ref _iceOutlineOffset, ref _iceOutlineSize);
+    }
+
+    private void PopulateOutlineDataForPrefab(GameObject prefab, ref Vector2 offset, ref Vector2 size)
+    {
+        if (prefab == null) return;
+
+        SpriteRenderer renderer = prefab.GetComponentInChildren<SpriteRenderer>();
+        if (renderer != null)
+        {
+            Bounds bounds = renderer.sprite != null ? renderer.sprite.bounds : renderer.bounds;
+            offset = (Vector2)bounds.center;
+            size = (Vector2)(bounds.extents * 2f);
+        }
+        else
+        {
+            offset = new Vector2(0.5f * cellSize, -0.5f * cellSize);
+            size = new Vector2(cellSize, cellSize);
+        }
+    }
+
     private void CacheSequenceReservedCells()
     {
         _sequenceReservedCells.Clear();
+        _sequenceCellTypes.Clear();
 
         foreach (SequenceDefinition definition in TriggerSequences)
         {
@@ -143,6 +179,7 @@ public class Level3Manager : MonoBehaviour
                 if (step.ActionType == SequenceActionType.Ice || step.ActionType == SequenceActionType.Fire)
                 {
                     _sequenceReservedCells.Add(step.Cell);
+                    _sequenceCellTypes[step.Cell] = step.ActionType;
                 }
             }
         }
@@ -221,6 +258,11 @@ public class Level3Manager : MonoBehaviour
                 {
                     CreateSpawnMarker(cellPosition, FireSpawnName);
                 }
+
+                if (reservedForSequence)
+                {
+                    EnsureHazardOutline(gridPosition, cellPosition);
+                }
             }
         }
     }
@@ -235,6 +277,75 @@ public class Level3Manager : MonoBehaviour
         if (GameObject.Find(WaterSpawnName) == null && _cellOrigins.TryGetValue(WaterSpawnCell, out Vector2 waterOrigin))
         {
             CreateSpawnMarker(waterOrigin, WaterSpawnName);
+        }
+    }
+
+    private void EnsureHazardOutline(Vector2Int cell, Vector2 cellPosition)
+    {
+        if (!showSequenceOutlines || _hazardOutlines.ContainsKey(cell)) return;
+        if (!_sequenceCellTypes.TryGetValue(cell, out SequenceActionType type)) return;
+
+        GameObject outline = new GameObject($"HazardOutline_{cell.x}_{cell.y}");
+        outline.transform.SetParent(transform);
+        Vector2 offset = type == SequenceActionType.Fire ? _fireOutlineOffset : _iceOutlineOffset;
+        Vector2 size = type == SequenceActionType.Fire ? _fireOutlineSize : _iceOutlineSize;
+        outline.transform.position = new Vector3(
+            cellPosition.x + offset.x,
+            cellPosition.y + offset.y,
+            0f
+        );
+
+        LineRenderer renderer = outline.AddComponent<LineRenderer>();
+        renderer.useWorldSpace = false;
+        renderer.loop = true;
+        renderer.positionCount = 5;
+        renderer.startWidth = renderer.endWidth = Mathf.Max(0.001f, outlineWidth);
+        Material material = GetOutlineMaterial();
+        if (material != null)
+        {
+            renderer.material = material;
+        }
+        Color outlineColor = type == SequenceActionType.Fire ? fireOutlineColor : iceOutlineColor;
+        renderer.startColor = renderer.endColor = outlineColor;
+        renderer.sortingOrder = 4;
+
+        float halfWidth = size.x * 0.5f;
+        float halfHeight = size.y * 0.5f;
+        Vector3[] corners =
+        {
+            new Vector3(-halfWidth, halfHeight, 0f),
+            new Vector3(halfWidth, halfHeight, 0f),
+            new Vector3(halfWidth, -halfHeight, 0f),
+            new Vector3(-halfWidth, -halfHeight, 0f),
+            new Vector3(-halfWidth, halfHeight, 0f)
+        };
+        renderer.SetPositions(corners);
+
+        _hazardOutlines[cell] = outline;
+    }
+
+    private Material GetOutlineMaterial()
+    {
+        if (_outlineMaterial == null)
+        {
+            Shader shader = Shader.Find("Sprites/Default") ?? Shader.Find("Universal Render Pipeline/Unlit") ?? Shader.Find("Standard");
+            if (shader == null)
+            {
+                Debug.LogWarning("Level3Manager: Unable to find a shader for hazard outlines.", this);
+                return null;
+            }
+
+            _outlineMaterial = new Material(shader);
+        }
+
+        return _outlineMaterial;
+    }
+
+    private void SetHazardOutlineVisible(Vector2Int cell, bool visible)
+    {
+        if (_hazardOutlines.TryGetValue(cell, out GameObject outline))
+        {
+            outline.SetActive(visible && showSequenceOutlines);
         }
     }
 
@@ -287,6 +398,7 @@ public class Level3Manager : MonoBehaviour
             if (!_cellOrigins.TryGetValue(step.Cell, out Vector2 origin))
             {
                 Debug.LogWarning($"Level3Manager: Missing cell origin for sequence step at {step.Cell}.", this);
+                SetHazardOutlineVisible(step.Cell, true);
                 state.CurrentIndex++;
                 continue;
             }
@@ -321,10 +433,12 @@ public class Level3Manager : MonoBehaviour
             if (spawned == null)
             {
                 Debug.LogWarning($"Level3Manager: Failed to spawn {step.ActionType} for sequence '{state.Definition.Name}'.", this);
+                SetHazardOutlineVisible(step.Cell, true);
                 state.CurrentIndex++;
                 continue;
             }
 
+            SetHazardOutlineVisible(step.Cell, false);
             AttachSequenceMember(spawned, sequenceId);
             state.ActiveObject = spawned;
             Debug.Log($"Level3Manager: Sequence '{state.Definition.Name}' spawned {step.ActionType} at cell {step.Cell}.", this);
@@ -338,6 +452,13 @@ public class Level3Manager : MonoBehaviour
     {
         if (_tearingDown) return;
         if (!_sequenceStates.TryGetValue(sequenceId, out SequenceState state)) return;
+
+        int clearedIndex = state.CurrentIndex;
+        if (clearedIndex < state.Definition.Steps.Length)
+        {
+            Vector2Int clearedCell = state.Definition.Steps[clearedIndex].Cell;
+            SetHazardOutlineVisible(clearedCell, true);
+        }
 
         state.ActiveObject = null;
         state.CurrentIndex++;
