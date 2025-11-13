@@ -96,7 +96,20 @@ public class CannonHazard : MonoBehaviour
         }
 
         projectileGO.transform.SetParent(transform.parent, true);
-        projectileGO.transform.position = transform.position + Vector3.up * (_cellSize * muzzleOffset);
+        Vector3 aimVector3 = transform.up;
+        Vector2 aimVector2 = new Vector2(aimVector3.x, aimVector3.y);
+        if (aimVector2.sqrMagnitude < 0.0001f)
+        {
+            aimVector2 = Vector2.up;
+            aimVector3 = Vector3.up;
+        }
+        else
+        {
+            aimVector2.Normalize();
+            aimVector3 = new Vector3(aimVector2.x, aimVector2.y, 0f);
+        }
+
+        projectileGO.transform.position = transform.position + aimVector3 * (_cellSize * muzzleOffset);
 
         if (!projectileGO.TryGetComponent(out CannonProjectile projectile))
         {
@@ -107,7 +120,7 @@ public class CannonHazard : MonoBehaviour
             ? Mathf.Max(_cellSize * projectileTravelHeight, _cellSize)
             : float.PositiveInfinity;
         projectile.Initialize(
-            Vector2.up,
+            aimVector2,
             projectileSpeed,
             projectileLifetime,
             _gameManager,
