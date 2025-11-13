@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -34,7 +35,7 @@ public class Level3Manager : MonoBehaviour
         "##...#...#.#.#.#.#.#...##",
         "##...#.#...#.#.#.#.#...##",
         "##...#.#.#.#.#.#.#.#...##",
-        "##...#.###.#...#.#.#...F#",
+        "##...#.###.#...#.#.#....#",
         "#....#...#.#.#.#.#.#...##",
         "##...#.#.#.#.#.#.#.#...##",
         "##...#.#.#.#.#...#.#...##",
@@ -54,65 +55,29 @@ public class Level3Manager : MonoBehaviour
     private static readonly SequenceDefinition[] TriggerSequences =
     {
         new SequenceDefinition(
-            "FireThenIce",
+            "FireIcePair_(11,1)-(10,2)",
             new[]
             {
-                new SequenceStep(SequenceActionType.Fire, new Vector2Int(2, 9)),
-                new SequenceStep(SequenceActionType.Ice, new Vector2Int(12, 3))
+                new SequenceStep(SequenceActionType.Fire, new Vector2Int(11, 1)),
+                new SequenceStep(SequenceActionType.Ice, new Vector2Int(10, 2))
             },
             loop: true
         ),
         new SequenceDefinition(
-            "IceThenFire",
+            "IceFirePair_(13,1)-(12,3)",
             new[]
             {
-                new SequenceStep(SequenceActionType.Ice, new Vector2Int(5, 11)),
-                new SequenceStep(SequenceActionType.Fire, new Vector2Int(7, 10))
+                new SequenceStep(SequenceActionType.Ice, new Vector2Int(13, 1)),
+                new SequenceStep(SequenceActionType.Fire, new Vector2Int(12, 3))
             },
             loop: true
         ),
         new SequenceDefinition(
-            "FireThenIce_Top",
+            "IceFirePair_(9,4)-(10,5)",
             new[]
             {
-                new SequenceStep(SequenceActionType.Fire, new Vector2Int(3, 5)),
-                new SequenceStep(SequenceActionType.Ice, new Vector2Int(4, 1))
-            },
-            loop: true
-        ),
-        new SequenceDefinition(
-            "FireThenIce_MidLeft",
-            new[]
-            {
-                new SequenceStep(SequenceActionType.Fire, new Vector2Int(4, 6)),
-                new SequenceStep(SequenceActionType.Ice, new Vector2Int(5, 5))
-            },
-            loop: true
-        ),
-        new SequenceDefinition(
-            "FireThenIce_CenterTop",
-            new[]
-            {
-                new SequenceStep(SequenceActionType.Fire, new Vector2Int(7, 5)),
-                new SequenceStep(SequenceActionType.Ice, new Vector2Int(8, 6))
-            },
-            loop: true
-        ),
-        new SequenceDefinition(
-            "IceThenFire_BottomRight",
-            new[]
-            {
-                new SequenceStep(SequenceActionType.Ice, new Vector2Int(11, 10)),
-                new SequenceStep(SequenceActionType.Fire, new Vector2Int(12, 11))
-            },
-            loop: true
-        ),
-        new SequenceDefinition(
-            "IceThenFire_TopRight",
-            new[]
-            {
-                new SequenceStep(SequenceActionType.Ice, new Vector2Int(9, 2)),
-                new SequenceStep(SequenceActionType.Fire, new Vector2Int(10, 1))
+                new SequenceStep(SequenceActionType.Ice, new Vector2Int(9, 4)),
+                new SequenceStep(SequenceActionType.Fire, new Vector2Int(10, 5))
             },
             loop: true
         )
