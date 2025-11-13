@@ -215,6 +215,30 @@ public class DialogueTriggerZone : MonoBehaviour
     }
 
     /// <summary>
+    /// Set the dialogue text programmatically
+    /// </summary>
+    public void SetDialogueText(string text)
+    {
+        dialogueText = text;
+    }
+
+    /// <summary>
+    /// Set the offset position of the dialogue box relative to the player
+    /// </summary>
+    public void SetOffsetFromPlayer(Vector2 offset)
+    {
+        offsetFromPlayer = offset;
+    }
+
+    /// <summary>
+    /// Set the font size of the dialogue text
+    /// </summary>
+    public void SetFontSize(float size)
+    {
+        fontSize = size;
+    }
+
+    /// <summary>
     /// Reset the trigger so it can be triggered again (useful for testing or respawning)
     /// </summary>
     public void ResetTrigger()
