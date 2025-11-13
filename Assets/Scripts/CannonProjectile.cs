@@ -6,6 +6,8 @@ public class CannonProjectile : MonoBehaviour
     [SerializeField] private float _speed = 6f;
     [SerializeField] private float _lifetime = 4f;
     [SerializeField] private LayerMask collisionMask = ~0;
+    [SerializeField] private string fireTokenTag = "FireToken";
+    [SerializeField] private string waterTokenTag = "WaterToken";
 
     private Vector2 _direction = Vector2.up;
     private Vector2 _startPosition;
@@ -100,10 +102,10 @@ public class CannonProjectile : MonoBehaviour
                 return;
             }
 
-            Vector3 origin = start + (Vector3)(_direction * 0.02f);
+            Vector2 origin = (Vector2)(start + (Vector3)(_direction * 0.02f));
             float rayDistance = distance + 0.02f;
-            RaycastHit2D hit = Physics2D.Raycast(origin, _direction, rayDistance, collisionMask);
-            if (hit.collider != null && hit.collider != _collider)
+            RaycastHit2D hit = RaycastIgnoringTokens(origin, rayDistance);
+            if (hit.collider != null)
             {
                 transform.position = hit.point - (Vector2)_direction * 0.02f;
                 TriggerImpact(hit.point, hit.collider);
@@ -171,10 +173,55 @@ public class CannonProjectile : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D other)
     {
-        if (_consumed || other == _collider) return;
+        if (_consumed || other == _collider || IsTokenCollider(other)) return;
 
         Vector2 impactPoint = other.ClosestPoint(transform.position);
         TriggerImpact(impactPoint, other);
+    }
+
+    private RaycastHit2D RaycastIgnoringTokens(Vector2 origin, float distance)
+    {
+        float remaining = distance;
+        Vector2 currentOrigin = origin;
+        const float epsilon = 0.0005f;
+
+        while (remaining > 0f)
+        {
+            RaycastHit2D hit = Physics2D.Raycast(currentOrigin, _direction, remaining, collisionMask);
+            if (hit.collider == null)
+            {
+                return default;
+            }
+
+            if (hit.collider == _collider || IsTokenCollider(hit.collider))
+            {
+                float advance = Mathf.Max(hit.distance + epsilon, epsilon);
+                currentOrigin += _direction * advance;
+                remaining -= advance;
+                continue;
+            }
+
+            return hit;
+        }
+
+        return default;
+    }
+
+    private bool IsTokenCollider(Collider2D collider)
+    {
+        if (collider == null) return false;
+
+        if (!string.IsNullOrEmpty(fireTokenTag) && collider.CompareTag(fireTokenTag))
+        {
+            return true;
+        }
+
+        if (!string.IsNullOrEmpty(waterTokenTag) && collider.CompareTag(waterTokenTag))
+        {
+            return true;
+        }
+
+        return false;
     }
 
     private void TriggerImpact(Vector2 hitPoint, Collider2D collider)
