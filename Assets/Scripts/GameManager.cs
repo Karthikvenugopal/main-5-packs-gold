@@ -942,7 +942,7 @@ public class GameManager : MonoBehaviour
         rect.anchorMin = new Vector2(0.5f, 0.5f);
         rect.anchorMax = new Vector2(0.5f, 0.5f);
         rect.pivot = new Vector2(0.5f, 0.5f);
-        rect.sizeDelta = new Vector2(640f, 420f);
+        rect.sizeDelta = new Vector2(900f, 560f);
         rect.anchoredPosition = Vector2.zero;
 
         Image background = _victoryPanel.AddComponent<Image>();
@@ -953,13 +953,13 @@ public class GameManager : MonoBehaviour
         RectTransform contentRect = content.AddComponent<RectTransform>();
         contentRect.anchorMin = Vector2.zero;
         contentRect.anchorMax = Vector2.one;
-        contentRect.offsetMin = new Vector2(32f, 32f);
-        contentRect.offsetMax = new Vector2(-32f, -32f);
+        contentRect.offsetMin = new Vector2(48f, 48f);
+        contentRect.offsetMax = new Vector2(-48f, -48f);
 
         _victoryContentLayout = content.AddComponent<VerticalLayoutGroup>();
         _victoryContentLayout.childAlignment = TextAnchor.UpperCenter;
-        _victoryContentLayout.spacing = 18f;
-        _victoryContentLayout.padding = new RectOffset(0, 0, 0, 0);
+        _victoryContentLayout.spacing = 24f;
+        _victoryContentLayout.padding = new RectOffset(0, 0, 8, 8);
         _victoryContentLayout.childControlWidth = true;
         _victoryContentLayout.childForceExpandWidth = true;
         _victoryContentLayout.childControlHeight = false;
@@ -970,13 +970,13 @@ public class GameManager : MonoBehaviour
         RectTransform titleRect = titleGO.AddComponent<RectTransform>();
         titleRect.anchorMin = new Vector2(0f, 0.5f);
         titleRect.anchorMax = new Vector2(1f, 0.5f);
-        titleRect.sizeDelta = new Vector2(0f, 60f);
+        titleRect.sizeDelta = new Vector2(0f, 90f);
         LayoutElement titleLayout = titleGO.AddComponent<LayoutElement>();
-        titleLayout.preferredHeight = 60f;
+        titleLayout.preferredHeight = 90f;
 
         _victoryTitleLabel = titleGO.AddComponent<TextMeshProUGUI>();
         _victoryTitleLabel.alignment = TextAlignmentOptions.Center;
-        _victoryTitleLabel.fontSize = 42f;
+        _victoryTitleLabel.fontSize = 56f;
         _victoryTitleLabel.fontStyle = FontStyles.Bold;
         _victoryTitleLabel.text = victoryTitleText;
 
@@ -985,13 +985,13 @@ public class GameManager : MonoBehaviour
         RectTransform bodyRect = bodyGO.AddComponent<RectTransform>();
         bodyRect.anchorMin = new Vector2(0f, 0.5f);
         bodyRect.anchorMax = new Vector2(1f, 0.5f);
-        bodyRect.sizeDelta = new Vector2(0f, 50f);
+        bodyRect.sizeDelta = new Vector2(0f, 150f);
         LayoutElement bodyLayout = bodyGO.AddComponent<LayoutElement>();
-        bodyLayout.preferredHeight = 120f; // Increased to accommodate multiple lines for score display
+        bodyLayout.preferredHeight = 150f; // Increased to accommodate multiple lines for score display
 
         _victoryBodyLabel = bodyGO.AddComponent<TextMeshProUGUI>();
         _victoryBodyLabel.alignment = TextAlignmentOptions.Center;
-        _victoryBodyLabel.fontSize = 28f;
+        _victoryBodyLabel.fontSize = 34f;
         _victoryBodyLabel.enableWordWrapping = true;
         _victoryBodyLabel.text = victoryBodyText;
 
@@ -1000,13 +1000,13 @@ public class GameManager : MonoBehaviour
         RectTransform summaryRect = summaryGroup.AddComponent<RectTransform>();
         summaryRect.anchorMin = new Vector2(0f, 0.5f);
         summaryRect.anchorMax = new Vector2(1f, 0.5f);
-        summaryRect.sizeDelta = new Vector2(0f, 100f);
+        summaryRect.sizeDelta = new Vector2(0f, 0f);
         LayoutElement summaryLayoutElement = summaryGroup.AddComponent<LayoutElement>();
-        summaryLayoutElement.preferredHeight = 110f;
+        summaryLayoutElement.preferredHeight = 160f;
 
         VerticalLayoutGroup summaryLayout = summaryGroup.AddComponent<VerticalLayoutGroup>();
         summaryLayout.childAlignment = TextAnchor.MiddleCenter;
-        summaryLayout.spacing = 6f;
+        summaryLayout.spacing = 12f;
         summaryLayout.childControlWidth = true;
         summaryLayout.childForceExpandWidth = true;
         summaryLayout.childControlHeight = false;
@@ -1017,12 +1017,12 @@ public class GameManager : MonoBehaviour
         RectTransform fireRect = _fireSummaryRoot.AddComponent<RectTransform>();
         fireRect.anchorMin = new Vector2(0f, 0.5f);
         fireRect.anchorMax = new Vector2(1f, 0.5f);
-        fireRect.sizeDelta = new Vector2(0f, 40f);
-        _fireSummaryRoot.AddComponent<LayoutElement>().preferredHeight = 40f;
+        fireRect.sizeDelta = new Vector2(0f, 50f);
+        _fireSummaryRoot.AddComponent<LayoutElement>().preferredHeight = 50f;
 
         _fireVictoryLabel = _fireSummaryRoot.AddComponent<TextMeshProUGUI>();
         _fireVictoryLabel.alignment = TextAlignmentOptions.Center;
-        _fireVictoryLabel.fontSize = 30f;
+        _fireVictoryLabel.fontSize = 34f;
         _fireVictoryLabel.text = string.Empty;
 
         _waterSummaryRoot = new GameObject("WaterSummary");
@@ -1030,12 +1030,12 @@ public class GameManager : MonoBehaviour
         RectTransform waterRect = _waterSummaryRoot.AddComponent<RectTransform>();
         waterRect.anchorMin = new Vector2(0f, 0.5f);
         waterRect.anchorMax = new Vector2(1f, 0.5f);
-        waterRect.sizeDelta = new Vector2(0f, 40f);
-        _waterSummaryRoot.AddComponent<LayoutElement>().preferredHeight = 40f;
+        waterRect.sizeDelta = new Vector2(0f, 50f);
+        _waterSummaryRoot.AddComponent<LayoutElement>().preferredHeight = 50f;
 
         _waterVictoryLabel = _waterSummaryRoot.AddComponent<TextMeshProUGUI>();
         _waterVictoryLabel.alignment = TextAlignmentOptions.Center;
-        _waterVictoryLabel.fontSize = 30f;
+        _waterVictoryLabel.fontSize = 34f;
         _waterVictoryLabel.text = string.Empty;
 
         GameObject buttonRow = new GameObject("Buttons");
