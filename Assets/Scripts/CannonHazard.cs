@@ -15,6 +15,8 @@ public class CannonHazard : MonoBehaviour
     [SerializeField] private GameObject projectilePrefab;
     [SerializeField] private GameObject hitEffectPrefab;
     [SerializeField] private float projectileTravelHeight = 1.8f;
+    [SerializeField] private bool limitProjectileTravel = false;
+    [SerializeField] private bool limitProjectileLifetime = false;
 
     [Header("Fire Variant")]
     [SerializeField] private Color fireBodyColor = new Color(0.35f, 0.18f, 0.12f);
@@ -38,6 +40,7 @@ public class CannonHazard : MonoBehaviour
     private Color _impactColor;
     private SpriteRenderer _bodyRenderer;
     private SpriteRenderer _barrelRenderer;
+    private bool _invertShots;
 
     private static Sprite _fallbackSprite;
 
@@ -59,7 +62,13 @@ public class CannonHazard : MonoBehaviour
         }
     }
 
-    public void Initialize(GameManager manager, float cellSize, CannonVariant variant, GameObject projectileOverride, GameObject hitEffectOverride)
+    public void Initialize(
+        GameManager manager,
+        float cellSize,
+        CannonVariant variant,
+        GameObject projectileOverride,
+        GameObject hitEffectOverride,
+        bool invertShots = false)
     {
         _gameManager = manager;
 
@@ -71,17 +80,21 @@ public class CannonHazard : MonoBehaviour
         _variant = variant;
         _projectilePrefabToUse = projectileOverride != null ? projectileOverride : projectilePrefab;
         _hitEffectPrefabToUse = hitEffectOverride != null ? hitEffectOverride : hitEffectPrefab;
+        _invertShots = invertShots;
 
         _projectileColor = variant == CannonVariant.Fire ? fireProjectileColor : iceProjectileColor;
         _impactColor = variant == CannonVariant.Fire ? fireImpactColor : iceImpactColor;
 
         ApplySizing();
         ApplyVariantStyling();
+        ApplyOrientation();
     }
 
     private void Fire()
     {
         GameObject projectileGO;
+        Vector2 fireDirection = _invertShots ? Vector2.down : Vector2.up;
+        float muzzleSign = _invertShots ? -1f : 1f;
 
         if (_projectilePrefabToUse != null)
         {
@@ -93,18 +106,20 @@ public class CannonHazard : MonoBehaviour
         }
 
         projectileGO.transform.SetParent(transform.parent, true);
-        projectileGO.transform.position = transform.position + Vector3.up * (_cellSize * muzzleOffset);
+        projectileGO.transform.position = transform.position + Vector3.up * (_cellSize * muzzleOffset * muzzleSign);
 
         if (!projectileGO.TryGetComponent(out CannonProjectile projectile))
         {
             projectile = projectileGO.AddComponent<CannonProjectile>();
         }
 
-        float travelDistance = Mathf.Max(_cellSize * projectileTravelHeight, _cellSize);
+        float travelDistance = limitProjectileTravel
+            ? Mathf.Max(_cellSize * projectileTravelHeight, _cellSize)
+            : float.PositiveInfinity;
         projectile.Initialize(
-            Vector2.up,
+            fireDirection,
             projectileSpeed,
-            projectileLifetime,
+            limitProjectileLifetime ? projectileLifetime : 0f,
             _gameManager,
             travelDistance,
             _hitEffectPrefabToUse,
@@ -190,6 +205,12 @@ public class CannonHazard : MonoBehaviour
         {
             _barrelRenderer.color = barrelColor;
         }
+    }
+
+    private void ApplyOrientation()
+    {
+        float zRotation = _invertShots ? 180f : 0f;
+        transform.localRotation = Quaternion.Euler(0f, 0f, zRotation);
     }
 
     private static Sprite GetFallbackSprite()
