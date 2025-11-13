@@ -64,11 +64,11 @@ public class Level3Manager : MonoBehaviour
             loop: true
         ),
         new SequenceDefinition(
-            "IceFirePair_(13,1)-(12,3)",
+            "IceFirePair_(15,1)-(14,3)",
             new[]
             {
-                new SequenceStep(SequenceActionType.Ice, new Vector2Int(13, 1)),
-                new SequenceStep(SequenceActionType.Fire, new Vector2Int(12, 3))
+                new SequenceStep(SequenceActionType.Ice, new Vector2Int(15, 1)),
+                new SequenceStep(SequenceActionType.Fire, new Vector2Int(14, 3))
             },
             loop: true
         ),
@@ -78,6 +78,33 @@ public class Level3Manager : MonoBehaviour
             {
                 new SequenceStep(SequenceActionType.Ice, new Vector2Int(9, 4)),
                 new SequenceStep(SequenceActionType.Fire, new Vector2Int(10, 5))
+            },
+            loop: true
+        ),
+        new SequenceDefinition(
+            "FireIcePair_(7,7)-(9,10)",
+            new[]
+            {
+                new SequenceStep(SequenceActionType.Fire, new Vector2Int(7, 7)),
+                new SequenceStep(SequenceActionType.Ice, new Vector2Int(9, 10))
+            },
+            loop: true
+        ),
+        new SequenceDefinition(
+            "FireIcePair_(14,7)-(15,9)",
+            new[]
+            {
+                new SequenceStep(SequenceActionType.Fire, new Vector2Int(14, 7)),
+                new SequenceStep(SequenceActionType.Ice, new Vector2Int(15, 9))
+            },
+            loop: true
+        ),
+        new SequenceDefinition(
+            "IceFirePair_(19,1)-(18,9)",
+            new[]
+            {
+                new SequenceStep(SequenceActionType.Ice, new Vector2Int(19, 1)),
+                new SequenceStep(SequenceActionType.Fire, new Vector2Int(18, 9))
             },
             loop: true
         )
