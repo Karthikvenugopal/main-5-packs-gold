@@ -16,16 +16,6 @@ public class Level3Manager : MonoBehaviour
     [SerializeField] private GameObject iceWallPrefab;
     [SerializeField] private GameObject fireWallPrefab;
     [SerializeField] private GameObject exitPrefab;
-    [Header("Cannon Prefabs")]
-    [SerializeField] private GameObject cannonPrefab;
-    [SerializeField] private GameObject fireCannonPrefab;
-    [SerializeField] private GameObject iceCannonPrefab;
-    [SerializeField] private GameObject cannonProjectilePrefab;
-    [SerializeField] private GameObject fireProjectilePrefab;
-    [SerializeField] private GameObject iceProjectilePrefab;
-    [SerializeField] private GameObject cannonHitEffectPrefab;
-    [SerializeField] private GameObject fireHitEffectPrefab;
-    [SerializeField] private GameObject iceHitEffectPrefab;
 
     [Header("Dependencies")]
     [SerializeField] private GameManager gameManager;
@@ -58,9 +48,9 @@ public class Level3Manager : MonoBehaviour
     private const string WaterSpawnName = "WatergirlSpawn";
 
     private static readonly Vector2Int FireSpawnCell = new Vector2Int(13, 1);
-    private static readonly Vector2Int WaterSpawnCell = new Vector2Int(1, 2);
+    private static readonly Vector2Int WaterSpawnCell = new Vector2Int(1, 11);
 
-    private static readonly Vector2Int CenterExitCell = new Vector2Int(18, 10);
+    private static readonly Vector2Int CenterExitCell = new Vector2Int(7, 6);
 
     private static readonly SequenceDefinition[] TriggerSequences =
     {
@@ -256,16 +246,6 @@ public class Level3Manager : MonoBehaviour
                         {
                             SpawnFireWall(cellPosition);
                         }
-                        break;
-
-                    case '1':
-                        SpawnFloor(cellPosition);
-                        SpawnCannon(cellPosition, CannonVariant.Fire);
-                        break;
-
-                    case '2':
-                        SpawnFloor(cellPosition);
-                        SpawnCannon(cellPosition, CannonVariant.Ice);
                         break;
 
                     default:
@@ -617,51 +597,6 @@ public class Level3Manager : MonoBehaviour
         GameObject fireWall = Instantiate(fireWallPrefab, position, Quaternion.identity, transform);
         fireWall.layer = LayerMask.NameToLayer("Wall");
         return fireWall;
-    }
-
-    private void SpawnCannon(Vector2 position, CannonVariant variant)
-    {
-        Vector3 worldPosition = new Vector3(
-            position.x + 0.5f * cellSize,
-            position.y - 0.5f * cellSize,
-            0f
-        );
-
-        GameObject selectedPrefab = variant == CannonVariant.Fire ? fireCannonPrefab : iceCannonPrefab;
-        if (selectedPrefab == null)
-        {
-            selectedPrefab = cannonPrefab;
-        }
-
-        GameObject cannon = selectedPrefab != null
-            ? Instantiate(selectedPrefab, worldPosition, Quaternion.identity, transform)
-            : new GameObject(variant == CannonVariant.Fire ? "FireCannon" : "IceCannon");
-
-        if (cannon.transform.parent != transform)
-        {
-            cannon.transform.SetParent(transform);
-        }
-
-        cannon.transform.position = worldPosition;
-
-        if (!cannon.TryGetComponent(out CannonHazard hazard))
-        {
-            hazard = cannon.AddComponent<CannonHazard>();
-        }
-
-        GameObject projectile = variant == CannonVariant.Fire ? fireProjectilePrefab : iceProjectilePrefab;
-        if (projectile == null)
-        {
-            projectile = cannonProjectilePrefab;
-        }
-
-        GameObject hitEffect = variant == CannonVariant.Fire ? fireHitEffectPrefab : iceHitEffectPrefab;
-        if (hitEffect == null)
-        {
-            hitEffect = cannonHitEffectPrefab;
-        }
-
-        hazard.Initialize(gameManager, cellSize, variant, projectile, hitEffect);
     }
 
     private GameObject SpawnExit(Vector2 position)
