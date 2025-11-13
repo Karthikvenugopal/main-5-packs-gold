@@ -23,6 +23,23 @@ public class GameManagerTutorial : MonoBehaviour
     [SerializeField] private string exitReminderMessage = "Both heroes must stand in the exit to finish.";
     [Header("Player Hearts")]
     [SerializeField] private int startingHearts = 3;
+    [Header("UI Sprites")]
+    [Tooltip("Sprite for Ember's full heart (Red)")]
+    [SerializeField] private Sprite emberHeartFullSprite;
+    [Tooltip("Sprite for Ember's empty heart (Red)")]
+    [SerializeField] private Sprite emberHeartEmptySprite;
+    [Tooltip("Sprite for Aqua's full heart (Blue)")]
+    [SerializeField] private Sprite aquaHeartFullSprite;
+    [Tooltip("Sprite for Aqua's empty heart (Blue)")]
+    [SerializeField] private Sprite aquaHeartEmptySprite;
+    [Header("UI Icon Sizes")]
+    [Tooltip("The size (Width, Height) for the heart icons.")]
+    [SerializeField] private Vector2 heartIconSize = new Vector2(50f, 50f);
+    [Header("UI Layout")]
+    [Tooltip("The height (in reference pixels) of the top UI bar")]
+    [SerializeField] private float topUiBarHeight = 160f;
+    [Tooltip("The background color of the top UI bar")]
+    [SerializeField] private Color topUiBarColor = new Color(0.1f, 0.1f, 0.1f, 0.8f);
     [Header("Progression")]
     [SerializeField] private string nextSceneName = "Level1Scene";
     [SerializeField] private float nextSceneDelaySeconds = 2f;
@@ -48,8 +65,10 @@ public class GameManagerTutorial : MonoBehaviour
     private static int s_totalWaterTokensCollected;
 
     private Canvas _hudCanvas;
-    private TextMeshProUGUI _heartsLabel;
+    private RectTransform _topUiBar;
     private TextMeshProUGUI _tokensLabel;
+    private List<Image> _emberHeartImages = new List<Image>();
+    private List<Image> _aquaHeartImages = new List<Image>();
     private int _fireHearts;
     private int _waterHearts;
     private bool _reloadingScene;
@@ -261,13 +280,16 @@ public class GameManagerTutorial : MonoBehaviour
         if (_hudCanvas == null) return;
 
         GameObject background = new GameObject("MessageBackground");
-        background.transform.SetParent(_hudCanvas.transform, false);
+        // Parent to the Top UI Bar instead of canvas
+        background.transform.SetParent(_topUiBar, false);
 
         RectTransform bgRect = background.AddComponent<RectTransform>();
+        // Anchor to the top-center of the bar
         bgRect.anchorMin = new Vector2(0.5f, 1f);
         bgRect.anchorMax = new Vector2(0.5f, 1f);
         bgRect.pivot = new Vector2(0.5f, 1f);
-        bgRect.sizeDelta = new Vector2(680f, 80f);
+        bgRect.sizeDelta = new Vector2(680f, 120f);
+        // Position it 40 pixels down from the top-center of the bar
         bgRect.anchoredPosition = new Vector2(0f, -40f);
 
         Image image = background.AddComponent<Image>();
@@ -311,6 +333,23 @@ public class GameManagerTutorial : MonoBehaviour
         
         // Ensure EventSystem exists for UI interactions
         EnsureEventSystem();
+        
+        // Create the Top UI Bar
+        GameObject topBarGO = new GameObject("TopUI_Bar_Background");
+        topBarGO.transform.SetParent(canvasGO.transform, false);
+        Image topBarImg = topBarGO.AddComponent<Image>();
+        topBarImg.color = topUiBarColor;
+
+        _topUiBar = topBarGO.GetComponent<RectTransform>();
+        
+        // Anchor it to the top edge and stretch 100% wide
+        _topUiBar.anchorMin = new Vector2(0f, 1f); 
+        _topUiBar.anchorMax = new Vector2(1f, 1f); 
+        _topUiBar.pivot = new Vector2(0.5f, 1f);
+        
+        // Set its height using the variable
+        _topUiBar.sizeDelta = new Vector2(0f, topUiBarHeight);
+        _topUiBar.anchoredPosition = Vector2.zero;
     }
 
     private void EnsureEventSystem()
@@ -326,22 +365,131 @@ public class GameManagerTutorial : MonoBehaviour
 
     private void CreateHeartsUI()
     {
-        if (_hudCanvas == null || _heartsLabel != null) return;
+        if (_hudCanvas == null) return;
+        
+        // Create the Master Container for all "Life" UI
+        GameObject heartsMasterContainer = new GameObject("HeartsMasterContainer");
+        
+        // Parent to the Top UI Bar
+        heartsMasterContainer.transform.SetParent(_topUiBar, false);
 
-        GameObject heartsGO = new GameObject("HeartsLabel");
-        heartsGO.transform.SetParent(_hudCanvas.transform, false);
+        VerticalLayoutGroup masterLayout = heartsMasterContainer.AddComponent<VerticalLayoutGroup>();
+        masterLayout.spacing = 10;
+        masterLayout.childAlignment = TextAnchor.UpperRight;
+        masterLayout.childControlWidth = false;
+        masterLayout.childControlHeight = false;
+        
+        ContentSizeFitter masterFitter = heartsMasterContainer.AddComponent<ContentSizeFitter>();
+        masterFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
 
-        RectTransform rect = heartsGO.AddComponent<RectTransform>();
-        rect.anchorMin = new Vector2(1f, 1f);
-        rect.anchorMax = new Vector2(1f, 1f);
-        rect.pivot = new Vector2(1f, 1f);
-        rect.sizeDelta = new Vector2(450f, 60f);
-        rect.anchoredPosition = new Vector2(-40f, -40f);
+        RectTransform masterRect = heartsMasterContainer.GetComponent<RectTransform>();
+        
+        // Anchor to the top-right of the bar
+        masterRect.anchorMin = new Vector2(1f, 1f); 
+        masterRect.anchorMax = new Vector2(1f, 1f);
+        masterRect.pivot = new Vector2(1f, 1f);
+        // Position it 40px in from the top-right corner of the bar
+        masterRect.anchoredPosition = new Vector2(-40f, -40f); 
+        masterRect.sizeDelta = new Vector2(360f, 200f); 
 
-        _heartsLabel = heartsGO.AddComponent<TextMeshProUGUI>();
-        _heartsLabel.alignment = TextAlignmentOptions.Right;
-        _heartsLabel.fontSize = 32f;
-        _heartsLabel.raycastTarget = false;
+        // Create the "Life" Title
+        GameObject titleLabelGO = new GameObject("TitleLabel");
+        titleLabelGO.transform.SetParent(heartsMasterContainer.transform, false);
+        TextMeshProUGUI titleLabel = titleLabelGO.AddComponent<TextMeshProUGUI>();
+        titleLabel.text = "Life";
+        titleLabel.fontSize = 42f;
+        titleLabel.fontStyle = FontStyles.Bold;
+        titleLabel.color = Color.white;
+        titleLabel.alignment = TextAlignmentOptions.Right;
+
+        LayoutElement titleLayout = titleLabelGO.AddComponent<LayoutElement>();
+        titleLayout.preferredWidth = 360f; 
+        
+        // Create Hearts Container for Ember
+        GameObject emberHeartsGO = new GameObject("EmberHeartsContainer");
+        emberHeartsGO.transform.SetParent(heartsMasterContainer.transform, false); 
+        
+        Image emberBg = emberHeartsGO.AddComponent<Image>();
+        emberBg.color = new Color(0f, 0f, 0f, 0.35f); 
+        
+        HorizontalLayoutGroup emberLayout = emberHeartsGO.AddComponent<HorizontalLayoutGroup>();
+        emberLayout.spacing = 10; 
+        emberLayout.childAlignment = TextAnchor.MiddleRight;
+        emberLayout.childControlWidth = false;
+        emberLayout.childControlHeight = false;
+        emberLayout.padding = new RectOffset(10, 10, 5, 5); 
+
+        RectTransform emberRect = emberHeartsGO.GetComponent<RectTransform>();
+        float heartContainerHeight = heartIconSize.y + emberLayout.padding.top + emberLayout.padding.bottom;
+        emberRect.sizeDelta = new Vector2(360f, heartContainerHeight);
+
+        GameObject emberLabelGO = new GameObject("Label");
+        emberLabelGO.transform.SetParent(emberHeartsGO.transform, false); 
+        TextMeshProUGUI emberLabel = emberLabelGO.AddComponent<TextMeshProUGUI>();
+        emberLabel.text = "Ember:";
+        emberLabel.fontSize = 40f;
+        emberLabel.color = Color.white;
+        emberLabel.alignment = TextAlignmentOptions.Right;
+        LayoutElement emberLabelLayout = emberLabelGO.AddComponent<LayoutElement>();
+        emberLabelLayout.preferredWidth = 160f; 
+
+        _emberHeartImages.Clear();
+        for (int i = 0; i < startingHearts; i++)
+        {
+            GameObject heartImgGO = new GameObject($"Heart_{i}");
+            heartImgGO.transform.SetParent(emberHeartsGO.transform, false);
+            Image heartImg = heartImgGO.AddComponent<Image>();
+            heartImg.sprite = emberHeartFullSprite; 
+            
+            RectTransform heartRect = heartImgGO.GetComponent<RectTransform>();
+            heartRect.sizeDelta = heartIconSize; 
+            heartImgGO.AddComponent<LayoutElement>().preferredWidth = heartIconSize.x;
+            
+            _emberHeartImages.Add(heartImg);
+        }
+
+        // Create Hearts Container for Aqua
+        GameObject aquaHeartsGO = new GameObject("AquaHeartsContainer");
+        aquaHeartsGO.transform.SetParent(heartsMasterContainer.transform, false); 
+
+        Image aquaBg = aquaHeartsGO.AddComponent<Image>();
+        aquaBg.color = new Color(0f, 0f, 0f, 0.35f); 
+        
+        HorizontalLayoutGroup aquaLayout = aquaHeartsGO.AddComponent<HorizontalLayoutGroup>();
+        aquaLayout.spacing = 10;
+        aquaLayout.childAlignment = TextAnchor.MiddleRight;
+        aquaLayout.childControlWidth = false;
+        aquaLayout.childControlHeight = false;
+        aquaLayout.padding = new RectOffset(10, 10, 5, 5); 
+
+        RectTransform aquaRect = aquaHeartsGO.GetComponent<RectTransform>();
+        aquaRect.sizeDelta = new Vector2(360f, heartContainerHeight); 
+
+        GameObject aquaLabelGO = new GameObject("Label");
+        aquaLabelGO.transform.SetParent(aquaHeartsGO.transform, false); 
+        TextMeshProUGUI aquaLabel = aquaLabelGO.AddComponent<TextMeshProUGUI>();
+        aquaLabel.text = "Aqua:";
+        aquaLabel.fontSize = 40f;
+        aquaLabel.color = Color.white;
+        aquaLabel.alignment = TextAlignmentOptions.Right;
+        LayoutElement aquaLabelLayout = aquaLabelGO.AddComponent<LayoutElement>();
+        aquaLabelLayout.preferredWidth = 160f; 
+
+        _aquaHeartImages.Clear();
+        for (int i = 0; i < startingHearts; i++)
+        {
+            GameObject heartImgGO = new GameObject($"Heart_{i}");
+            heartImgGO.transform.SetParent(aquaHeartsGO.transform, false);
+            Image heartImg = heartImgGO.AddComponent<Image>();
+            heartImg.sprite = aquaHeartFullSprite; 
+            
+            RectTransform heartRect = heartImgGO.GetComponent<RectTransform>();
+            heartRect.sizeDelta = heartIconSize; 
+            heartImgGO.AddComponent<LayoutElement>().preferredWidth = heartIconSize.x;
+            
+            _aquaHeartImages.Add(heartImg);
+        }
+        
         UpdateHeartsUI();
     }
 
@@ -630,8 +778,59 @@ public class GameManagerTutorial : MonoBehaviour
 
     private void UpdateHeartsUI()
     {
-        if (_heartsLabel == null) return;
-        _heartsLabel.text = $"Ember Hearts: {_fireHearts};  Aqua Hearts: {_waterHearts}";
+        // Loop through all of Ember's heart images
+        for (int i = 0; i < _emberHeartImages.Count; i++)
+        {
+            var heartImage = _emberHeartImages[i];
+            if (heartImage == null)
+            {
+                continue;
+            }
+
+            heartImage.gameObject.SetActive(true);
+
+            if (i < _fireHearts)
+            {
+                heartImage.sprite = emberHeartFullSprite;
+                heartImage.enabled = true;
+            }
+            else if (emberHeartEmptySprite != null)
+            {
+                heartImage.sprite = emberHeartEmptySprite;
+                heartImage.enabled = true;
+            }
+            else
+            {
+                heartImage.enabled = false;
+            }
+        }
+
+        // Loop through all of Aqua's heart images
+        for (int i = 0; i < _aquaHeartImages.Count; i++)
+        {
+            var heartImage = _aquaHeartImages[i];
+            if (heartImage == null)
+            {
+                continue;
+            }
+
+            heartImage.gameObject.SetActive(true);
+
+            if (i < _waterHearts)
+            {
+                heartImage.sprite = aquaHeartFullSprite;
+                heartImage.enabled = true;
+            }
+            else if (aquaHeartEmptySprite != null)
+            {
+                heartImage.sprite = aquaHeartEmptySprite;
+                heartImage.enabled = true;
+            }
+            else
+            {
+                heartImage.enabled = false;
+            }
+        }
     }
 
     private void UpdateTokensUI()
