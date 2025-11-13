@@ -61,7 +61,7 @@ public class Level3Manager : MonoBehaviour
     private const string FireSpawnName = "FireboySpawn";
     private const string WaterSpawnName = "WatergirlSpawn";
 
-    private static readonly Vector2Int FireSpawnCell = new Vector2Int(23, 6);
+    private static readonly Vector2Int FireSpawnCell = new Vector2Int(13, 1);
     private static readonly Vector2Int WaterSpawnCell = new Vector2Int(1, 2);
 
     private static readonly Vector2Int CenterExitCell = new Vector2Int(18, 10);
@@ -220,17 +220,6 @@ public class Level3Manager : MonoBehaviour
 
                 bool reservedForSequence = _sequenceReservedCells.Contains(gridPosition);
                 char cell = row[x];
-                bool isFireSpawnCell = gridPosition == FireSpawnCell;
-                bool isWaterSpawnCell = gridPosition == WaterSpawnCell;
-
-                if (isFireSpawnCell)
-                {
-                    cell = 'F';
-                }
-                else if (isWaterSpawnCell)
-                {
-                    cell = 'W';
-                }
 
                 switch (cell)
                 {
@@ -267,7 +256,7 @@ public class Level3Manager : MonoBehaviour
 
                     case 'F':
                         SpawnFloor(cellPosition);
-                        if (isFireSpawnCell)
+                        if (gridPosition == FireSpawnCell)
                         {
                             CreateSpawnMarker(cellPosition, FireSpawnName);
                             break;
