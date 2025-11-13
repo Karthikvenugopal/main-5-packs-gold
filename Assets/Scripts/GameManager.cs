@@ -1149,12 +1149,14 @@ public class GameManager : MonoBehaviour
 
         if (_fireSummaryRoot != null)
         {
-            _fireSummaryRoot.SetActive(isVictory);
+            // Hide token count display for all levels
+            _fireSummaryRoot.SetActive(false);
         }
 
         if (_waterSummaryRoot != null)
         {
-            _waterSummaryRoot.SetActive(isVictory);
+            // Hide token count display for all levels
+            _waterSummaryRoot.SetActive(false);
         }
 
         if (_victoryContentLayout != null)
