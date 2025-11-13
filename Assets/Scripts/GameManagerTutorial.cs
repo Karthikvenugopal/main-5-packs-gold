@@ -522,11 +522,7 @@ public class GameManagerTutorial : MonoBehaviour
         _victoryPanel.transform.SetParent(_hudCanvas.transform, false);
 
         RectTransform rect = _victoryPanel.AddComponent<RectTransform>();
-        rect.anchorMin = new Vector2(0.5f, 0.5f);
-        rect.anchorMax = new Vector2(0.5f, 0.5f);
-        rect.pivot = new Vector2(0.5f, 0.5f);
-        rect.sizeDelta = new Vector2(900f, 520f);
-        rect.anchoredPosition = Vector2.zero;
+        ConfigureVictoryPanelRect(rect, new Vector2(900f, 520f));
 
         Image background = _victoryPanel.AddComponent<Image>();
         background.color = new Color(0f, 0f, 0f, 0.78f);
@@ -557,7 +553,7 @@ public class GameManagerTutorial : MonoBehaviour
 
         _victoryBodyLabel = bodyGO.AddComponent<TextMeshProUGUI>();
         _victoryBodyLabel.alignment = TextAlignmentOptions.Center;
-        _victoryBodyLabel.fontSize = 34f;
+        _victoryBodyLabel.fontSize = 40f;
         _victoryBodyLabel.text = victoryBodyText;
 
         GameObject summaryGroup = new GameObject("TokenSummary");
@@ -773,6 +769,19 @@ public class GameManagerTutorial : MonoBehaviour
     {
         Victory,
         Defeat
+    }
+
+    private static void ConfigureVictoryPanelRect(RectTransform rect, Vector2 size)
+    {
+        if (rect == null) return;
+
+        Vector2 center = new Vector2(0.5f, 0.5f);
+        rect.anchorMin = center;
+        rect.anchorMax = center;
+        rect.pivot = center;
+        rect.sizeDelta = size;
+        rect.anchoredPosition = Vector2.zero;
+        rect.localPosition = Vector3.zero;
     }
 
     private void ResetHearts()
@@ -1101,4 +1110,3 @@ public class GameManagerTutorial : MonoBehaviour
         return text.Replace("Fireboy", "Ember").Replace("Watergirl", "Aqua");
     }
 }
-

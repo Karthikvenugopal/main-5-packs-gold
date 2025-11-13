@@ -939,11 +939,7 @@ public class GameManager : MonoBehaviour
         _victoryPanel.transform.SetParent(_hudCanvas.transform, false);
 
         RectTransform rect = _victoryPanel.AddComponent<RectTransform>();
-        rect.anchorMin = new Vector2(0.5f, 0.5f);
-        rect.anchorMax = new Vector2(0.5f, 0.5f);
-        rect.pivot = new Vector2(0.5f, 0.5f);
-        rect.sizeDelta = new Vector2(900f, 560f);
-        rect.anchoredPosition = Vector2.zero;
+        ConfigureVictoryPanelRect(rect, new Vector2(900f, 560f));
 
         Image background = _victoryPanel.AddComponent<Image>();
         background.color = new Color(0f, 0f, 0f, 0.78f);
@@ -991,7 +987,7 @@ public class GameManager : MonoBehaviour
 
         _victoryBodyLabel = bodyGO.AddComponent<TextMeshProUGUI>();
         _victoryBodyLabel.alignment = TextAlignmentOptions.Center;
-        _victoryBodyLabel.fontSize = 34f;
+        _victoryBodyLabel.fontSize = 40f;
         _victoryBodyLabel.enableWordWrapping = true;
         _victoryBodyLabel.text = victoryBodyText;
 
@@ -1075,6 +1071,19 @@ public class GameManager : MonoBehaviour
         }
 
         _victoryPanel.SetActive(false);
+    }
+
+    private static void ConfigureVictoryPanelRect(RectTransform rect, Vector2 size)
+    {
+        if (rect == null) return;
+
+        Vector2 center = new Vector2(0.5f, 0.5f);
+        rect.anchorMin = center;
+        rect.anchorMax = center;
+        rect.pivot = center;
+        rect.sizeDelta = size;
+        rect.anchoredPosition = Vector2.zero;
+        rect.localPosition = Vector3.zero;
     }
 
     private Button CreateEndPanelButton(string name, Transform parent, string labelText)
