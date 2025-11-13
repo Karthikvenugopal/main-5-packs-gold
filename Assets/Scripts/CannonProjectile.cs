@@ -10,6 +10,7 @@ public class CannonProjectile : MonoBehaviour
     private Vector2 _direction = Vector2.up;
     private Vector2 _startPosition;
     private float _age;
+    private bool _limitLifetime;
     private bool _consumed;
     private GameManager _gameManager;
     private GameObject _hitEffectPrefab;
@@ -37,7 +38,8 @@ public class CannonProjectile : MonoBehaviour
         }
 
         _speed = speed > 0f ? speed : _speed;
-        _lifetime = lifetime > 0f ? lifetime : _lifetime;
+        _limitLifetime = lifetime > 0f;
+        _lifetime = _limitLifetime ? lifetime : 0f;
         _gameManager = manager;
         _hitEffectPrefab = hitEffectPrefab;
         _impactColor = impactColor;
@@ -116,10 +118,13 @@ public class CannonProjectile : MonoBehaviour
             }
         }
 
-        _age += Time.deltaTime;
-        if (_age >= _lifetime)
+        if (_limitLifetime)
         {
-            Destroy(gameObject);
+            _age += Time.deltaTime;
+            if (_age >= _lifetime)
+            {
+                Destroy(gameObject);
+            }
         }
     }
 
