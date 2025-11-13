@@ -37,6 +37,7 @@ public class MazeBuilder_Level1 : MonoBehaviour
     {
         BuildMaze(Layout);
         CenterMaze(Layout);
+        SpawnDialogueTrigger();
         tokenPlacementManager?.SpawnTokens();
         gameManager?.OnLevelReady();
     }
@@ -169,6 +170,42 @@ public class MazeBuilder_Level1 : MonoBehaviour
         GameObject marker = new GameObject(name);
         marker.transform.position = position + new Vector2(0.5f * cellSize, -0.5f * cellSize);
         marker.transform.SetParent(transform);
+    }
+
+    private void SpawnDialogueTrigger()
+    {
+        // Place dialogue trigger early in the level, at row 1 (index 1), column 2
+        int targetRow = 1;
+        int targetCol = 2;
+
+        if (targetRow >= Layout.Length || targetCol >= Layout[targetRow].Length)
+        {
+            Debug.LogWarning("Dialogue trigger position is out of bounds.");
+            return;
+        }
+
+        // Calculate world position (same as BuildMaze uses)
+        Vector2 cellPosition = new Vector2(targetCol * cellSize, -targetRow * cellSize);
+        Vector2 worldPosition = cellPosition + new Vector2(0.5f * cellSize, -0.5f * cellSize);
+
+        // Create trigger zone GameObject
+        GameObject triggerZone = new GameObject("DialogueTriggerZone");
+        triggerZone.transform.position = worldPosition;
+        triggerZone.transform.SetParent(transform);
+
+        // Add BoxCollider2D for trigger
+        BoxCollider2D trigger = triggerZone.AddComponent<BoxCollider2D>();
+        trigger.isTrigger = true;
+        trigger.size = new Vector2(cellSize * 0.9f, cellSize * 0.9f);
+        trigger.offset = Vector2.zero;
+
+        // Add DialogueTriggerZone component with custom text, position, and font size
+        DialogueTriggerZone dialogueTrigger = triggerZone.AddComponent<DialogueTriggerZone>();
+        dialogueTrigger.SetDialogueText("Collect tokens to boost your score");
+        // Set custom offset position for Level 1 (adjust these values as needed)
+        dialogueTrigger.SetOffsetFromPlayer(new Vector2(5f, -2f));
+        // Set custom font size for Level 1 (reduced by 0.5 from default 3.5)
+        dialogueTrigger.SetFontSize(3.0f);
     }
 
     private void CenterMaze(string[] layout)
