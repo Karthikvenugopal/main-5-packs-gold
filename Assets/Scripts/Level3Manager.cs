@@ -17,6 +17,19 @@ public class Level3Manager : MonoBehaviour
     [SerializeField] private GameObject fireWallPrefab;
     [SerializeField] private GameObject exitPrefab;
 
+    [Header("Projectile Hazards")]
+    [SerializeField] private GameObject cannonPrefab;
+    [SerializeField] private GameObject fireCannonPrefab;
+    [SerializeField] private GameObject iceCannonPrefab;
+    [SerializeField] private GameObject cannonProjectilePrefab;
+    [SerializeField] private GameObject fireProjectilePrefab;
+    [SerializeField] private GameObject iceProjectilePrefab;
+    [SerializeField] private GameObject cannonHitEffectPrefab;
+    [SerializeField] private GameObject fireHitEffectPrefab;
+    [SerializeField] private GameObject iceHitEffectPrefab;
+    [SerializeField] private Vector2 fireCannonPositionOffset = Vector2.zero;
+    [SerializeField] private Vector2 iceCannonPositionOffset = Vector2.zero;
+
     [Header("Dependencies")]
     [SerializeField] private GameManager gameManager;
     [SerializeField] private TokenPlacementManager tokenPlacementManager;
@@ -246,6 +259,16 @@ public class Level3Manager : MonoBehaviour
                         {
                             SpawnFireWall(cellPosition);
                         }
+                        break;
+
+                    case '1':
+                        SpawnFloor(cellPosition);
+                        SpawnCannon(cellPosition, CannonVariant.Fire);
+                        break;
+
+                    case '2':
+                        SpawnFloor(cellPosition);
+                        SpawnCannon(cellPosition, CannonVariant.Ice);
                         break;
 
                     default:
@@ -661,6 +684,61 @@ public class Level3Manager : MonoBehaviour
         exitZone.Initialize(gameManager);
 
         return exit;
+    }
+
+    private void SpawnCannon(Vector2 position, CannonVariant variant)
+    {
+        Vector3 worldPosition = new Vector3(
+            position.x + 0.5f * cellSize,
+            position.y - 0.5f * cellSize,
+            0f
+        );
+        Vector2 offsetUnits = variant == CannonVariant.Fire ? fireCannonPositionOffset : iceCannonPositionOffset;
+        if (offsetUnits.sqrMagnitude > 0f)
+        {
+            worldPosition += new Vector3(offsetUnits.x * cellSize, offsetUnits.y * cellSize, 0f);
+        }
+
+        GameObject selectedPrefab = variant == CannonVariant.Fire ? fireCannonPrefab : iceCannonPrefab;
+        if (selectedPrefab == null)
+        {
+            selectedPrefab = cannonPrefab;
+        }
+
+        Quaternion spawnRotation = variant == CannonVariant.Ice
+            ? Quaternion.Euler(0f, 0f, -180f)
+            : Quaternion.identity;
+
+        GameObject cannon = selectedPrefab != null
+            ? Instantiate(selectedPrefab, worldPosition, spawnRotation, transform)
+            : new GameObject(variant == CannonVariant.Fire ? "FireCannon" : "IceCannon");
+
+        if (cannon.transform.parent != transform)
+        {
+            cannon.transform.SetParent(transform);
+        }
+
+        cannon.transform.position = worldPosition;
+        cannon.transform.rotation = spawnRotation;
+
+        if (!cannon.TryGetComponent(out CannonHazard hazard))
+        {
+            hazard = cannon.AddComponent<CannonHazard>();
+        }
+
+        GameObject projectileOverride = variant == CannonVariant.Fire ? fireProjectilePrefab : iceProjectilePrefab;
+        if (projectileOverride == null)
+        {
+            projectileOverride = cannonProjectilePrefab;
+        }
+
+        GameObject hitEffectOverride = variant == CannonVariant.Fire ? fireHitEffectPrefab : iceHitEffectPrefab;
+        if (hitEffectOverride == null)
+        {
+            hitEffectOverride = cannonHitEffectPrefab;
+        }
+
+        hazard.Initialize(gameManager, cellSize, variant, projectileOverride, hitEffectOverride);
     }
 
     private void CreateSpawnMarker(Vector2 position, string name)
