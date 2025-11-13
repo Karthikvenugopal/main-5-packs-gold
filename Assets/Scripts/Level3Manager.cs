@@ -44,14 +44,14 @@ public class Level3Manager : MonoBehaviour
     {
         "#########################",
         "##222#.#.#.............##",
-        "#W...#.#.#.#.#.#.#.#....#",
-        "##...#...#.#.#.#.#.#...##",
+        "##...#.#.#.#.#.#.#.#....#",
+        "#....#...#.#.#.#.#.#...##",
         "##...#.#...#.#.#.#.#...##",
         "##...#.#.#.#.#.#.#.#...##",
-        "##...#.###.#...#.#.#....#",
+        "##...#.###.#...#.#.#...F#",
         "#....#...#.#.#.#.#.#...##",
         "##...#.#.#.#.#.#.#.#...##",
-        "##...#.#.#.#.#...#.#...##",
+        "##...#W#.#.#.#...#.#...##",
         "##.....#.....#.#...#111##",
         "#########################"
    
@@ -60,8 +60,8 @@ public class Level3Manager : MonoBehaviour
     private const string FireSpawnName = "FireboySpawn";
     private const string WaterSpawnName = "WatergirlSpawn";
 
-    private static readonly Vector2Int FireSpawnCell = new Vector2Int(13, 1);
-    private static readonly Vector2Int WaterSpawnCell = new Vector2Int(1, 11);
+    private static readonly Vector2Int FireSpawnCell = FindSpawnCellInLayout('F');
+    private static readonly Vector2Int WaterSpawnCell = FindSpawnCellInLayout('W');
 
     private static readonly Vector2Int CenterExitCell = new Vector2Int(7, 6);
 
@@ -139,6 +139,16 @@ public class Level3Manager : MonoBehaviour
 
     private void Start()
     {
+        if (!IsValidCell(FireSpawnCell))
+        {
+            Debug.LogWarning("Level3Manager: Could not find 'F' spawn marker in layout; Fireboy spawn may be missing.", this);
+        }
+
+        if (!IsValidCell(WaterSpawnCell))
+        {
+            Debug.LogWarning("Level3Manager: Could not find 'W' spawn marker in layout; Watergirl spawn may be missing.", this);
+        }
+
         CacheSequenceReservedCells();
         CacheHazardOutlineData();
         BuildMaze(Layout);
@@ -292,12 +302,12 @@ public class Level3Manager : MonoBehaviour
 
     private void CreateAdditionalSpawnMarkers()
     {
-        if (GameObject.Find(FireSpawnName) == null && _cellOrigins.TryGetValue(FireSpawnCell, out Vector2 fireOrigin))
+        if (IsValidCell(FireSpawnCell) && GameObject.Find(FireSpawnName) == null && _cellOrigins.TryGetValue(FireSpawnCell, out Vector2 fireOrigin))
         {
             CreateSpawnMarker(fireOrigin, FireSpawnName);
         }
 
-        if (GameObject.Find(WaterSpawnName) == null && _cellOrigins.TryGetValue(WaterSpawnCell, out Vector2 waterOrigin))
+        if (IsValidCell(WaterSpawnCell) && GameObject.Find(WaterSpawnName) == null && _cellOrigins.TryGetValue(WaterSpawnCell, out Vector2 waterOrigin))
         {
             CreateSpawnMarker(waterOrigin, WaterSpawnName);
         }
@@ -820,5 +830,25 @@ public class Level3Manager : MonoBehaviour
         Ice,
         Fire,
         Exit
+    }
+
+    private static Vector2Int FindSpawnCellInLayout(char marker)
+    {
+        for (int y = 0; y < Layout.Length; y++)
+        {
+            string row = Layout[y];
+            int x = row.IndexOf(marker);
+            if (x >= 0)
+            {
+                return new Vector2Int(x, y);
+            }
+        }
+
+        return new Vector2Int(-1, -1);
+    }
+
+    private static bool IsValidCell(Vector2Int cell)
+    {
+        return cell.x >= 0 && cell.y >= 0;
     }
 }
