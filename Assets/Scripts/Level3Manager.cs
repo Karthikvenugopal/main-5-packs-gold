@@ -28,7 +28,8 @@ public class Level3Manager : MonoBehaviour
     [SerializeField] private GameObject fireHitEffectPrefab;
     [SerializeField] private GameObject iceHitEffectPrefab;
     [SerializeField] private Vector2 fireCannonPositionOffset = Vector2.zero;
-    [SerializeField] private Vector2 iceCannonPositionOffset = Vector2.zero;
+    [SerializeField] private Vector2 iceCannonPositionOffset = new Vector2(-0.15f, 0f);
+    [SerializeField] private float iceCannonHorizontalShift = -0.15f;
 
     [Header("Dependencies")]
     [SerializeField] private GameManager gameManager;
@@ -271,15 +272,15 @@ public class Level3Manager : MonoBehaviour
                         }
                         break;
 
-                    case '1':
-                        SpawnFloor(cellPosition);
-                        SpawnCannon(cellPosition, CannonVariant.Fire);
-                        break;
+                case '1':
+                    SpawnFloor(cellPosition);
+                    SpawnCannon(cellPosition, CannonVariant.Fire);
+                    break;
 
-                    case '2':
-                        SpawnFloor(cellPosition);
-                        SpawnCannon(cellPosition, CannonVariant.Ice);
-                        break;
+                case '2':
+                    SpawnFloor(cellPosition);
+                    SpawnCannon(cellPosition, CannonVariant.Ice);
+                    break;
 
                     default:
                         SpawnFloor(cellPosition);
@@ -704,6 +705,10 @@ public class Level3Manager : MonoBehaviour
             0f
         );
         Vector2 offsetUnits = variant == CannonVariant.Fire ? fireCannonPositionOffset : iceCannonPositionOffset;
+        if (variant == CannonVariant.Ice)
+        {
+            offsetUnits.x += iceCannonHorizontalShift;
+        }
         if (offsetUnits.sqrMagnitude > 0f)
         {
             worldPosition += new Vector3(offsetUnits.x * cellSize, offsetUnits.y * cellSize, 0f);
@@ -715,9 +720,7 @@ public class Level3Manager : MonoBehaviour
             selectedPrefab = cannonPrefab;
         }
 
-        Quaternion spawnRotation = variant == CannonVariant.Ice
-            ? Quaternion.Euler(0f, 0f, -180f)
-            : Quaternion.identity;
+        Quaternion spawnRotation = Quaternion.identity;
 
         GameObject cannon = selectedPrefab != null
             ? Instantiate(selectedPrefab, worldPosition, spawnRotation, transform)
