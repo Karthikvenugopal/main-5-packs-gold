@@ -556,7 +556,7 @@ public class GameManager : MonoBehaviour
         instructionsRect.anchorMin = new Vector2(0.5f, 0.5f);
         instructionsRect.anchorMax = new Vector2(0.5f, 0.5f);
         instructionsRect.pivot = new Vector2(0.5f, 0.5f);
-        instructionsRect.sizeDelta = new Vector2(1900f, 500f);
+        instructionsRect.sizeDelta = new Vector2(1900f, 50f);
 
         TextMeshProUGUI instructionsLabel = instructionsGO.AddComponent<TextMeshProUGUI>();
         instructionsLabel.alignment = TextAlignmentOptions.Center;
@@ -945,7 +945,7 @@ public class GameManager : MonoBehaviour
         rect.anchorMin = new Vector2(0.5f, 0.5f);
         rect.anchorMax = new Vector2(0.5f, 0.5f);
         rect.pivot = new Vector2(0.5f, 0.5f);
-        rect.sizeDelta = new Vector2(640f, 420f);
+        rect.sizeDelta = new Vector2(640f, 550f); // Increased height to accommodate larger font
         rect.anchoredPosition = Vector2.zero;
 
         Image background = _victoryPanel.AddComponent<Image>();
@@ -956,13 +956,13 @@ public class GameManager : MonoBehaviour
         RectTransform contentRect = content.AddComponent<RectTransform>();
         contentRect.anchorMin = Vector2.zero;
         contentRect.anchorMax = Vector2.one;
-        contentRect.offsetMin = new Vector2(48f, 48f);
+        contentRect.offsetMin = new Vector2(48f, 32f); // Reduced top offset to bring title closer to top
         contentRect.offsetMax = new Vector2(-48f, -48f);
 
         _victoryContentLayout = content.AddComponent<VerticalLayoutGroup>();
         _victoryContentLayout.childAlignment = TextAnchor.UpperCenter;
-        _victoryContentLayout.spacing = 18f;
-        _victoryContentLayout.padding = new RectOffset(0, 0, 0, 0);
+        _victoryContentLayout.spacing = 10f; // Reduced spacing to bring buttons closer to score text
+        _victoryContentLayout.padding = new RectOffset(0, 0, 5, 10); // Reduced top padding to bring title closer to top
         _victoryContentLayout.childControlWidth = true;
         _victoryContentLayout.childForceExpandWidth = true;
         _victoryContentLayout.childControlHeight = false;
@@ -1036,9 +1036,9 @@ public class GameManager : MonoBehaviour
         RectTransform summaryRect = summaryGroup.AddComponent<RectTransform>();
         summaryRect.anchorMin = new Vector2(0f, 0.5f);
         summaryRect.anchorMax = new Vector2(1f, 0.5f);
-        summaryRect.sizeDelta = new Vector2(0f, 100f);
+        summaryRect.sizeDelta = new Vector2(0f, 0f); // Reduced size since it's hidden
         LayoutElement summaryLayoutElement = summaryGroup.AddComponent<LayoutElement>();
-        summaryLayoutElement.preferredHeight = 110f;
+        summaryLayoutElement.preferredHeight = 0f; // Reduced height since summary is hidden
 
         VerticalLayoutGroup summaryLayout = summaryGroup.AddComponent<VerticalLayoutGroup>();
         summaryLayout.childAlignment = TextAnchor.MiddleCenter;
