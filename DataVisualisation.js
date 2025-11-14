@@ -111,21 +111,22 @@ function ensureRetryDensitySheet_(ss, opts) {
 
   try { sh.setConditionalFormatRules([]); } catch (e) {}
 
-  sh.getRange('D:D').setNumberFormat('0.00');
+  // Show retry density values as whole-number percentages (e.g. 0.62 -> 62%).
+  sh.getRange('D:D').setNumberFormat('0%');
 
   if (opts && opts.reset) {
     sh.getCharts().forEach(function(c){ sh.removeChart(c); });
   }
   if (sh.getCharts().length === 0) {
-    var chart = sh.newChart()
+    const chart = sh.newChart()
       .asColumnChart()
       .addRange(sh.getRange('A:A'))
       .addRange(sh.getRange('D:D'))
       .setNumHeaders(1)
-      .setPosition(1, 6, 0, 0) 
+      .setPosition(1, 6, 0, 0)
       .setOption('title', 'Retry Density by Level')
       .setOption('legend', { position: 'none' })
-      .setOption('vAxis', { title: 'Retry Density', viewWindow: { min: 0, max: 1 } })
+      .setOption('vAxis', { title: 'Retry Density', viewWindow: { min: 0, max: 1 }, format: 'percent' })
       .setOption('hAxis', { title: 'Level' })
       .setOption('series', { 0: { dataLabel: 'value' } })
       .build();
@@ -135,31 +136,32 @@ function ensureRetryDensitySheet_(ss, opts) {
 
 function ensureTokenCompletionSheet_(ss, opts) {
   let sh = ss.getSheetByName('TokenCompletion');
+  let created = false;
+  if (sh && opts && opts.reset && opts.fullReset) {
+    ss.deleteSheet(sh);
+    sh = null;
+  }
   if (!sh) {
     sh = ss.insertSheet('TokenCompletion');
+    created = true;
   }
   sh.getRange('A1:G1').setValues([[
     'timestamp', 'session_id', 'level_id', 'token_completion_rate', 'tokens_collected', 'tokens_available', 'time_spent_s'
   ]]);
-
-  const summaryFormula = `=IF(COUNTA(TokenCompletion!D2:D)=0,"",QUERY(TokenCompletion!A2:G,"select C, avg(D), count(D) where D is not null group by C label C 'level_id', avg(D) 'avg_token_completion_rate', count(D) 'attempt_count'",0))`;
-  sh.getRange('I1').setValue(summaryFormula);
-
-  if (opts && opts.reset) sh.getCharts().forEach(c => sh.removeChart(c));
-  if (sh.getCharts().length === 0) {
-    const chart = sh.newChart()
-      .asColumnChart()
-      .addRange(sh.getRange('I:J'))
-      .setPosition(1, 5, 0, 0)
-      .setOption('title', 'Average Token Completion Rate by Level')
-      .setOption('legend', { position: 'none' })
-      .setOption('vAxis', { title: 'Completion Rate', viewWindow: { min: 0, max: 1 } })
-      .setOption('hAxis', { title: 'Level' })
-      .build();
-    sh.insertChart(chart);
-  }
+  sh.getRange('G:G').setNumberFormat('0');
+  sh.getRange('D:D').setNumberFormat('0%');
   return sh;
 }
+
+function safeGetCharts_(sh) {
+  try {
+    return sh.getCharts();
+  } catch (err) {
+    Logger.log('getCharts failed: ' + err);
+    return [];
+  }
+}
+
 
 function buildTokenCompletionCharts() {
   const ss = SpreadsheetApp.getActive();
