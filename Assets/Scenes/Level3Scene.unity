@@ -442,9 +442,12 @@ MonoBehaviour:
   fireHitEffectPrefab: {fileID: 0}
   iceHitEffectPrefab: {fileID: 0}
   fireCannonPositionOffset: {x: -0.5, y: 0}
-  iceCannonPositionOffset: {x: -0.2, y: 0.5}
   gameManager: {fileID: 1746984134}
   tokenPlacementManager: {fileID: 2110000000000000002}
+  showSequenceOutlines: 1
+  fireOutlineColor: {r: 0.95, g: 0.45, b: 0.15, a: 0.9}
+  iceOutlineColor: {r: 0.4, g: 0.75, b: 1, a: 0.9}
+  outlineWidth: 0.05
 --- !u!4 &920500693
 Transform:
   m_ObjectHideFlags: 0
@@ -487,7 +490,7 @@ Transform:
   m_GameObject: {fileID: 1672909859}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 2.09, y: -10.35, z: 0}
+  m_LocalPosition: {x: 1.05, y: -7.29, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -578,7 +581,7 @@ MonoBehaviour:
   nextSceneDelaySeconds: 2
   mainMenuSceneName: MainMenu
   useVictoryPanel: 1
-  victoryTitleText: Level Complete
+  victoryTitleText: Level Complete!
   victoryBodyText: Choose where to go next.
   defeatTitleText: Out of Hearts
   defeatBodyText: You ran out of hearts. Try again?
@@ -586,6 +589,8 @@ MonoBehaviour:
   restartButtonText: Restart
   mainMenuButtonText: Main Menu
   levelDefeatMessage: Out of hearts! Choose an option.
+  trophySprite: {fileID: -2138534889620764463, guid: 225d178dfa87ec24c8ce310bd475332d, type: 3}
+  trophyIconSize: {x: 100, y: 100}
   resetGlobalTokenTotalsOnLoad: 0
   enableScoring: 1
   basePoints: 1000

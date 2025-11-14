@@ -385,6 +385,8 @@ MonoBehaviour:
   restartButtonText: Restart Tutorial
   mainMenuButtonText: Main Menu
   levelDefeatMessage: Out of hearts! Try again?
+  trophySprite: {fileID: -2138534889620764463, guid: 225d178dfa87ec24c8ce310bd475332d, type: 3}
+  trophyIconSize: {x: 120, y: 120}
   fireTokensCollected: 0
   waterTokensCollected: 0
   levelTimer: {fileID: 0}

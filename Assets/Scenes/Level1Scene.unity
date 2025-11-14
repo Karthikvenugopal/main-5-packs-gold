@@ -424,6 +424,10 @@ PrefabInstance:
     m_TransformParent: {fileID: 0}
     m_Modifications:
     - target: {fileID: 777697172324581036, guid: 8c454dc0a577643e89ba9e1793c4e03f, type: 3}
+      propertyPath: trophySprite
+      value: 
+      objectReference: {fileID: -2138534889620764463, guid: 225d178dfa87ec24c8ce310bd475332d, type: 3}
+    - target: {fileID: 777697172324581036, guid: 8c454dc0a577643e89ba9e1793c4e03f, type: 3}
       propertyPath: heartIconSize.x
       value: 30
       objectReference: {fileID: 0}
@@ -438,6 +442,10 @@ PrefabInstance:
     - target: {fileID: 777697172324581036, guid: 8c454dc0a577643e89ba9e1793c4e03f, type: 3}
       propertyPath: tokenIconSize.y
       value: 30
+      objectReference: {fileID: 0}
+    - target: {fileID: 777697172324581036, guid: 8c454dc0a577643e89ba9e1793c4e03f, type: 3}
+      propertyPath: victoryTitleText
+      value: Level Complete!
       objectReference: {fileID: 0}
     - target: {fileID: 777697172324581036, guid: 8c454dc0a577643e89ba9e1793c4e03f, type: 3}
       propertyPath: aquaHeartFullSprite
