@@ -136,92 +136,20 @@ function ensureRetryDensitySheet_(ss, opts) {
 
 function ensureTokenCompletionSheet_(ss, opts) {
   let sh = ss.getSheetByName('TokenCompletion');
+  let created = false;
   if (sh && opts && opts.reset && opts.fullReset) {
     ss.deleteSheet(sh);
     sh = null;
   }
   if (!sh) {
     sh = ss.insertSheet('TokenCompletion');
+    created = true;
   }
   sh.getRange('A1:G1').setValues([[
     'timestamp', 'session_id', 'level_id', 'token_completion_rate', 'tokens_collected', 'tokens_available', 'time_spent_s'
   ]]);
   sh.getRange('G:G').setNumberFormat('0');
-
-  sh.getRange('L:Q').clearContent();
-  const scatterHeaders = [[
-    'Level 1 Token Completion Rate', 'Level 1 Time Spent (s)',
-    'Level 2 Token Completion Rate', 'Level 2 Time Spent (s)',
-    'Level 3 Token Completion Rate', 'Level 3 Time Spent (s)'
-  ]];
-  sh.getRange('L1:Q1').setValues(scatterHeaders);
-
-  const scatterFormula = level => `=IFERROR(FILTER({TokenCompletion!D2:D, TokenCompletion!G2:G}, (TokenCompletion!D2:D<>"")*(TokenCompletion!G2:G<>"")*(REGEXMATCH(TokenCompletion!C2:C,"(?i)^${level}"))), "")`;
-  sh.getRange('L2').setFormula(scatterFormula('level1'));
-  sh.getRange('N2').setFormula(scatterFormula('level2'));
-  sh.getRange('P2').setFormula(scatterFormula('level3'));
-
-  sh.getRange('L:L').setNumberFormat('0%');
-  sh.getRange('N:N').setNumberFormat('0%');
-  sh.getRange('P:P').setNumberFormat('0%');
-  sh.getRange('M:M').setNumberFormat('0');
-  sh.getRange('O:O').setNumberFormat('0');
-  sh.getRange('Q:Q').setNumberFormat('0');
-
-  const summaryFormula = `=IF(COUNTA(TokenCompletion!D2:D)=0,"",QUERY(TokenCompletion!A2:G,"select C, avg(D), count(D) where D is not null group by C label C 'level_id', avg(D) 'avg_token_completion_rate', count(D) 'attempt_count'",0))`;
-  sh.getRange('I1').setValue(summaryFormula);
-  sh.getRange('D:D').setNumberFormat('0%');  // raw token completion values
-  sh.getRange('J:J').setNumberFormat('0%');  // summary averages
-
-  if (opts && opts.reset) {
-    safeGetCharts_(sh).forEach(c => sh.removeChart(c));
-  }
-  const charts = safeGetCharts_(sh);
-  const sheetName = sh.getName();
-  const hasSummaryChart = charts.some(chart => {
-    if (typeof chart.getChartType !== 'function' || chart.getChartType() !== Charts.ChartType.COLUMN) return false;
-    const ranges = chart.getRanges ? chart.getRanges() : [];
-    return ranges.some(range => range.getSheet().getName() === sheetName && range.getColumn() === 9);
-  });
-  if (!hasSummaryChart) {
-    const chart = sh.newChart()
-      .asColumnChart()
-      .addRange(sh.getRange('I:J'))
-      .setPosition(1, 5, 0, 0)
-      .setOption('title', 'Average Token Completion Rate by Level')
-      .setOption('legend', { position: 'none' })
-      .setOption('vAxis', { title: 'Completion Rate', viewWindow: { min: 0, max: 1 } })
-      .setOption('hAxis', { title: 'Level' })
-      .setOption('series', { 0: { dataLabel: 'value' } })
-      .build();
-    sh.insertChart(chart);
-  }
-  const hasScatterChart = charts.some(chart => {
-    if (typeof chart.getChartType !== 'function' || chart.getChartType() !== Charts.ChartType.SCATTER) return false;
-    const ranges = chart.getRanges ? chart.getRanges() : [];
-    return ranges.some(range => range.getSheet().getName() === sheetName && range.getColumn() === 12);
-  });
-  if (!hasScatterChart) {
-    const scatter = sh.newChart()
-      .asScatterChart()
-      .addRange(sh.getRange('L:M'))
-      .addRange(sh.getRange('N:O'))
-      .addRange(sh.getRange('P:Q'))
-      .setNumHeaders(1)
-      .setPosition(18, 5, 0, 0)
-      .setOption('title', 'Token Completion vs Time Bonus')
-      .setOption('legend', { position: 'right' })
-      .setOption('hAxis', { title: 'Token Completion Rate', viewWindow: { min: -0.05, max: 1.05 }, format: 'percent' })
-      .setOption('vAxis', { title: 'Time Spent (s)' })
-      .setOption('series', {
-        0: { labelInLegend: 'Level 1' },
-        1: { labelInLegend: 'Level 2' },
-        2: { labelInLegend: 'Level 3' }
-      })
-      .setOption('pointSize', 5)
-      .build();
-    sh.insertChart(scatter);
-  }
+  sh.getRange('D:D').setNumberFormat('0%');
   return sh;
 }
 
