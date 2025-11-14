@@ -82,6 +82,14 @@ public class CannonHazard : MonoBehaviour
         ApplyVariantStyling();
     }
 
+    public void OverrideProjectileSpeed(float speed)
+    {
+        if (speed > 0f)
+        {
+            projectileSpeed = speed;
+        }
+    }
+
     private void Fire()
     {
         GameObject projectileGO;
