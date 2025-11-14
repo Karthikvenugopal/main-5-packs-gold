@@ -27,6 +27,10 @@ public class DialogueTriggerZone : MonoBehaviour
     [SerializeField] private float minGlowIntensity = 0.3f;
     [SerializeField] private float maxGlowIntensity = 0.8f;
     
+    [Header("Fixed Position Mode")]
+    [SerializeField] private bool useFixedPosition = false;
+    [SerializeField] private Vector2 fixedPosition = Vector2.zero;
+    
     private BoxCollider2D _trigger;
     private bool _hasTriggered = false;
     private GameObject _currentDialogueBox;
@@ -46,7 +50,16 @@ public class DialogueTriggerZone : MonoBehaviour
         if (!other.TryGetComponent(out CoopPlayerController player)) return;
 
         _hasTriggered = true;
-        ShowDialogueNearPlayer(player);
+        
+        // Use fixed position if enabled, otherwise use player-relative position
+        if (useFixedPosition)
+        {
+            ShowDialogueAtFixedPosition(fixedPosition);
+        }
+        else
+        {
+            ShowDialogueNearPlayer(player);
+        }
     }
 
     private void ShowDialogueNearPlayer(CoopPlayerController player)
@@ -236,6 +249,111 @@ public class DialogueTriggerZone : MonoBehaviour
     public void SetFontSize(float size)
     {
         fontSize = size;
+    }
+
+    /// <summary>
+    /// Enable fixed position mode and set the fixed position
+    /// This allows Level 1 to use fixed positions without affecting Level 2
+    /// </summary>
+    public void SetFixedPosition(Vector2 position)
+    {
+        useFixedPosition = true;
+        fixedPosition = position;
+    }
+
+    /// <summary>
+    /// Immediately show the dialogue at the configured fixed position (if enabled)
+    /// Useful when a level wants the dialogue to appear without waiting for a trigger enter event.
+    /// </summary>
+    public void TriggerFixedDialogue()
+    {
+        if (!useFixedPosition)
+        {
+            Debug.LogWarning("TriggerFixedDialogue called but fixed position mode is disabled.", this);
+            return;
+        }
+
+        _hasTriggered = true;
+        ShowDialogueAtFixedPosition(fixedPosition);
+    }
+
+    /// <summary>
+    /// Show dialogue at a fixed world position (not relative to player)
+    /// This allows Level 1 to use fixed positions without affecting Level 2's player-relative dialogues
+    /// </summary>
+    public void ShowDialogueAtFixedPosition(Vector2 worldPosition)
+    {
+        // Don't create multiple dialogue boxes
+        if (_currentDialogueBox != null)
+        {
+            Destroy(_currentDialogueBox);
+        }
+
+        // Create dialogue box GameObject
+        GameObject dialogueBox = new GameObject("DialogueBox");
+        dialogueBox.transform.SetParent(transform);
+        
+        // Position it at the fixed world position
+        dialogueBox.transform.position = worldPosition;
+
+        // Create background
+        GameObject background = new GameObject("Background");
+        background.transform.SetParent(dialogueBox.transform);
+        background.transform.localPosition = Vector3.zero;
+
+        SpriteRenderer bgRenderer = background.AddComponent<SpriteRenderer>();
+        bgRenderer.color = backgroundColor;
+        bgRenderer.sortingOrder = 10;
+
+        // Create a simple white sprite for the background
+        Texture2D texture = new Texture2D(1, 1);
+        texture.SetPixel(0, 0, Color.white);
+        texture.Apply();
+        Sprite sprite = Sprite.Create(texture, new Rect(0, 0, 1, 1), new Vector2(0.5f, 0.5f), 100f);
+        bgRenderer.sprite = sprite;
+
+        // Create text
+        GameObject textObject = new GameObject("Text");
+        textObject.transform.SetParent(dialogueBox.transform);
+        textObject.transform.localPosition = Vector3.zero;
+
+        TextMeshPro textMesh = textObject.AddComponent<TextMeshPro>();
+        textMesh.text = dialogueText;
+        textMesh.color = textColor;
+        textMesh.fontSize = fontSize;
+        textMesh.alignment = TextAlignmentOptions.Center;
+        textMesh.fontStyle = FontStyles.Bold;
+        textMesh.enableWordWrapping = true;
+        textMesh.rectTransform.sizeDelta = new Vector2(8f, 0f); // Auto-height
+
+        // Force text to update bounds
+        textMesh.ForceMeshUpdate();
+
+        // Store text reference and original color for pulsating effect
+        _currentTextMesh = textMesh;
+        _originalTextColor = textColor;
+
+        // Size background to fit text with padding
+        Bounds textBounds = textMesh.bounds;
+        float bgWidth = textBounds.size.x + padding * 2f;
+        float bgHeight = textBounds.size.y + padding * 2f;
+        
+        background.transform.localScale = new Vector3(bgWidth, bgHeight, 1f);
+        background.transform.localPosition = new Vector3(0f, 0f, 0.01f); // Slightly behind text
+
+        // Center the text on the background
+        textObject.transform.localPosition = new Vector3(0f, 0f, -0.01f);
+
+        _currentDialogueBox = dialogueBox;
+
+        // Start pulsating effect if enabled
+        if (enablePulsatingEffect)
+        {
+            StartPulsatingEffect();
+        }
+
+        // Auto-hide after duration
+        StartCoroutine(HideDialogueAfterDelay(dialogueBox, displayDuration));
     }
 
     /// <summary>

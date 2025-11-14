@@ -277,7 +277,8 @@ public class Level3Manager : MonoBehaviour
 
                 case '2':
                     SpawnFloor(cellPosition);
-                    SpawnCannon(cellPosition, CannonVariant.Ice);
+                    bool snapToCeiling = ShouldSnapIceCannonToCeiling(gridPosition);
+                    SpawnCannon(cellPosition, CannonVariant.Ice, snapToCeiling);
                     break;
 
                     default:
@@ -310,6 +311,19 @@ public class Level3Manager : MonoBehaviour
         {
             CreateSpawnMarker(waterOrigin, WaterSpawnName);
         }
+    }
+
+    private bool ShouldSnapIceCannonToCeiling(Vector2Int gridPosition)
+    {
+        if (gridPosition.y <= 0 || gridPosition.y >= Layout.Length) return false;
+        if (gridPosition.x < 0) return false;
+
+        int upperRowIndex = gridPosition.y - 1;
+        string upperRow = Layout[upperRowIndex];
+        if (string.IsNullOrEmpty(upperRow)) return false;
+        if (gridPosition.x >= upperRow.Length) return false;
+
+        return upperRow[gridPosition.x] == '#';
     }
 
     private void EnsureHazardOutline(Vector2Int cell, Vector2 cellPosition)
@@ -695,7 +709,7 @@ public class Level3Manager : MonoBehaviour
         return exit;
     }
 
-    private void SpawnCannon(Vector2 position, CannonVariant variant)
+    private void SpawnCannon(Vector2 position, CannonVariant variant, bool snapToCeiling = false)
     {
         Vector3 worldPosition = new Vector3(
             position.x + 0.5f * cellSize,
