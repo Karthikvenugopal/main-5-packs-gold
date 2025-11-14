@@ -173,8 +173,10 @@ function ensureTokenCompletionSheet_(ss, opts) {
   sh.getRange('D:D').setNumberFormat('0%');  // raw token completion values
   sh.getRange('J:J').setNumberFormat('0%');  // summary averages
 
-  if (opts && opts.reset) sh.getCharts().forEach(c => sh.removeChart(c));
-  const charts = sh.getCharts();
+  if (opts && opts.reset) {
+    safeGetCharts_(sh).forEach(c => sh.removeChart(c));
+  }
+  const charts = safeGetCharts_(sh);
   const sheetName = sh.getName();
   const hasSummaryChart = charts.some(chart => {
     if (typeof chart.getChartType !== 'function' || chart.getChartType() !== Charts.ChartType.COLUMN) return false;
@@ -221,6 +223,15 @@ function ensureTokenCompletionSheet_(ss, opts) {
     sh.insertChart(scatter);
   }
   return sh;
+}
+
+function safeGetCharts_(sh) {
+  try {
+    return sh.getCharts();
+  } catch (err) {
+    Logger.log('getCharts failed: ' + err);
+    return [];
+  }
 }
 
 
