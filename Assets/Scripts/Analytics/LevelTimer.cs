@@ -71,13 +71,20 @@ namespace Analytics
 
             GoogleSheetsAnalytics.SendLevelResult(levelId, success, elapsed);
 
-            if (hasTokenStats)
+            if (!hasTokenStats)
             {
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-                Debug.Log($"[Analytics] Sending token_completion level={levelId} collected={tokensCollected} available={tokensAvailable} rate={completionRate:0.###} time={elapsed:0.0}s");
+                Debug.Log($"[Analytics] Token stats unavailable for level '{levelId}'. Sending zeroed completion entry.");
 #endif
-                GoogleSheetsAnalytics.SendTokenCompletion(levelId, completionRate, tokensCollected, tokensAvailable, elapsed);
+                completionRate = 0f;
+                tokensCollected = 0;
+                tokensAvailable = 0;
             }
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            Debug.Log($"[Analytics] Sending token_completion level={levelId} collected={tokensCollected} available={tokensAvailable} rate={completionRate:0.###} time={elapsed:0.0}s");
+#endif
+            GoogleSheetsAnalytics.SendTokenCompletion(levelId, completionRate, tokensCollected, tokensAvailable, elapsed);
         }
 
         public float ElapsedSeconds => Mathf.Max(0f, Time.realtimeSinceStartup - _startTime);
