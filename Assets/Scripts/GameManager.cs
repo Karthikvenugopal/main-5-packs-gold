@@ -49,6 +49,10 @@ public class GameManager : MonoBehaviour
     [SerializeField] private string restartButtonText = "Restart";
     [SerializeField] private string mainMenuButtonText = "Main Menu";
     [SerializeField] private string levelDefeatMessage = "Out of hearts! Choose an option.";
+    [Tooltip("Sprite for the trophy icon shown on victory (between title and score)")]
+    [SerializeField] private Sprite trophySprite;
+    [Tooltip("Size of the trophy icon (Width, Height)")]
+    [SerializeField] private Vector2 trophyIconSize = new Vector2(100f, 100f);
     [Header("Session Tracking")]
     [SerializeField] private bool resetGlobalTokenTotalsOnLoad = false;
     [Header("Scoring System")]
@@ -178,6 +182,7 @@ public class GameManager : MonoBehaviour
     private Button _victoryRestartButton;
     private Button _victoryMainMenuButton;
     private Button _victoryNextLevelButton;
+    private Image _victoryTrophyImage;
 
     private readonly List<CoopPlayerController> _players = new();
     private readonly HashSet<CoopPlayerController> _playersAtExit = new();
@@ -242,8 +247,6 @@ public class GameManager : MonoBehaviour
         }
         ResetTokenTracking();
         ResetHearts();
-        
-        CreateStatusUI(); // This function is now modified
         
         EnsureLevelTimer();
         CreateInstructionPanelIfNeeded();
@@ -553,7 +556,7 @@ public class GameManager : MonoBehaviour
         instructionsRect.anchorMin = new Vector2(0.5f, 0.5f);
         instructionsRect.anchorMax = new Vector2(0.5f, 0.5f);
         instructionsRect.pivot = new Vector2(0.5f, 0.5f);
-        instructionsRect.sizeDelta = new Vector2(1900f, 500f);
+        instructionsRect.sizeDelta = new Vector2(1900f, 50f);
 
         TextMeshProUGUI instructionsLabel = instructionsGO.AddComponent<TextMeshProUGUI>();
         instructionsLabel.alignment = TextAlignmentOptions.Center;
@@ -939,7 +942,11 @@ public class GameManager : MonoBehaviour
         _victoryPanel.transform.SetParent(_hudCanvas.transform, false);
 
         RectTransform rect = _victoryPanel.AddComponent<RectTransform>();
-        ConfigureVictoryPanelRect(rect, new Vector2(900f, 560f));
+        rect.anchorMin = new Vector2(0.5f, 0.5f);
+        rect.anchorMax = new Vector2(0.5f, 0.5f);
+        rect.pivot = new Vector2(0.5f, 0.5f);
+        rect.sizeDelta = new Vector2(640f, 550f); // Increased height to accommodate larger font
+        rect.anchoredPosition = Vector2.zero;
 
         Image background = _victoryPanel.AddComponent<Image>();
         background.color = new Color(0f, 0f, 0f, 0.78f);
@@ -949,13 +956,13 @@ public class GameManager : MonoBehaviour
         RectTransform contentRect = content.AddComponent<RectTransform>();
         contentRect.anchorMin = Vector2.zero;
         contentRect.anchorMax = Vector2.one;
-        contentRect.offsetMin = new Vector2(48f, 48f);
+        contentRect.offsetMin = new Vector2(48f, 32f); // Reduced top offset to bring title closer to top
         contentRect.offsetMax = new Vector2(-48f, -48f);
 
         _victoryContentLayout = content.AddComponent<VerticalLayoutGroup>();
         _victoryContentLayout.childAlignment = TextAnchor.UpperCenter;
-        _victoryContentLayout.spacing = 24f;
-        _victoryContentLayout.padding = new RectOffset(0, 0, 8, 8);
+        _victoryContentLayout.spacing = 10f; // Reduced spacing to bring buttons closer to score text
+        _victoryContentLayout.padding = new RectOffset(0, 0, 5, 10); // Reduced top padding to bring title closer to top
         _victoryContentLayout.childControlWidth = true;
         _victoryContentLayout.childForceExpandWidth = true;
         _victoryContentLayout.childControlHeight = false;
@@ -975,6 +982,39 @@ public class GameManager : MonoBehaviour
         _victoryTitleLabel.fontSize = 56f;
         _victoryTitleLabel.fontStyle = FontStyles.Bold;
         _victoryTitleLabel.text = victoryTitleText;
+
+        // Create Trophy Image (between title and body/score text)
+        GameObject trophyContainer = new GameObject("TrophyContainer");
+        trophyContainer.transform.SetParent(content.transform, false);
+        RectTransform trophyContainerRect = trophyContainer.AddComponent<RectTransform>();
+        trophyContainerRect.anchorMin = new Vector2(0f, 0.5f);
+        trophyContainerRect.anchorMax = new Vector2(1f, 0.5f);
+        trophyContainerRect.sizeDelta = new Vector2(0f, trophyIconSize.y + 30f); // Add extra space below trophy
+        LayoutElement trophyContainerLayout = trophyContainer.AddComponent<LayoutElement>();
+        trophyContainerLayout.preferredHeight = trophyIconSize.y + 30f; // Extra space for spacing
+        trophyContainerLayout.flexibleWidth = 0f;
+        trophyContainerLayout.flexibleHeight = 0f;
+
+        // Add horizontal layout to center the trophy
+        HorizontalLayoutGroup trophyContainerLayoutGroup = trophyContainer.AddComponent<HorizontalLayoutGroup>();
+        trophyContainerLayoutGroup.childAlignment = TextAnchor.MiddleCenter;
+        trophyContainerLayoutGroup.childControlWidth = false;
+        trophyContainerLayoutGroup.childControlHeight = false;
+        trophyContainerLayoutGroup.childForceExpandWidth = false;
+        trophyContainerLayoutGroup.childForceExpandHeight = false;
+
+        GameObject trophyGO = new GameObject("Trophy");
+        trophyGO.transform.SetParent(trophyContainer.transform, false);
+        RectTransform trophyRect = trophyGO.AddComponent<RectTransform>();
+        trophyRect.sizeDelta = trophyIconSize;
+
+        _victoryTrophyImage = trophyGO.AddComponent<Image>();
+        if (trophySprite != null)
+        {
+            _victoryTrophyImage.sprite = trophySprite;
+        }
+        _victoryTrophyImage.preserveAspect = true;
+        trophyContainer.SetActive(false); // Hidden by default, shown only on victory
 
         GameObject bodyGO = new GameObject("Body");
         bodyGO.transform.SetParent(content.transform, false);
@@ -996,9 +1036,9 @@ public class GameManager : MonoBehaviour
         RectTransform summaryRect = summaryGroup.AddComponent<RectTransform>();
         summaryRect.anchorMin = new Vector2(0f, 0.5f);
         summaryRect.anchorMax = new Vector2(1f, 0.5f);
-        summaryRect.sizeDelta = new Vector2(0f, 0f);
+        summaryRect.sizeDelta = new Vector2(0f, 0f); // Reduced size since it's hidden
         LayoutElement summaryLayoutElement = summaryGroup.AddComponent<LayoutElement>();
-        summaryLayoutElement.preferredHeight = 160f;
+        summaryLayoutElement.preferredHeight = 0f; // Reduced height since summary is hidden
 
         VerticalLayoutGroup summaryLayout = summaryGroup.AddComponent<VerticalLayoutGroup>();
         summaryLayout.childAlignment = TextAnchor.MiddleCenter;
@@ -1039,9 +1079,9 @@ public class GameManager : MonoBehaviour
         RectTransform buttonRowRect = buttonRow.AddComponent<RectTransform>();
         buttonRowRect.anchorMin = new Vector2(0f, 0.5f);
         buttonRowRect.anchorMax = new Vector2(1f, 0.5f);
-        buttonRowRect.sizeDelta = new Vector2(0f, 90f);
+        buttonRowRect.sizeDelta = new Vector2(0f, 70f); // Reduced height
         LayoutElement buttonRowLayout = buttonRow.AddComponent<LayoutElement>();
-        buttonRowLayout.preferredHeight = 80f;
+        buttonRowLayout.preferredHeight = 75f; // Reduced height to fit better
 
         HorizontalLayoutGroup layoutGroup = buttonRow.AddComponent<HorizontalLayoutGroup>();
         layoutGroup.childAlignment = TextAnchor.MiddleCenter;
@@ -1141,6 +1181,16 @@ public class GameManager : MonoBehaviour
         if (_victoryTitleLabel != null)
         {
             _victoryTitleLabel.text = isVictory ? victoryTitleText : defeatTitleText;
+        }
+
+        // Show/hide trophy based on victory state
+        if (_victoryTrophyImage != null)
+        {
+            GameObject trophyContainer = _victoryTrophyImage.transform.parent?.gameObject;
+            if (trophyContainer != null)
+            {
+                trophyContainer.SetActive(isVictory && trophySprite != null);
+            }
         }
 
         if (_victoryBodyLabel != null)
