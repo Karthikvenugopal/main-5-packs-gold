@@ -432,6 +432,17 @@ MonoBehaviour:
   iceWallPrefab: {fileID: 6349953291806104131, guid: bc08693b2d5249aeb8c3de8839320afc, type: 3}
   fireWallPrefab: {fileID: 4468719429622143330, guid: 1ada63391b0245bd931c379b2c1c8d09, type: 3}
   exitPrefab: {fileID: 0}
+  cannonPrefab: {fileID: 0}
+  fireCannonPrefab: {fileID: 0}
+  iceCannonPrefab: {fileID: 0}
+  cannonProjectilePrefab: {fileID: 0}
+  fireProjectilePrefab: {fileID: 0}
+  iceProjectilePrefab: {fileID: 0}
+  cannonHitEffectPrefab: {fileID: 0}
+  fireHitEffectPrefab: {fileID: 0}
+  iceHitEffectPrefab: {fileID: 0}
+  fireCannonPositionOffset: {x: -0.5, y: 0}
+  iceCannonPositionOffset: {x: -0.2, y: 0.5}
   gameManager: {fileID: 1746984134}
   tokenPlacementManager: {fileID: 2110000000000000002}
   showSequenceOutlines: 1

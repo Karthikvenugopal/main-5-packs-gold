@@ -17,6 +17,20 @@ public class Level3Manager : MonoBehaviour
     [SerializeField] private GameObject fireWallPrefab;
     [SerializeField] private GameObject exitPrefab;
 
+    [Header("Projectile Hazards")]
+    [SerializeField] private GameObject cannonPrefab;
+    [SerializeField] private GameObject fireCannonPrefab;
+    [SerializeField] private GameObject iceCannonPrefab;
+    [SerializeField] private GameObject cannonProjectilePrefab;
+    [SerializeField] private GameObject fireProjectilePrefab;
+    [SerializeField] private GameObject iceProjectilePrefab;
+    [SerializeField] private GameObject cannonHitEffectPrefab;
+    [SerializeField] private GameObject fireHitEffectPrefab;
+    [SerializeField] private GameObject iceHitEffectPrefab;
+    [SerializeField] private Vector2 fireCannonPositionOffset = Vector2.zero;
+    [SerializeField] private Vector2 iceCannonPositionOffset = new Vector2(-0.2f, 0.5f);
+    [SerializeField] private float iceCannonHorizontalShift = -0.3f;
+
     [Header("Dependencies")]
     [SerializeField] private GameManager gameManager;
     [SerializeField] private TokenPlacementManager tokenPlacementManager;
@@ -31,14 +45,14 @@ public class Level3Manager : MonoBehaviour
     {
         "#########################",
         "##222#.#.#.............##",
-        "#W...#.#.#.#.#.#.#.#....#",
-        "##...#...#.#.#.#.#.#...##",
+        "##...#.#.#.#.#.#.#.#....#",
+        "#....#...#.#.#.#.#.#...##",
         "##...#.#...#.#.#.#.#...##",
         "##...#.#.#.#.#.#.#.#...##",
-        "##...#.###.#...#.#.#....#",
+        "##...#.###.#...#.#.#...F#",
         "#....#...#.#.#.#.#.#...##",
         "##...#.#.#.#.#.#.#.#...##",
-        "##...#.#.#.#.#...#.#...##",
+        "##...#W#.#.#.#...#.#...##",
         "##.....#.....#.#...#111##",
         "#########################"
    
@@ -47,8 +61,8 @@ public class Level3Manager : MonoBehaviour
     private const string FireSpawnName = "FireboySpawn";
     private const string WaterSpawnName = "WatergirlSpawn";
 
-    private static readonly Vector2Int FireSpawnCell = new Vector2Int(13, 1);
-    private static readonly Vector2Int WaterSpawnCell = new Vector2Int(1, 11);
+    private static readonly Vector2Int FireSpawnCell = FindSpawnCellInLayout('F');
+    private static readonly Vector2Int WaterSpawnCell = FindSpawnCellInLayout('W');
 
     private static readonly Vector2Int CenterExitCell = new Vector2Int(7, 6);
 
@@ -126,6 +140,16 @@ public class Level3Manager : MonoBehaviour
 
     private void Start()
     {
+        if (!IsValidCell(FireSpawnCell))
+        {
+            Debug.LogWarning("Level3Manager: Could not find 'F' spawn marker in layout; Fireboy spawn may be missing.", this);
+        }
+
+        if (!IsValidCell(WaterSpawnCell))
+        {
+            Debug.LogWarning("Level3Manager: Could not find 'W' spawn marker in layout; Watergirl spawn may be missing.", this);
+        }
+
         CacheSequenceReservedCells();
         CacheHazardOutlineData();
         BuildMaze(Layout);
@@ -248,6 +272,16 @@ public class Level3Manager : MonoBehaviour
                         }
                         break;
 
+                case '1':
+                    SpawnFloor(cellPosition);
+                    SpawnCannon(cellPosition, CannonVariant.Fire);
+                    break;
+
+                case '2':
+                    SpawnFloor(cellPosition);
+                    SpawnCannon(cellPosition, CannonVariant.Ice);
+                    break;
+
                     default:
                         SpawnFloor(cellPosition);
                         break;
@@ -269,12 +303,12 @@ public class Level3Manager : MonoBehaviour
 
     private void CreateAdditionalSpawnMarkers()
     {
-        if (GameObject.Find(FireSpawnName) == null && _cellOrigins.TryGetValue(FireSpawnCell, out Vector2 fireOrigin))
+        if (IsValidCell(FireSpawnCell) && GameObject.Find(FireSpawnName) == null && _cellOrigins.TryGetValue(FireSpawnCell, out Vector2 fireOrigin))
         {
             CreateSpawnMarker(fireOrigin, FireSpawnName);
         }
 
-        if (GameObject.Find(WaterSpawnName) == null && _cellOrigins.TryGetValue(WaterSpawnCell, out Vector2 waterOrigin))
+        if (IsValidCell(WaterSpawnCell) && GameObject.Find(WaterSpawnName) == null && _cellOrigins.TryGetValue(WaterSpawnCell, out Vector2 waterOrigin))
         {
             CreateSpawnMarker(waterOrigin, WaterSpawnName);
         }
@@ -663,6 +697,65 @@ public class Level3Manager : MonoBehaviour
         return exit;
     }
 
+    private void SpawnCannon(Vector2 position, CannonVariant variant)
+    {
+        Vector3 worldPosition = new Vector3(
+            position.x + 0.5f * cellSize,
+            position.y - 0.5f * cellSize,
+            0f
+        );
+        Vector2 offsetUnits = variant == CannonVariant.Fire ? fireCannonPositionOffset : iceCannonPositionOffset;
+        if (variant == CannonVariant.Ice)
+        {
+            offsetUnits.x += iceCannonHorizontalShift;
+        }
+        if (offsetUnits.sqrMagnitude > 0f)
+        {
+            worldPosition += new Vector3(offsetUnits.x * cellSize, offsetUnits.y * cellSize, 0f);
+        }
+
+        GameObject selectedPrefab = variant == CannonVariant.Fire ? fireCannonPrefab : iceCannonPrefab;
+        if (selectedPrefab == null)
+        {
+            selectedPrefab = cannonPrefab;
+        }
+
+        Quaternion spawnRotation = variant == CannonVariant.Ice
+            ? Quaternion.Euler(0f, 0f, 180f)
+            : Quaternion.identity;
+
+        GameObject cannon = selectedPrefab != null
+            ? Instantiate(selectedPrefab, worldPosition, spawnRotation, transform)
+            : new GameObject(variant == CannonVariant.Fire ? "FireCannon" : "IceCannon");
+
+        if (cannon.transform.parent != transform)
+        {
+            cannon.transform.SetParent(transform);
+        }
+
+        cannon.transform.position = worldPosition;
+        cannon.transform.rotation = spawnRotation;
+
+        if (!cannon.TryGetComponent(out CannonHazard hazard))
+        {
+            hazard = cannon.AddComponent<CannonHazard>();
+        }
+
+        GameObject projectileOverride = variant == CannonVariant.Fire ? fireProjectilePrefab : iceProjectilePrefab;
+        if (projectileOverride == null)
+        {
+            projectileOverride = cannonProjectilePrefab;
+        }
+
+        GameObject hitEffectOverride = variant == CannonVariant.Fire ? fireHitEffectPrefab : iceHitEffectPrefab;
+        if (hitEffectOverride == null)
+        {
+            hitEffectOverride = cannonHitEffectPrefab;
+        }
+
+        hazard.Initialize(gameManager, cellSize, variant, projectileOverride, hitEffectOverride);
+    }
+
     private void CreateSpawnMarker(Vector2 position, string name)
     {
         GameObject marker = new GameObject(name);
@@ -742,5 +835,25 @@ public class Level3Manager : MonoBehaviour
         Ice,
         Fire,
         Exit
+    }
+
+    private static Vector2Int FindSpawnCellInLayout(char marker)
+    {
+        for (int y = 0; y < Layout.Length; y++)
+        {
+            string row = Layout[y];
+            int x = row.IndexOf(marker);
+            if (x >= 0)
+            {
+                return new Vector2Int(x, y);
+            }
+        }
+
+        return new Vector2Int(-1, -1);
+    }
+
+    private static bool IsValidCell(Vector2Int cell)
+    {
+        return cell.x >= 0 && cell.y >= 0;
     }
 }
