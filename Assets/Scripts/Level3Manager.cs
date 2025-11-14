@@ -27,7 +27,6 @@ public class Level3Manager : MonoBehaviour
     [SerializeField] private GameObject cannonHitEffectPrefab;
     [SerializeField] private GameObject fireHitEffectPrefab;
     [SerializeField] private GameObject iceHitEffectPrefab;
-    [SerializeField] private float levelCannonProjectileSpeed = 3f;
     [SerializeField] private Vector2 fireCannonPositionOffset = Vector2.zero;
 
     [Header("Dependencies")]
@@ -969,11 +968,6 @@ public class Level3Manager : MonoBehaviour
         }
 
         hazard.Initialize(gameManager, cellSize, variant, projectileOverride, hitEffectOverride);
-
-        if (levelCannonProjectileSpeed > 0f)
-        {
-            hazard.OverrideProjectileSpeed(levelCannonProjectileSpeed);
-        }
     }
 
     private void CreateSpawnMarker(Vector2 position, string name)
