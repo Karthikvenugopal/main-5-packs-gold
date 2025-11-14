@@ -445,6 +445,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerSpawner
   playerPrefab: {fileID: 7307446650723487989, guid: 44964639595521e40aa2d28dda0ba7bd, type: 3}
   gameManager: {fileID: 1746984134}
+  gameManagerTutorial: {fileID: 0}
 --- !u!4 &1746984133
 Transform:
   m_ObjectHideFlags: 0
@@ -482,9 +483,26 @@ MonoBehaviour:
   startingHearts: 3
   nextSceneName: 
   nextSceneDelaySeconds: 2
+  mainMenuSceneName: MainMenu
   useVictoryPanel: 1
-  victoryRestartSceneName: Level1Scene
+  victoryTitleText: Level Complete!
+  victoryBodyText: Choose where to go next.
+  defeatTitleText: Out of Hearts
+  defeatBodyText: You ran out of hearts. Try again?
+  nextLevelButtonText: Next Level
+  restartButtonText: Restart
+  mainMenuButtonText: Main Menu
+  levelDefeatMessage: Out of hearts! Choose an option.
+  trophySprite: {fileID: -2138534889620764463, guid: 225d178dfa87ec24c8ce310bd475332d, type: 3}
+  trophyIconSize: {x: 100, y: 100}
   resetGlobalTokenTotalsOnLoad: 0
+  enableScoring: 1
+  basePoints: 1000
+  pointsPerToken: 100
+  timeBonusMultiplier: 50
+  targetTimeSeconds: 60
+  level2TargetTimeSeconds: 180
+  level3TargetTimeSeconds: 120
   showInstructionPanel: 1
   instructionPanelSceneName: Level1Scene
   instructionLines:
@@ -500,6 +518,15 @@ MonoBehaviour:
   - Opposites protect.
   - Stand in front of danger for your partner.
   level2InstructionContinuePrompt: Press Space to start
+  level3InstructionSceneName: Level3Scene
+  level3InstructionLines:
+  - <b>Level 3</b>
+  - 
+  - 'Dynamic obstacles: Stay Sharp'
+  - Destroying one obstacle can lead to the creation of a new one
+  - 
+  - Keep collecting tokens and avoid hazards!
+  level3InstructionContinuePrompt: Press Space to start
   emberHeartFullSprite: {fileID: 6341348101557482619, guid: 3b91ad87000d64526b2b182ed1ef4834, type: 3}
   emberHeartEmptySprite: {fileID: -4643077359141595314, guid: 3333514574fc144eb95cc807c8348464, type: 3}
   aquaHeartFullSprite: {fileID: -2880978766386009668, guid: 28fb0f56d13b04528a3ef03f381a909e, type: 3}
@@ -512,8 +539,13 @@ MonoBehaviour:
   tokenIconSize: {x: 30, y: 30}
   topUiBarHeight: 160
   topUiBarColor: {r: 0.1, g: 0.1, b: 0.1, a: 0.8}
+  heartLossSfx: {fileID: 0}
+  heartLossSfxVolume: 0.9
   fireTokensCollected: 0
   waterTokensCollected: 0
+  enableTokenBreath: 1
+  tokenBreathCycleSeconds: 1.6
+  tokenBreathScaleRange: {x: 0.85, y: 1.1}
   levelTimer: {fileID: 0}
 --- !u!1 &1985815534
 GameObject:
@@ -982,5 +1014,4 @@ SceneRoots:
   - {fileID: 920500693}
   - {fileID: 1746984133}
   - {fileID: 265964374}
-  - {fileID: 231701431}
   - {fileID: 1985815535}

@@ -82,8 +82,8 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 5
-  m_Sprite: {fileID: 0}
-  m_Color: {r: 1, g: 0.55, b: 0.15, a: 1}
+  m_Sprite: {fileID: -4151771278503953051, guid: ec53f22ac97534774872e875f21508e6, type: 3}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
@@ -145,6 +145,11 @@ MonoBehaviour:
   waterPlayerTag: WaterPlayer
   fireTokenTag: FireToken
   waterTokenTag: WaterToken
+  fireShockwaveColor: {r: 1, g: 0.55, b: 0.15, a: 1}
+  waterShockwaveColor: {r: 0.2, g: 0.45, b: 0.95, a: 1}
+  shockwaveStartScale: 0.15
+  shockwaveEndScale: 1.2
+  shockwaveDuration: 0.45
 --- !u!114 &3566402713277739558
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -158,3 +163,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   tokenType: 0
+  sortingOrder: 5
+  fireSpriteOverride: {fileID: -4151771278503953051, guid: ec53f22ac97534774872e875f21508e6, type: 3}
+  waterSpriteOverride: {fileID: 3472107637496650615, guid: 22ce194b86d81416ba29f64f1b0e6c3c, type: 3}
+  enableBreathEffect: 1
+  breathCycleDuration: 1.6
+  breathScaleRange: {x: 0.85, y: 1.1}
+  randomizePhase: 1
+  useSharedBreathPattern: 1

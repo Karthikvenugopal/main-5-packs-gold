@@ -14,6 +14,7 @@ public class CannonHazard : MonoBehaviour
     [SerializeField] private float muzzleOffset = 0.75f;
     [SerializeField] private GameObject projectilePrefab;
     [SerializeField] private GameObject hitEffectPrefab;
+    [SerializeField] private bool limitProjectileDistance = false;
     [SerializeField] private float projectileTravelHeight = 1.8f;
 
     [Header("Fire Variant")]
@@ -38,12 +39,14 @@ public class CannonHazard : MonoBehaviour
     private Color _impactColor;
     private SpriteRenderer _bodyRenderer;
     private SpriteRenderer _barrelRenderer;
+    private BoxCollider2D _solidCollider;
 
     private static Sprite _fallbackSprite;
 
     private void Awake()
     {
         EnsureVisuals();
+        EnsureCollider();
         _timer = Random.Range(0f, fireInterval);
     }
 
@@ -93,16 +96,31 @@ public class CannonHazard : MonoBehaviour
         }
 
         projectileGO.transform.SetParent(transform.parent, true);
-        projectileGO.transform.position = transform.position + Vector3.up * (_cellSize * muzzleOffset);
+        Vector3 aimVector3 = transform.up;
+        Vector2 aimVector2 = new Vector2(aimVector3.x, aimVector3.y);
+        if (aimVector2.sqrMagnitude < 0.0001f)
+        {
+            aimVector2 = Vector2.up;
+            aimVector3 = Vector3.up;
+        }
+        else
+        {
+            aimVector2.Normalize();
+            aimVector3 = new Vector3(aimVector2.x, aimVector2.y, 0f);
+        }
+
+        projectileGO.transform.position = transform.position + aimVector3 * (_cellSize * muzzleOffset);
 
         if (!projectileGO.TryGetComponent(out CannonProjectile projectile))
         {
             projectile = projectileGO.AddComponent<CannonProjectile>();
         }
 
-        float travelDistance = Mathf.Max(_cellSize * projectileTravelHeight, _cellSize);
+        float travelDistance = limitProjectileDistance
+            ? Mathf.Max(_cellSize * projectileTravelHeight, _cellSize)
+            : float.PositiveInfinity;
         projectile.Initialize(
-            Vector2.up,
+            aimVector2,
             projectileSpeed,
             projectileLifetime,
             _gameManager,
@@ -164,6 +182,18 @@ public class CannonHazard : MonoBehaviour
         _barrelRenderer.sortingOrder = 7;
     }
 
+    private void EnsureCollider()
+    {
+        if (!TryGetComponent(out _solidCollider))
+        {
+            _solidCollider = gameObject.AddComponent<BoxCollider2D>();
+        }
+
+        _solidCollider.isTrigger = false;
+        _solidCollider.usedByComposite = false;
+        UpdateColliderDimensions();
+    }
+
     private void ApplySizing()
     {
         transform.localScale = new Vector3(_cellSize * 0.75f, _cellSize * 0.45f, 1f);
@@ -174,6 +204,18 @@ public class CannonHazard : MonoBehaviour
             barrel.localPosition = new Vector3(0f, _cellSize * 0.25f, 0f);
             barrel.localScale = new Vector3(_cellSize * 0.25f, _cellSize * 1.1f, 1f);
         }
+
+        UpdateColliderDimensions();
+    }
+
+    private void UpdateColliderDimensions()
+    {
+        if (_solidCollider == null) return;
+
+        float width = _cellSize * 0.7f;
+        float height = _cellSize * 0.5f;
+        _solidCollider.size = new Vector2(width, height);
+        _solidCollider.offset = new Vector2(0f, height * 0.5f);
     }
 
     private void ApplyVariantStyling()

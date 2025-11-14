@@ -30,6 +30,28 @@ public class CoopPlayerController : MonoBehaviour
     [SerializeField, Range(0.01f, 0.5f)] private float hurtFlashOffDuration = 0.3f;
     [SerializeField, Range(0f, 1f)] private float hurtFlashGreyBlend = 0.4f;
     [SerializeField, Range(0f, 1f)] private float hurtFlashBrightnessBoost = 0.09f;
+    [Tooltip("Seconds spent easing down to the hurt scale.")]
+    [SerializeField, Min(0f)] private float hurtScaleShrinkDuration = 1f;
+    [Tooltip("Seconds spent holding the hurt scale before recovery.")]
+    [SerializeField, Min(0f)] private float hurtScaleHoldDuration = 1f;
+    [Tooltip("Seconds spent easing back to the original scale.")]
+    [SerializeField, Min(0f)] private float hurtScaleRecoverDuration = 1f;
+    [Tooltip("Multiplier applied to local scale when hurt.")]
+    [SerializeField, Range(0.1f, 1f)] private float hurtScaleMultiplier = 0.6f;
+    [Header("Hazard Pushback")]
+    [Tooltip("Distance (in world units) the player is pushed away from their own obstacle.")]
+    [SerializeField, Range(0.1f, 1.5f)] private float hazardPushDistance = 0.45f;
+    [Tooltip("Max angular deviation (degrees) applied to the push direction to keep it from feeling perfectly straight.")]
+    [SerializeField, Range(0f, 60f)] private float hazardPushAngularVariance = 20f;
+    [Tooltip("Initial speed applied after the push so the player bounces off nearby walls.")]
+    [SerializeField, Range(1f, 10f)] private float hazardBounceSpeed = 3.5f;
+    [Tooltip("How long bouncing remains active after the collision.")]
+    [SerializeField, Range(0.1f, 1f)] private float hazardBounceDuration = 0.22f;
+    [Tooltip("Energy retained on each bounce (1 = no slowdown, 0 = stop immediately).")]
+    [SerializeField, Range(0f, 1f)] private float hazardBounceElasticity = 0.75f;
+    [Header("Hazard Input Lock")]
+    [Tooltip("Seconds to ignore user movement input after being hurt by own obstacle.")]
+    [SerializeField, Range(0.5f, 5f)] private float hazardInputLockDuration = 1.5f;
 
     private Rigidbody2D _rigidbody;
     private Collider2D _collider;
@@ -40,6 +62,12 @@ public class CoopPlayerController : MonoBehaviour
     private Vector2 _moveInput;
     private bool _movementEnabled;
     private Coroutine _hurtFlashRoutine;
+    private bool _pendingPushOverride;
+    private Vector2 _bounceVelocity;
+    private float _bounceTimeRemaining;
+    private float _inputLockRemaining;
+    private Coroutine _hurtScaleRoutine;
+    private Vector3 _initialScale;
 
     private readonly Dictionary<int, float> _lastHazardDamageTimes = new();
 
@@ -54,6 +82,7 @@ public class CoopPlayerController : MonoBehaviour
         _rigidbody.gravityScale = 0f;
         _rigidbody.freezeRotation = true;
         _rigidbody.interpolation = RigidbodyInterpolation2D.Interpolate;
+        _initialScale = transform.localScale;
 
         if (collisionMask == 0)
         {
@@ -70,6 +99,7 @@ public class CoopPlayerController : MonoBehaviour
         _movementEnabled = false;
 
         ApplyRoleVisuals();
+        ResetScaleImmediate();
         _gameManager?.RegisterPlayer(this);
     }
 
@@ -81,6 +111,7 @@ public class CoopPlayerController : MonoBehaviour
         _movementEnabled = false;
 
         ApplyRoleVisuals();
+        ResetScaleImmediate();
         _gameManagerTutorial?.RegisterPlayer(this);
     }
 
@@ -88,6 +119,13 @@ public class CoopPlayerController : MonoBehaviour
     {
         if (!_movementEnabled)
         {
+            _moveInput = Vector2.zero;
+            return;
+        }
+
+        if (_inputLockRemaining > 0f)
+        {
+            _inputLockRemaining = Mathf.Max(0f, _inputLockRemaining - Time.deltaTime);
             _moveInput = Vector2.zero;
             return;
         }
@@ -124,6 +162,12 @@ public class CoopPlayerController : MonoBehaviour
 
     private void FixedUpdate()
     {
+        if (_bounceTimeRemaining > 0f && _bounceVelocity.sqrMagnitude > 0.0001f)
+        {
+            SimulateBounce(Time.fixedDeltaTime);
+            return;
+        }
+
         if (_moveInput == Vector2.zero) return;
 
         Vector2 direction = _moveInput.normalized;
@@ -151,6 +195,12 @@ public class CoopPlayerController : MonoBehaviour
                 distance + 0.01f,
                 collisionMask
             );
+        }
+
+        if (_pendingPushOverride)
+        {
+            _pendingPushOverride = false;
+            return;
         }
 
         if (hit.collider == null)
@@ -182,7 +232,6 @@ public class CoopPlayerController : MonoBehaviour
         {
             if (_role == PlayerRole.Fireboy && iceWall.TryMelt(_role))
             {
-                _gameManager?.RecordAssist(_role, GameManager.AssistType.MeltIce, iceWall.transform.position);
                 return true;
             }
 
@@ -204,7 +253,6 @@ public class CoopPlayerController : MonoBehaviour
 
             if (fireWall.TryExtinguish(_role))
             {
-                _gameManager?.RecordAssist(_role, GameManager.AssistType.ExtinguishFire, fireWall.transform.position);
                 return true;
             }
         }
@@ -317,17 +365,195 @@ public class CoopPlayerController : MonoBehaviour
         }
 
         _lastHazardDamageTimes[hazardId] = now;
+        TriggerHurtScaleRoutine();
         _gameManagerTutorial?.DamagePlayer(_role, 1);
         GameManager.DamageCause cause = GameManager.DamageCause.Unknown;
+        bool shouldPushback = false;
         if (hazard.TryGetComponent<FireWall>(out _))
         {
             cause = GameManager.DamageCause.FireWall;
+            shouldPushback = _role == PlayerRole.Fireboy;
         }
         else if (hazard.TryGetComponent<IceWall>(out _))
         {
             cause = GameManager.DamageCause.IceWall;
+            shouldPushback = _role == PlayerRole.Watergirl;
         }
-        _gameManager.DamagePlayer(_role, 1, cause, hazard.transform.position);
+        if (_gameManager != null)
+        {
+            _gameManager.DamagePlayer(_role, 1, cause, hazard.transform.position);
+        }
+        if (shouldPushback)
+        {
+            ApplyHazardPushback(hazard);
+        }
         return true;
+    }
+
+    private void ApplyHazardPushback(Collider2D hazard)
+    {
+        if (_rigidbody == null) return;
+
+        Vector2 origin = _rigidbody.position;
+        Vector2 closestPoint = hazard.ClosestPoint(origin);
+        Vector2 direction = origin - closestPoint;
+        if (direction.sqrMagnitude < 0.0001f)
+        {
+            direction = origin - (Vector2)hazard.transform.position;
+        }
+        if (direction.sqrMagnitude < 0.0001f)
+        {
+            direction = Vector2.up;
+        }
+        direction.Normalize();
+        if (hazardPushAngularVariance > 0.01f)
+        {
+            float variance = UnityEngine.Random.Range(-hazardPushAngularVariance, hazardPushAngularVariance);
+            direction = Quaternion.Euler(0f, 0f, variance) * direction;
+        }
+
+        float distance = Mathf.Max(0.01f, hazardPushDistance);
+        Vector2 target = origin + direction * distance;
+
+        // Snap using MovePosition so physics interpolation stays smooth.
+        _rigidbody.MovePosition(target);
+        _moveInput = Vector2.zero;
+        _pendingPushOverride = true;
+        _bounceVelocity = direction * hazardBounceSpeed;
+        _bounceTimeRemaining = hazardBounceDuration;
+        _inputLockRemaining = Mathf.Max(_inputLockRemaining, hazardInputLockDuration);
+    }
+
+    private void SimulateBounce(float deltaTime)
+    {
+        if (_rigidbody == null)
+        {
+            StopBounce();
+            return;
+        }
+
+        Vector2 position = _rigidbody.position;
+        Vector2 velocity = _bounceVelocity;
+        Vector2 displacement = velocity * deltaTime;
+        float distance = displacement.magnitude;
+        Vector2 direction = distance > 0f ? displacement / distance : Vector2.zero;
+        Vector2 boxSize = GetColliderSize() * collisionBoxScale;
+
+        if (distance > 0f && direction != Vector2.zero)
+        {
+            RaycastHit2D hit = Physics2D.BoxCast(position, boxSize, 0f, direction, distance, collisionMask);
+            if (hit.collider == null)
+            {
+                position += displacement;
+            }
+            else
+            {
+                float moveDistance = Mathf.Max(0f, hit.distance - 0.01f);
+                position += direction * moveDistance;
+                Vector2 reflected = Vector2.Reflect(velocity, hit.normal) * hazardBounceElasticity;
+                velocity = reflected;
+            }
+        }
+        else
+        {
+            position += displacement;
+        }
+
+        _rigidbody.MovePosition(position);
+        _bounceVelocity = velocity;
+        _bounceTimeRemaining = Mathf.Max(0f, _bounceTimeRemaining - deltaTime);
+
+        if (_bounceTimeRemaining <= 0f || _bounceVelocity.sqrMagnitude < 0.0001f)
+        {
+            StopBounce();
+        }
+    }
+
+    private void StopBounce()
+    {
+        _bounceVelocity = Vector2.zero;
+        _bounceTimeRemaining = 0f;
+        _pendingPushOverride = false;
+    }
+
+    private void TriggerHurtScaleRoutine()
+    {
+        if (_hurtScaleRoutine != null)
+        {
+            StopCoroutine(_hurtScaleRoutine);
+        }
+        _hurtScaleRoutine = StartCoroutine(HurtScaleRoutine());
+    }
+
+    private IEnumerator HurtScaleRoutine()
+    {
+        Vector3 baseScale = _initialScale == Vector3.zero ? Vector3.one : _initialScale;
+        Vector3 targetScale = baseScale * hurtScaleMultiplier;
+
+        float shrinkDuration = Mathf.Max(0f, hurtScaleShrinkDuration);
+        if (shrinkDuration <= 0f)
+        {
+            transform.localScale = targetScale;
+        }
+        else
+        {
+            float elapsed = 0f;
+            while (elapsed < shrinkDuration)
+            {
+                float t = Mathf.Clamp01(elapsed / Mathf.Max(0.0001f, shrinkDuration));
+                float eased = EaseOutQuad(t);
+                transform.localScale = Vector3.Lerp(baseScale, targetScale, eased);
+                elapsed += Time.deltaTime;
+                yield return null;
+            }
+            transform.localScale = targetScale;
+        }
+
+        if (hurtScaleHoldDuration > 0f)
+        {
+            yield return new WaitForSeconds(hurtScaleHoldDuration);
+        }
+
+        float recoverDuration = Mathf.Max(0f, hurtScaleRecoverDuration);
+        if (recoverDuration <= 0f)
+        {
+            transform.localScale = baseScale;
+        }
+        else
+        {
+            float elapsed = 0f;
+            while (elapsed < recoverDuration)
+            {
+                float t = Mathf.Clamp01(elapsed / Mathf.Max(0.0001f, recoverDuration));
+                float eased = EaseInQuad(t);
+                transform.localScale = Vector3.Lerp(targetScale, baseScale, eased);
+                elapsed += Time.deltaTime;
+                yield return null;
+            }
+            transform.localScale = baseScale;
+        }
+
+        _hurtScaleRoutine = null;
+    }
+
+    private void ResetScaleImmediate()
+    {
+        if (_hurtScaleRoutine != null)
+        {
+            StopCoroutine(_hurtScaleRoutine);
+            _hurtScaleRoutine = null;
+        }
+        Vector3 baseScale = _initialScale == Vector3.zero ? Vector3.one : _initialScale;
+        transform.localScale = baseScale;
+    }
+
+    private static float EaseOutQuad(float t)
+    {
+        return 1f - (1f - t) * (1f - t);
+    }
+
+    private static float EaseInQuad(float t)
+    {
+        return t * t;
     }
 }

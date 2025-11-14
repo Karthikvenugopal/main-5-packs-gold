@@ -145,7 +145,7 @@ Transform:
   m_GameObject: {fileID: 38690079}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 3.05, y: -7.28, z: 0}
+  m_LocalPosition: {x: 18, y: -7.45, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -432,8 +432,22 @@ MonoBehaviour:
   iceWallPrefab: {fileID: 6349953291806104131, guid: bc08693b2d5249aeb8c3de8839320afc, type: 3}
   fireWallPrefab: {fileID: 4468719429622143330, guid: 1ada63391b0245bd931c379b2c1c8d09, type: 3}
   exitPrefab: {fileID: 0}
+  cannonPrefab: {fileID: 0}
+  fireCannonPrefab: {fileID: 0}
+  iceCannonPrefab: {fileID: 0}
+  cannonProjectilePrefab: {fileID: 0}
+  fireProjectilePrefab: {fileID: 0}
+  iceProjectilePrefab: {fileID: 0}
+  cannonHitEffectPrefab: {fileID: 0}
+  fireHitEffectPrefab: {fileID: 0}
+  iceHitEffectPrefab: {fileID: 0}
+  fireCannonPositionOffset: {x: -0.5, y: 0}
   gameManager: {fileID: 1746984134}
   tokenPlacementManager: {fileID: 2110000000000000002}
+  showSequenceOutlines: 1
+  fireOutlineColor: {r: 0.95, g: 0.45, b: 0.15, a: 0.9}
+  iceOutlineColor: {r: 0.4, g: 0.75, b: 1, a: 0.9}
+  outlineWidth: 0.05
 --- !u!4 &920500693
 Transform:
   m_ObjectHideFlags: 0
@@ -476,7 +490,7 @@ Transform:
   m_GameObject: {fileID: 1672909859}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 3.53, y: -9.15, z: 0}
+  m_LocalPosition: {x: 1.05, y: -3.21, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -567,7 +581,7 @@ MonoBehaviour:
   nextSceneDelaySeconds: 2
   mainMenuSceneName: MainMenu
   useVictoryPanel: 1
-  victoryTitleText: Level Complete
+  victoryTitleText: Level Complete!
   victoryBodyText: Choose where to go next.
   defeatTitleText: Out of Hearts
   defeatBodyText: You ran out of hearts. Try again?
@@ -575,7 +589,16 @@ MonoBehaviour:
   restartButtonText: Restart
   mainMenuButtonText: Main Menu
   levelDefeatMessage: Out of hearts! Choose an option.
+  trophySprite: {fileID: -2138534889620764463, guid: 225d178dfa87ec24c8ce310bd475332d, type: 3}
+  trophyIconSize: {x: 100, y: 100}
   resetGlobalTokenTotalsOnLoad: 0
+  enableScoring: 1
+  basePoints: 1000
+  pointsPerToken: 100
+  timeBonusMultiplier: 50
+  targetTimeSeconds: 60
+  level2TargetTimeSeconds: 180
+  level3TargetTimeSeconds: 120
   showInstructionPanel: 1
   instructionPanelSceneName: Level1Scene
   instructionLines:
@@ -591,6 +614,15 @@ MonoBehaviour:
   - Opposites protect.
   - Stand in front of danger for your partner.
   level2InstructionContinuePrompt: Press Space to start
+  level3InstructionSceneName: Level3Scene
+  level3InstructionLines:
+  - <b>Level 3</b>
+  - 
+  - 'Dynamic obstacles: Stay Sharp'
+  - Destroying one obstacle can lead to the creation of a new one
+  - 
+  - Keep collecting tokens and avoid hazards!
+  level3InstructionContinuePrompt: Press Space to start
   emberHeartFullSprite: {fileID: 6341348101557482619, guid: 3b91ad87000d64526b2b182ed1ef4834, type: 3}
   emberHeartEmptySprite: {fileID: -4643077359141595314, guid: 3333514574fc144eb95cc807c8348464, type: 3}
   aquaHeartFullSprite: {fileID: -2880978766386009668, guid: 28fb0f56d13b04528a3ef03f381a909e, type: 3}
@@ -603,8 +635,13 @@ MonoBehaviour:
   tokenIconSize: {x: 40, y: 40}
   topUiBarHeight: 160
   topUiBarColor: {r: 0.1, g: 0.1, b: 0.1, a: 0.8}
+  heartLossSfx: {fileID: 0}
+  heartLossSfxVolume: 0.9
   fireTokensCollected: 0
   waterTokensCollected: 0
+  enableTokenBreath: 1
+  tokenBreathCycleSeconds: 1.6
+  tokenBreathScaleRange: {x: 0.85, y: 1.1}
   levelTimer: {fileID: 0}
 --- !u!1 &1985815534
 GameObject:
@@ -822,7 +859,7 @@ Transform:
   m_GameObject: {fileID: 2110000000000000100}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 6.96, y: -1.11, z: 0}
+  m_LocalPosition: {x: 22.08, y: -1.11, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -867,7 +904,7 @@ Transform:
   m_GameObject: {fileID: 2110000000000000200}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 10.99, y: -3.15, z: 0}
+  m_LocalPosition: {x: 11.97, y: -4.26, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -912,7 +949,7 @@ Transform:
   m_GameObject: {fileID: 2110000000000000300}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 4.23, y: -1.14, z: 0}
+  m_LocalPosition: {x: 12.45, y: -1.14, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -957,7 +994,7 @@ Transform:
   m_GameObject: {fileID: 2110000000000000400}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 5.99, y: -11.32, z: 0}
+  m_LocalPosition: {x: 8.13, y: -1.14, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1002,7 +1039,7 @@ Transform:
   m_GameObject: {fileID: 2110000000000000500}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 13.07, y: -5.39, z: 0}
+  m_LocalPosition: {x: 15.99, y: -7.81, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1047,7 +1084,7 @@ Transform:
   m_GameObject: {fileID: 2110000000000000600}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 9.01, y: -4.18, z: 0}
+  m_LocalPosition: {x: 14.03, y: -4.39, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []

@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -16,97 +17,113 @@ public class Level3Manager : MonoBehaviour
     [SerializeField] private GameObject fireWallPrefab;
     [SerializeField] private GameObject exitPrefab;
 
+    [Header("Projectile Hazards")]
+    [SerializeField] private GameObject cannonPrefab;
+    [SerializeField] private GameObject fireCannonPrefab;
+    [SerializeField] private GameObject iceCannonPrefab;
+    [SerializeField] private GameObject cannonProjectilePrefab;
+    [SerializeField] private GameObject fireProjectilePrefab;
+    [SerializeField] private GameObject iceProjectilePrefab;
+    [SerializeField] private GameObject cannonHitEffectPrefab;
+    [SerializeField] private GameObject fireHitEffectPrefab;
+    [SerializeField] private GameObject iceHitEffectPrefab;
+    [SerializeField] private Vector2 fireCannonPositionOffset = Vector2.zero;
+
     [Header("Dependencies")]
     [SerializeField] private GameManager gameManager;
     [SerializeField] private TokenPlacementManager tokenPlacementManager;
 
+    [Header("Hazard Outlines")]
+    [SerializeField] private bool showSequenceOutlines = true;
+    [SerializeField] private Color fireOutlineColor = new Color(0.95f, 0.45f, 0.15f, 0.9f);
+    [SerializeField] private Color iceOutlineColor = new Color(0.4f, 0.75f, 1f, 0.9f);
+    [SerializeField, Min(0.001f)] private float outlineWidth = 0.05f;
+
     private static readonly string[] Layout =
     {
-        "###############",
-        "#.....#.#....F#",
-        "#.#.###.#.###.#",
-        "#.#.#.#.#.#...#",
-        "#.#.#.#.#.#.###",
-        "#.#.#.#.###.#.#",
-        "#.#.......#.#.#",
-        "#.#.####..#.#.#",
-        "#.####.#..#.#.#",
-        "#....#.#..#.#.#",
-        "#.##.#....#.#.#",
-        "#W#....#......#",
-        "###############"
+        "#########################",
+        "##...#.#.#.............##",
+        "##...#.#.#.#.#.#.#.#....#",
+        "#....#...#.#.#.#.#.#...##",
+        "##.....#...#.#.#.#.#...##",
+        "##...#.#.#.#.#.#.#.#...##",
+        "##...#.###.#...#.#.#...F#",
+        "#W...#...#.#.#.#.#.#...##",
+        "#....#.#.#.#.#.#.#.#...##",
+        "##...#.#.#.#.#...#.#...##",
+        "##222#.#.....#.#...#111##",
+        "#########################"
+   
     };
 
     private const string FireSpawnName = "FireboySpawn";
     private const string WaterSpawnName = "WatergirlSpawn";
 
-    private static readonly Vector2Int FireSpawnCell = new Vector2Int(13, 1);
-    private static readonly Vector2Int WaterSpawnCell = new Vector2Int(1, 11);
+    private static readonly Vector2Int FireSpawnCell = FindSpawnCellInLayout('F');
+    private static readonly Vector2Int WaterSpawnCell = FindSpawnCellInLayout('W');
 
-    private static readonly Vector2Int CenterExitCell = new Vector2Int(7, 6);
+    private static readonly Vector2Int CenterExitCell = new Vector2Int(18, 10);
+    private static readonly Vector2Int[] CardinalDirections =
+    {
+        Vector2Int.right,
+        Vector2Int.left,
+        Vector2Int.up,
+        Vector2Int.down
+    };
 
     private static readonly SequenceDefinition[] TriggerSequences =
     {
         new SequenceDefinition(
-            "FireThenIce",
+            "FireIcePair_(11,1)-(10,2)",
             new[]
             {
-                new SequenceStep(SequenceActionType.Fire, new Vector2Int(2, 9)),
-                new SequenceStep(SequenceActionType.Ice, new Vector2Int(12, 3))
+                new SequenceStep(SequenceActionType.Fire, new Vector2Int(11, 1)),
+                new SequenceStep(SequenceActionType.Ice, new Vector2Int(10, 2))
             },
             loop: true
         ),
         new SequenceDefinition(
-            "IceThenFire",
+            "IceFirePair_(15,1)-(14,3)",
             new[]
             {
-                new SequenceStep(SequenceActionType.Ice, new Vector2Int(5, 11)),
-                new SequenceStep(SequenceActionType.Fire, new Vector2Int(7, 10))
+                new SequenceStep(SequenceActionType.Ice, new Vector2Int(15, 1)),
+                new SequenceStep(SequenceActionType.Fire, new Vector2Int(14, 3))
             },
             loop: true
         ),
         new SequenceDefinition(
-            "FireThenIce_Top",
+            "IceFirePair_(9,4)-(10,5)",
             new[]
             {
-                new SequenceStep(SequenceActionType.Fire, new Vector2Int(3, 5)),
-                new SequenceStep(SequenceActionType.Ice, new Vector2Int(4, 1))
+                new SequenceStep(SequenceActionType.Ice, new Vector2Int(9, 4)),
+                new SequenceStep(SequenceActionType.Fire, new Vector2Int(10, 5))
             },
             loop: true
         ),
         new SequenceDefinition(
-            "FireThenIce_MidLeft",
+            "FireIcePair_(7,7)-(9,10)",
             new[]
             {
-                new SequenceStep(SequenceActionType.Fire, new Vector2Int(4, 6)),
-                new SequenceStep(SequenceActionType.Ice, new Vector2Int(5, 5))
+                new SequenceStep(SequenceActionType.Fire, new Vector2Int(7, 7)),
+                new SequenceStep(SequenceActionType.Ice, new Vector2Int(9, 10))
             },
             loop: true
         ),
         new SequenceDefinition(
-            "FireThenIce_CenterTop",
+            "FireIcePair_(14,7)-(15,9)",
             new[]
             {
-                new SequenceStep(SequenceActionType.Fire, new Vector2Int(7, 5)),
-                new SequenceStep(SequenceActionType.Ice, new Vector2Int(8, 6))
+                new SequenceStep(SequenceActionType.Fire, new Vector2Int(14, 7)),
+                new SequenceStep(SequenceActionType.Ice, new Vector2Int(15, 9))
             },
             loop: true
         ),
         new SequenceDefinition(
-            "IceThenFire_BottomRight",
+            "IceFirePair_(19,1)-(18,9)",
             new[]
             {
-                new SequenceStep(SequenceActionType.Ice, new Vector2Int(11, 10)),
-                new SequenceStep(SequenceActionType.Fire, new Vector2Int(12, 11))
-            },
-            loop: true
-        ),
-        new SequenceDefinition(
-            "IceThenFire_TopRight",
-            new[]
-            {
-                new SequenceStep(SequenceActionType.Ice, new Vector2Int(9, 2)),
-                new SequenceStep(SequenceActionType.Fire, new Vector2Int(10, 1))
+                new SequenceStep(SequenceActionType.Ice, new Vector2Int(19, 1)),
+                new SequenceStep(SequenceActionType.Fire, new Vector2Int(18, 9))
             },
             loop: true
         )
@@ -114,14 +131,32 @@ public class Level3Manager : MonoBehaviour
 
     private readonly Dictionary<Vector2Int, Vector2> _cellOrigins = new Dictionary<Vector2Int, Vector2>();
     private readonly HashSet<Vector2Int> _sequenceReservedCells = new HashSet<Vector2Int>();
+    private readonly Dictionary<Vector2Int, SequenceActionType> _sequenceCellTypes = new Dictionary<Vector2Int, SequenceActionType>();
+    private readonly Dictionary<Vector2Int, GameObject> _hazardOutlines = new Dictionary<Vector2Int, GameObject>();
     private readonly Dictionary<int, SequenceState> _sequenceStates = new Dictionary<int, SequenceState>();
     private readonly Dictionary<int, Coroutine> _pendingSpawnCoroutines = new Dictionary<int, Coroutine>();
     private bool _tearingDown;
     private bool _exitPlaced;
+    private Material _outlineMaterial;
+    private Vector2 _fireOutlineOffset = Vector2.zero;
+    private Vector2 _iceOutlineOffset = Vector2.zero;
+    private Vector2 _fireOutlineSize = Vector2.one;
+    private Vector2 _iceOutlineSize = Vector2.one;
 
     private void Start()
     {
+        if (!IsValidCell(FireSpawnCell))
+        {
+            Debug.LogWarning("Level3Manager: Could not find 'F' spawn marker in layout; Fireboy spawn may be missing.", this);
+        }
+
+        if (!IsValidCell(WaterSpawnCell))
+        {
+            Debug.LogWarning("Level3Manager: Could not find 'W' spawn marker in layout; Watergirl spawn may be missing.", this);
+        }
+
         CacheSequenceReservedCells();
+        CacheHazardOutlineData();
         BuildMaze(Layout);
         CreateAdditionalSpawnMarkers();
         PlaceCentralExit();
@@ -132,9 +167,39 @@ public class Level3Manager : MonoBehaviour
         gameManager?.OnLevelReady();
     }
 
+    private void CacheHazardOutlineData()
+    {
+        _fireOutlineOffset = Vector2.zero;
+        _iceOutlineOffset = Vector2.zero;
+        _fireOutlineSize = Vector2.one * cellSize;
+        _iceOutlineSize = Vector2.one * cellSize;
+
+        PopulateOutlineDataForPrefab(fireWallPrefab, ref _fireOutlineOffset, ref _fireOutlineSize);
+        PopulateOutlineDataForPrefab(iceWallPrefab, ref _iceOutlineOffset, ref _iceOutlineSize);
+    }
+
+    private void PopulateOutlineDataForPrefab(GameObject prefab, ref Vector2 offset, ref Vector2 size)
+    {
+        if (prefab == null) return;
+
+        SpriteRenderer renderer = prefab.GetComponentInChildren<SpriteRenderer>();
+        if (renderer != null)
+        {
+            Bounds bounds = renderer.sprite != null ? renderer.sprite.bounds : renderer.bounds;
+            offset = (Vector2)bounds.center;
+            size = (Vector2)(bounds.extents * 2f);
+        }
+        else
+        {
+            offset = new Vector2(0.5f * cellSize, -0.5f * cellSize);
+            size = new Vector2(cellSize, cellSize);
+        }
+    }
+
     private void CacheSequenceReservedCells()
     {
         _sequenceReservedCells.Clear();
+        _sequenceCellTypes.Clear();
 
         foreach (SequenceDefinition definition in TriggerSequences)
         {
@@ -143,6 +208,7 @@ public class Level3Manager : MonoBehaviour
                 if (step.ActionType == SequenceActionType.Ice || step.ActionType == SequenceActionType.Fire)
                 {
                     _sequenceReservedCells.Add(step.Cell);
+                    _sequenceCellTypes[step.Cell] = step.ActionType;
                 }
             }
         }
@@ -211,6 +277,17 @@ public class Level3Manager : MonoBehaviour
                         }
                         break;
 
+                case '1':
+                    SpawnFloor(cellPosition);
+                    SpawnCannon(cellPosition, CannonVariant.Fire);
+                    break;
+
+                case '2':
+                    SpawnFloor(cellPosition);
+                    bool snapToCeiling = ShouldSnapIceCannonToCeiling(gridPosition);
+                    SpawnCannon(cellPosition, CannonVariant.Ice, snapToCeiling);
+                    break;
+
                     default:
                         SpawnFloor(cellPosition);
                         break;
@@ -221,20 +298,107 @@ public class Level3Manager : MonoBehaviour
                 {
                     CreateSpawnMarker(cellPosition, FireSpawnName);
                 }
+
+                if (reservedForSequence)
+                {
+                    EnsureHazardOutline(gridPosition, cellPosition);
+                }
             }
         }
     }
 
     private void CreateAdditionalSpawnMarkers()
     {
-        if (GameObject.Find(FireSpawnName) == null && _cellOrigins.TryGetValue(FireSpawnCell, out Vector2 fireOrigin))
+        if (IsValidCell(FireSpawnCell) && GameObject.Find(FireSpawnName) == null && _cellOrigins.TryGetValue(FireSpawnCell, out Vector2 fireOrigin))
         {
             CreateSpawnMarker(fireOrigin, FireSpawnName);
         }
 
-        if (GameObject.Find(WaterSpawnName) == null && _cellOrigins.TryGetValue(WaterSpawnCell, out Vector2 waterOrigin))
+        if (IsValidCell(WaterSpawnCell) && GameObject.Find(WaterSpawnName) == null && _cellOrigins.TryGetValue(WaterSpawnCell, out Vector2 waterOrigin))
         {
             CreateSpawnMarker(waterOrigin, WaterSpawnName);
+        }
+    }
+
+    private bool ShouldSnapIceCannonToCeiling(Vector2Int gridPosition)
+    {
+        if (gridPosition.y <= 0 || gridPosition.y >= Layout.Length) return false;
+        if (gridPosition.x < 0) return false;
+
+        int upperRowIndex = gridPosition.y - 1;
+        string upperRow = Layout[upperRowIndex];
+        if (string.IsNullOrEmpty(upperRow)) return false;
+        if (gridPosition.x >= upperRow.Length) return false;
+
+        return upperRow[gridPosition.x] == '#';
+    }
+
+    private void EnsureHazardOutline(Vector2Int cell, Vector2 cellPosition)
+    {
+        if (!showSequenceOutlines || _hazardOutlines.ContainsKey(cell)) return;
+        if (!_sequenceCellTypes.TryGetValue(cell, out SequenceActionType type)) return;
+
+        GameObject outline = new GameObject($"HazardOutline_{cell.x}_{cell.y}");
+        outline.transform.SetParent(transform);
+        Vector2 offset = type == SequenceActionType.Fire ? _fireOutlineOffset : _iceOutlineOffset;
+        Vector2 size = type == SequenceActionType.Fire ? _fireOutlineSize : _iceOutlineSize;
+        outline.transform.position = new Vector3(
+            cellPosition.x + offset.x,
+            cellPosition.y + offset.y,
+            0f
+        );
+
+        LineRenderer renderer = outline.AddComponent<LineRenderer>();
+        renderer.useWorldSpace = false;
+        renderer.loop = true;
+        renderer.positionCount = 5;
+        renderer.startWidth = renderer.endWidth = Mathf.Max(0.001f, outlineWidth);
+        Material material = GetOutlineMaterial();
+        if (material != null)
+        {
+            renderer.material = material;
+        }
+        Color outlineColor = type == SequenceActionType.Fire ? fireOutlineColor : iceOutlineColor;
+        renderer.startColor = renderer.endColor = outlineColor;
+        renderer.sortingOrder = 4;
+
+        float halfWidth = size.x * 0.5f;
+        float halfHeight = size.y * 0.5f;
+        Vector3[] corners =
+        {
+            new Vector3(-halfWidth, halfHeight, 0f),
+            new Vector3(halfWidth, halfHeight, 0f),
+            new Vector3(halfWidth, -halfHeight, 0f),
+            new Vector3(-halfWidth, -halfHeight, 0f),
+            new Vector3(-halfWidth, halfHeight, 0f)
+        };
+        renderer.SetPositions(corners);
+
+        _hazardOutlines[cell] = outline;
+    }
+
+    private Material GetOutlineMaterial()
+    {
+        if (_outlineMaterial == null)
+        {
+            Shader shader = Shader.Find("Sprites/Default") ?? Shader.Find("Universal Render Pipeline/Unlit") ?? Shader.Find("Standard");
+            if (shader == null)
+            {
+                Debug.LogWarning("Level3Manager: Unable to find a shader for hazard outlines.", this);
+                return null;
+            }
+
+            _outlineMaterial = new Material(shader);
+        }
+
+        return _outlineMaterial;
+    }
+
+    private void SetHazardOutlineVisible(Vector2Int cell, bool visible)
+    {
+        if (_hazardOutlines.TryGetValue(cell, out GameObject outline))
+        {
+            outline.SetActive(visible && showSequenceOutlines);
         }
     }
 
@@ -287,18 +451,23 @@ public class Level3Manager : MonoBehaviour
             if (!_cellOrigins.TryGetValue(step.Cell, out Vector2 origin))
             {
                 Debug.LogWarning($"Level3Manager: Missing cell origin for sequence step at {step.Cell}.", this);
+                SetHazardOutlineVisible(step.Cell, true);
                 state.CurrentIndex++;
                 continue;
             }
 
             if (IsPlayerBlockingCell(origin))
             {
-                if (!_pendingSpawnCoroutines.ContainsKey(sequenceId))
+                bool displaced = TryDisplaceBlockingPlayers(step.Cell, step.ActionType);
+                if (!displaced || IsPlayerBlockingCell(origin))
                 {
-                    _pendingSpawnCoroutines[sequenceId] = StartCoroutine(WaitForSequenceCellClear(sequenceId, step.Cell));
+                    if (!_pendingSpawnCoroutines.ContainsKey(sequenceId))
+                    {
+                        _pendingSpawnCoroutines[sequenceId] = StartCoroutine(WaitForSequenceCellClear(sequenceId, step.Cell));
+                    }
+                    _sequenceStates[sequenceId] = state;
+                    return;
                 }
-                _sequenceStates[sequenceId] = state;
-                return;
             }
 
             GameObject spawned;
@@ -321,10 +490,12 @@ public class Level3Manager : MonoBehaviour
             if (spawned == null)
             {
                 Debug.LogWarning($"Level3Manager: Failed to spawn {step.ActionType} for sequence '{state.Definition.Name}'.", this);
+                SetHazardOutlineVisible(step.Cell, true);
                 state.CurrentIndex++;
                 continue;
             }
 
+            SetHazardOutlineVisible(step.Cell, false);
             AttachSequenceMember(spawned, sequenceId);
             state.ActiveObject = spawned;
             Debug.Log($"Level3Manager: Sequence '{state.Definition.Name}' spawned {step.ActionType} at cell {step.Cell}.", this);
@@ -338,6 +509,13 @@ public class Level3Manager : MonoBehaviour
     {
         if (_tearingDown) return;
         if (!_sequenceStates.TryGetValue(sequenceId, out SequenceState state)) return;
+
+        int clearedIndex = state.CurrentIndex;
+        if (clearedIndex < state.Definition.Steps.Length)
+        {
+            Vector2Int clearedCell = state.Definition.Steps[clearedIndex].Cell;
+            SetHazardOutlineVisible(clearedCell, true);
+        }
 
         state.ActiveObject = null;
         state.CurrentIndex++;
@@ -355,6 +533,15 @@ public class Level3Manager : MonoBehaviour
             }
 
             if (!IsPlayerBlockingCell(origin))
+            {
+                break;
+            }
+
+            SequenceActionType? actionType = _sequenceCellTypes.TryGetValue(cell, out SequenceActionType typeFromMap)
+                ? typeFromMap
+                : (SequenceActionType?)null;
+
+            if (TryDisplaceBlockingPlayers(cell, actionType) && !IsPlayerBlockingCell(origin))
             {
                 break;
             }
@@ -389,6 +576,194 @@ public class Level3Manager : MonoBehaviour
         }
 
         return false;
+    }
+
+    private bool TryDisplaceBlockingPlayers(Vector2Int blockingCell, SequenceActionType? actionType = null)
+    {
+        if (!_cellOrigins.ContainsKey(blockingCell))
+        {
+            return false;
+        }
+
+        Vector3 center = GetCellCenter(blockingCell);
+        Vector2 size = new Vector2(cellSize * 0.8f, cellSize * 0.8f);
+        Collider2D[] overlaps = Physics2D.OverlapBoxAll(center, size, 0f);
+        bool displacedAny = false;
+
+        foreach (Collider2D collider in overlaps)
+        {
+            if (collider == null) continue;
+            CoopPlayerController player = collider.GetComponent<CoopPlayerController>();
+            if (player == null) continue;
+
+            if (!ShouldDisplacePlayer(actionType, player))
+            {
+                continue;
+            }
+
+            if (TryFindSafeDisplacementPosition(blockingCell, player.transform.position, out Vector3 destination))
+            {
+                TeleportPlayer(player, destination);
+                displacedAny = true;
+            }
+        }
+
+        return displacedAny;
+    }
+
+    private bool ShouldDisplacePlayer(SequenceActionType? actionType, CoopPlayerController player)
+    {
+        if (!actionType.HasValue || player == null)
+        {
+            return true;
+        }
+
+        return actionType switch
+        {
+            SequenceActionType.Fire => player.Role == PlayerRole.Watergirl,
+            SequenceActionType.Ice => player.Role == PlayerRole.Fireboy,
+            _ => true
+        };
+    }
+
+    private bool TryFindSafeDisplacementPosition(Vector2Int blockingCell, Vector3 playerPosition, out Vector3 destination)
+    {
+        destination = Vector3.zero;
+        Vector3 blockedCenter = GetCellCenter(blockingCell);
+        Queue<Vector2Int> frontier = new Queue<Vector2Int>();
+        HashSet<Vector2Int> visited = new HashSet<Vector2Int> { blockingCell };
+
+        foreach (Vector2Int direction in GetDirectionalPriority(playerPosition, blockedCenter))
+        {
+            Vector2Int neighbor = blockingCell + direction;
+            if (visited.Add(neighbor))
+            {
+                frontier.Enqueue(neighbor);
+            }
+        }
+
+        while (frontier.Count > 0)
+        {
+            Vector2Int candidate = frontier.Dequeue();
+
+            if (!IsCellWithinLayoutBounds(candidate))
+            {
+                continue;
+            }
+
+            if (!IsCellWalkable(candidate))
+            {
+                continue;
+            }
+
+            if (_sequenceReservedCells.Contains(candidate))
+            {
+                continue;
+            }
+
+            if (HasBreathingRoom(candidate, blockingCell))
+            {
+                destination = GetCellCenter(candidate);
+                return true;
+            }
+
+            foreach (Vector2Int direction in CardinalDirections)
+            {
+                Vector2Int next = candidate + direction;
+                if (visited.Add(next))
+                {
+                    frontier.Enqueue(next);
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private IEnumerable<Vector2Int> GetDirectionalPriority(Vector3 playerPosition, Vector3 blockedCenter)
+    {
+        List<Vector2Int> ordered = new List<Vector2Int>(CardinalDirections.Length);
+        Vector2 offset = playerPosition - blockedCenter;
+
+        if (offset.sqrMagnitude < 0.0001f)
+        {
+            ordered.AddRange(CardinalDirections);
+            return ordered;
+        }
+
+        bool favorHorizontal = Mathf.Abs(offset.x) >= Mathf.Abs(offset.y);
+        Vector2Int primary = favorHorizontal
+            ? (offset.x >= 0f ? Vector2Int.right : Vector2Int.left)
+            : (offset.y >= 0f ? Vector2Int.down : Vector2Int.up);
+        Vector2Int secondary = favorHorizontal
+            ? (offset.y >= 0f ? Vector2Int.down : Vector2Int.up)
+            : (offset.x >= 0f ? Vector2Int.right : Vector2Int.left);
+        Vector2Int oppositePrimary = new Vector2Int(-primary.x, -primary.y);
+        Vector2Int oppositeSecondary = new Vector2Int(-secondary.x, -secondary.y);
+
+        ordered.Add(primary);
+        ordered.Add(secondary);
+        ordered.Add(oppositeSecondary);
+        ordered.Add(oppositePrimary);
+
+        return ordered;
+    }
+
+    private bool IsCellWithinLayoutBounds(Vector2Int cell)
+    {
+        if (cell.y < 0 || cell.y >= Layout.Length) return false;
+        string row = Layout[cell.y];
+        if (string.IsNullOrEmpty(row)) return false;
+        return cell.x >= 0 && cell.x < row.Length;
+    }
+
+    private bool IsCellWalkable(Vector2Int cell)
+    {
+        if (!IsCellWithinLayoutBounds(cell)) return false;
+        char tile = Layout[cell.y][cell.x];
+        return tile != '#';
+    }
+
+    private bool HasBreathingRoom(Vector2Int cell, Vector2Int blockedCell)
+    {
+        foreach (Vector2Int direction in CardinalDirections)
+        {
+            Vector2Int neighbor = cell + direction;
+            if (neighbor == blockedCell) continue;
+            if (!IsCellWithinLayoutBounds(neighbor)) continue;
+            if (IsCellWalkable(neighbor))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private Vector3 GetCellCenter(Vector2Int cell)
+    {
+        Vector2 origin = GetCellPosition(cell);
+        return new Vector3(
+            origin.x + 0.5f * cellSize,
+            origin.y - 0.5f * cellSize,
+            0f
+        );
+    }
+
+    private void TeleportPlayer(CoopPlayerController player, Vector3 destination)
+    {
+        if (player == null) return;
+
+        destination.z = player.transform.position.z;
+
+        if (player.TryGetComponent(out Rigidbody2D body))
+        {
+            body.position = destination;
+            body.linearVelocity = Vector2.zero;
+            body.angularVelocity = 0f;
+        }
+
+        player.transform.position = destination;
     }
 
     private void AttachSequenceMember(GameObject target, int sequenceId)
@@ -542,6 +917,59 @@ public class Level3Manager : MonoBehaviour
         return exit;
     }
 
+    private void SpawnCannon(Vector2 position, CannonVariant variant, bool snapToCeiling = false)
+    {
+        Vector3 worldPosition = new Vector3(
+            position.x + 0.5f * cellSize,
+            position.y - 0.5f * cellSize,
+            0f
+        );
+        Vector2 offsetUnits = fireCannonPositionOffset;
+        if (offsetUnits.sqrMagnitude > 0f)
+        {
+            worldPosition += new Vector3(offsetUnits.x * cellSize, offsetUnits.y * cellSize, 0f);
+        }
+
+        GameObject selectedPrefab = variant == CannonVariant.Fire ? fireCannonPrefab : iceCannonPrefab;
+        if (selectedPrefab == null)
+        {
+            selectedPrefab = cannonPrefab;
+        }
+
+        Quaternion spawnRotation = Quaternion.identity;
+
+        GameObject cannon = selectedPrefab != null
+            ? Instantiate(selectedPrefab, worldPosition, spawnRotation, transform)
+            : new GameObject(variant == CannonVariant.Fire ? "FireCannon" : "IceCannon");
+
+        if (cannon.transform.parent != transform)
+        {
+            cannon.transform.SetParent(transform);
+        }
+
+        cannon.transform.position = worldPosition;
+        cannon.transform.rotation = spawnRotation;
+
+        if (!cannon.TryGetComponent(out CannonHazard hazard))
+        {
+            hazard = cannon.AddComponent<CannonHazard>();
+        }
+
+        GameObject projectileOverride = variant == CannonVariant.Fire ? fireProjectilePrefab : iceProjectilePrefab;
+        if (projectileOverride == null)
+        {
+            projectileOverride = cannonProjectilePrefab;
+        }
+
+        GameObject hitEffectOverride = variant == CannonVariant.Fire ? fireHitEffectPrefab : iceHitEffectPrefab;
+        if (hitEffectOverride == null)
+        {
+            hitEffectOverride = cannonHitEffectPrefab;
+        }
+
+        hazard.Initialize(gameManager, cellSize, variant, projectileOverride, hitEffectOverride);
+    }
+
     private void CreateSpawnMarker(Vector2 position, string name)
     {
         GameObject marker = new GameObject(name);
@@ -621,5 +1049,25 @@ public class Level3Manager : MonoBehaviour
         Ice,
         Fire,
         Exit
+    }
+
+    private static Vector2Int FindSpawnCellInLayout(char marker)
+    {
+        for (int y = 0; y < Layout.Length; y++)
+        {
+            string row = Layout[y];
+            int x = row.IndexOf(marker);
+            if (x >= 0)
+            {
+                return new Vector2Int(x, y);
+            }
+        }
+
+        return new Vector2Int(-1, -1);
+    }
+
+    private static bool IsValidCell(Vector2Int cell)
+    {
+        return cell.x >= 0 && cell.y >= 0;
     }
 }

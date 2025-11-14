@@ -13,27 +13,15 @@ Success-only average (mean):
 Failure-only average (mean):
 `=QUERY(Data!A2:E, "select C, avg(E) where D = FALSE group by C label C 'level_id', avg(E) 'avg_time_failure_s'", 0)`
 
-All attempts average (mean):
-`=QUERY(Data!A2:E, "select C, avg(E) group by C label C 'level_id', avg(E) 'avg_time_all_s'", 0)`
+Retry Density (failures/attempts):
 
-Robust stats to reduce outlier impact:
+- Per-level retry density using existing Data sheet rows:
+`=QUERY(Data!A2:E, "select C, count(E)-sum(D), count(E), (count(E)-sum(D))/count(E) group by C label C 'level_id', count(E)-sum(D) 'failures', count(E) 'attempts', (count(E)-sum(D))/count(E) 'retry_density'", 0)`
 
-- Median (success-only):
-`=QUERY(Data!A2:E, "select C, median(E) where D = TRUE group by C label C 'level_id', median(E) 'median_time_success_s'", 0)`
-
-- P90 (success-only):
-`=QUERY(Data!A2:E, "select C, percentile(E,0.9) where D = TRUE group by C label C 'level_id', percentile(E,0.9) 'p90_success_s'", 0)`
-
-Context metrics:
-
-- Attempts, successes, success rate per level:
-`=QUERY(Data!A2:E, "select C, count(E), sum(D), sum(D)/count(E) where C is not null group by C label C 'level_id', count(E) 'attempts', sum(D) 'successes', sum(D)/count(E) 'success_rate'", 0)`
-
-- Success-time averaged per session first (reduces heavy-user skew), then across sessions:
-`=QUERY(QUERY(Data!A2:E, "select C, A, avg(E) where D = TRUE group by C, A label avg(E) ''", 0), "select Col1, avg(Col3) group by Col1 label Col1 'level_id', avg(Col3) 'avg_time_success_per_session_s'", 0)`
+- If you only want whitelisted levels (Level1/2/3), use:
+`=QUERY(Data!A2:E, "select C, count(E)-sum(D), count(E), (count(E)-sum(D))/count(E) where (C='Level1' or C='Level1Scene' or C='Level2' or C='Level2Scene' or C='Level3' or C='Level3Scene') group by C label C 'level_id', count(E)-sum(D) 'failures', count(E) 'attempts', (count(E)-sum(D))/count(E) 'retry_density'", 0)`
 
 Notes
 
 - The game now marks failure automatically when a level is destroyed or the app quits (to capture abandon/quit attempts). This reduces selection bias in averages.
 - Times are reported in seconds as integers; when enough attempts accumulate, means/medians are stable despite per-row rounding.
-

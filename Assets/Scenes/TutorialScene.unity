@@ -149,7 +149,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TutorialInstructionText
   instructionText: Aqua can put out fires
-  textColor: {r: 1, g: 1, b: 1, a: 1}
+  textColor: {r: 0, g: 1, b: 0, a: 1}
   fontSize: 4
   alignment: 514
   enableWordWrapping: 0
@@ -366,6 +366,13 @@ MonoBehaviour:
   waitForPartnerMessage: '{0} made it. Wait for your partner!'
   exitReminderMessage: Both heroes must stand in the exit to finish.
   startingHearts: 3
+  emberHeartFullSprite: {fileID: 6341348101557482619, guid: 3b91ad87000d64526b2b182ed1ef4834, type: 3}
+  emberHeartEmptySprite: {fileID: -4643077359141595314, guid: 3333514574fc144eb95cc807c8348464, type: 3}
+  aquaHeartFullSprite: {fileID: -2880978766386009668, guid: 28fb0f56d13b04528a3ef03f381a909e, type: 3}
+  aquaHeartEmptySprite: {fileID: -3368947314594817166, guid: 146106181316f4840b888eff730ebb50, type: 3}
+  heartIconSize: {x: 50, y: 50}
+  topUiBarHeight: 160
+  topUiBarColor: {r: 0.1, g: 0.1, b: 0.1, a: 0.8}
   nextSceneName: Level1Scene
   nextSceneDelaySeconds: 2
   mainMenuSceneName: MainMenu
@@ -378,6 +385,8 @@ MonoBehaviour:
   restartButtonText: Restart Tutorial
   mainMenuButtonText: Main Menu
   levelDefeatMessage: Out of hearts! Try again?
+  trophySprite: {fileID: -2138534889620764463, guid: 225d178dfa87ec24c8ce310bd475332d, type: 3}
+  trophyIconSize: {x: 120, y: 120}
   fireTokensCollected: 0
   waterTokensCollected: 0
   levelTimer: {fileID: 0}
@@ -411,7 +420,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TutorialInstructionText
   instructionText: Aqua's powers freeze in ice
-  textColor: {r: 1, g: 1, b: 1, a: 1}
+  textColor: {r: 1, g: 0, b: 0, a: 1}
   fontSize: 4
   alignment: 514
   enableWordWrapping: 0
@@ -732,7 +741,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TutorialInstructionText
   instructionText: Ember can melt ice walls
-  textColor: {r: 1, g: 1, b: 1, a: 1}
+  textColor: {r: 0, g: 1, b: 0, a: 1}
   fontSize: 4
   alignment: 514
   enableWordWrapping: 0
@@ -797,7 +806,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TutorialInstructionText
   instructionText: Ember loses intensity in fire
-  textColor: {r: 1, g: 1, b: 1, a: 1}
+  textColor: {r: 1, g: 0, b: 0, a: 1}
   fontSize: 4
   alignment: 514
   enableWordWrapping: 0
