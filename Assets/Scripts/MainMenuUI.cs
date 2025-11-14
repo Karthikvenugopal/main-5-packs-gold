@@ -3,9 +3,11 @@ using UnityEngine.SceneManagement;
 
 public class MainMenuUI : MonoBehaviour
 {
+    [SerializeField] private string levelSelectScene = "LevelSelectScene";
+
     public void PlayGame()
     {
-        SceneManager.LoadScene("Level1Scene");
+        SceneManager.LoadScene(levelSelectScene);
     }
 
     public void OpenTutorial()
