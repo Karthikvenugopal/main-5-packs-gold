@@ -111,21 +111,22 @@ function ensureRetryDensitySheet_(ss, opts) {
 
   try { sh.setConditionalFormatRules([]); } catch (e) {}
 
-  sh.getRange('D:D').setNumberFormat('0.00');
+  // Show retry density values as whole-number percentages (e.g. 0.62 -> 62%).
+  sh.getRange('D:D').setNumberFormat('0%');
 
   if (opts && opts.reset) {
     sh.getCharts().forEach(function(c){ sh.removeChart(c); });
   }
   if (sh.getCharts().length === 0) {
-    var chart = sh.newChart()
+    const chart = sh.newChart()
       .asColumnChart()
       .addRange(sh.getRange('A:A'))
       .addRange(sh.getRange('D:D'))
       .setNumHeaders(1)
-      .setPosition(1, 6, 0, 0) 
+      .setPosition(1, 6, 0, 0)
       .setOption('title', 'Retry Density by Level')
       .setOption('legend', { position: 'none' })
-      .setOption('vAxis', { title: 'Retry Density', viewWindow: { min: 0, max: 1 } })
+      .setOption('vAxis', { title: 'Retry Density', viewWindow: { min: 0, max: 1 }, format: 'percent' })
       .setOption('hAxis', { title: 'Level' })
       .setOption('series', { 0: { dataLabel: 'value' } })
       .build();
@@ -144,6 +145,8 @@ function ensureTokenCompletionSheet_(ss, opts) {
 
   const summaryFormula = `=IF(COUNTA(TokenCompletion!D2:D)=0,"",QUERY(TokenCompletion!A2:G,"select C, avg(D), count(D) where D is not null group by C label C 'level_id', avg(D) 'avg_token_completion_rate', count(D) 'attempt_count'",0))`;
   sh.getRange('I1').setValue(summaryFormula);
+  sh.getRange('D:D').setNumberFormat('0%');  // raw token completion values
+  sh.getRange('J:J').setNumberFormat('0%');  // summary averages
 
   if (opts && opts.reset) sh.getCharts().forEach(c => sh.removeChart(c));
   if (sh.getCharts().length === 0) {
@@ -155,6 +158,7 @@ function ensureTokenCompletionSheet_(ss, opts) {
       .setOption('legend', { position: 'none' })
       .setOption('vAxis', { title: 'Completion Rate', viewWindow: { min: 0, max: 1 } })
       .setOption('hAxis', { title: 'Level' })
+      .setOption('series', { 0: { dataLabel: 'value' } })
       .build();
     sh.insertChart(chart);
   }
