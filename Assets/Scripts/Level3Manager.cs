@@ -62,7 +62,7 @@ public class Level3Manager : MonoBehaviour
     private static readonly Vector2Int FireSpawnCell = FindSpawnCellInLayout('F');
     private static readonly Vector2Int WaterSpawnCell = FindSpawnCellInLayout('W');
 
-    private static readonly Vector2Int CenterExitCell = new Vector2Int(7, 6);
+    private static readonly Vector2Int CenterExitCell = new Vector2Int(18, 10);
 
     private static readonly SequenceDefinition[] TriggerSequences =
     {
