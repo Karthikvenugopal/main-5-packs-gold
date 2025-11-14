@@ -30,6 +30,7 @@ public class Level3Manager : MonoBehaviour
     [SerializeField] private Vector2 fireCannonPositionOffset = Vector2.zero;
     [SerializeField] private Vector2 iceCannonPositionOffset = new Vector2(-0.2f, 0.5f);
     [SerializeField] private float iceCannonHorizontalShift = -0.3f;
+    [SerializeField] private float ceilingMountedIceVerticalOffset = 0f;
 
     [Header("Dependencies")]
     [SerializeField] private GameManager gameManager;
@@ -43,18 +44,18 @@ public class Level3Manager : MonoBehaviour
 
     private static readonly string[] Layout =
     {
-        "#########################",
-        "##222#.#.#.............##",
-        "##...#.#.#.#.#.#.#.#....#",
-        "#....#...#.#.#.#.#.#...##",
-        "##...#.#...#.#.#.#.#...##",
-        "##...#.#.#.#.#.#.#.#...##",
-        "##...#.###.#...#.#.#...F#",
-        "#....#...#.#.#.#.#.#...##",
-        "##...#.#.#.#.#.#.#.#...##",
-        "##...#W#.#.#.#...#.#...##",
-        "##.....#.....#.#...#111##",
-        "#########################"
+        "####################",
+        "#.#.#.............##",
+        "#.#.#.#.#.#.#.#....#",
+        "#...#.#.#.#.#.#...##",
+        "#.#...#.#.#.#.#...##",
+        "#.#.#.#.#.#.#.#...##",
+        "#.###.#...#.#.#...F#",
+        "#...#.#.#.#.#.#...##",
+        "#.#.#.#.#.#.#.#...##",
+        "#.#.#.#.#...#.#...##",
+        "#W#.....#.#...#111##",
+        "####################"
    
     };
 
@@ -279,7 +280,8 @@ public class Level3Manager : MonoBehaviour
 
                 case '2':
                     SpawnFloor(cellPosition);
-                    SpawnCannon(cellPosition, CannonVariant.Ice);
+                    bool snapToCeiling = ShouldSnapIceCannonToCeiling(gridPosition);
+                    SpawnCannon(cellPosition, CannonVariant.Ice, snapToCeiling);
                     break;
 
                     default:
@@ -312,6 +314,19 @@ public class Level3Manager : MonoBehaviour
         {
             CreateSpawnMarker(waterOrigin, WaterSpawnName);
         }
+    }
+
+    private bool ShouldSnapIceCannonToCeiling(Vector2Int gridPosition)
+    {
+        if (gridPosition.y <= 0 || gridPosition.y >= Layout.Length) return false;
+        if (gridPosition.x < 0) return false;
+
+        int upperRowIndex = gridPosition.y - 1;
+        string upperRow = Layout[upperRowIndex];
+        if (string.IsNullOrEmpty(upperRow)) return false;
+        if (gridPosition.x >= upperRow.Length) return false;
+
+        return upperRow[gridPosition.x] == '#';
     }
 
     private void EnsureHazardOutline(Vector2Int cell, Vector2 cellPosition)
@@ -697,7 +712,7 @@ public class Level3Manager : MonoBehaviour
         return exit;
     }
 
-    private void SpawnCannon(Vector2 position, CannonVariant variant)
+    private void SpawnCannon(Vector2 position, CannonVariant variant, bool snapToCeiling = false)
     {
         Vector3 worldPosition = new Vector3(
             position.x + 0.5f * cellSize,
@@ -709,7 +724,12 @@ public class Level3Manager : MonoBehaviour
         {
             offsetUnits.x += iceCannonHorizontalShift;
         }
-        if (offsetUnits.sqrMagnitude > 0f)
+        if (snapToCeiling && variant == CannonVariant.Ice)
+        {
+            worldPosition.y += 0.5f * cellSize;
+            worldPosition += new Vector3(offsetUnits.x * cellSize, ceilingMountedIceVerticalOffset * cellSize, 0f);
+        }
+        else if (offsetUnits.sqrMagnitude > 0f)
         {
             worldPosition += new Vector3(offsetUnits.x * cellSize, offsetUnits.y * cellSize, 0f);
         }
