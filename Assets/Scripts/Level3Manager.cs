@@ -28,9 +28,6 @@ public class Level3Manager : MonoBehaviour
     [SerializeField] private GameObject fireHitEffectPrefab;
     [SerializeField] private GameObject iceHitEffectPrefab;
     [SerializeField] private Vector2 fireCannonPositionOffset = Vector2.zero;
-    [SerializeField] private Vector2 iceCannonPositionOffset = new Vector2(-0.2f, 0.5f);
-    [SerializeField] private float iceCannonHorizontalShift = -0.3f;
-    [SerializeField] private float ceilingMountedIceVerticalOffset = 0f;
 
     [Header("Dependencies")]
     [SerializeField] private GameManager gameManager;
@@ -44,18 +41,18 @@ public class Level3Manager : MonoBehaviour
 
     private static readonly string[] Layout =
     {
-        "####################",
-        "#.#.#.............##",
-        "#.#.#.#.#.#.#.#....#",
-        "#...#.#.#.#.#.#...##",
-        "#.#...#.#.#.#.#...##",
-        "#.#.#.#.#.#.#.#...##",
-        "#.###.#...#.#.#...F#",
-        "#...#.#.#.#.#.#...##",
-        "#.#.#.#.#.#.#.#...##",
-        "#.#.#.#.#...#.#...##",
-        "#W#.....#.#...#111##",
-        "####################"
+        "#########################",
+        "##...#.#.#.............##",
+        "##...#.#.#.#.#.#.#.#....#",
+        "#....#...#.#.#.#.#.#...##",
+        "##.....#...#.#.#.#.#...##",
+        "##...#.#.#.#.#.#.#.#...##",
+        "##...#.###.#...#.#.#...F#",
+        "#....#...#.#.#.#.#.#...##",
+        "##...#.#.#.#.#.#.#.#...##",
+        "##...#W#.#.#.#...#.#...##",
+        "##222#.#.....#.#...#111##",
+        "#########################"
    
     };
 
@@ -65,7 +62,7 @@ public class Level3Manager : MonoBehaviour
     private static readonly Vector2Int FireSpawnCell = FindSpawnCellInLayout('F');
     private static readonly Vector2Int WaterSpawnCell = FindSpawnCellInLayout('W');
 
-    private static readonly Vector2Int CenterExitCell = new Vector2Int(7, 6);
+    private static readonly Vector2Int CenterExitCell = new Vector2Int(18, 10);
 
     private static readonly SequenceDefinition[] TriggerSequences =
     {
@@ -719,17 +716,8 @@ public class Level3Manager : MonoBehaviour
             position.y - 0.5f * cellSize,
             0f
         );
-        Vector2 offsetUnits = variant == CannonVariant.Fire ? fireCannonPositionOffset : iceCannonPositionOffset;
-        if (variant == CannonVariant.Ice)
-        {
-            offsetUnits.x += iceCannonHorizontalShift;
-        }
-        if (snapToCeiling && variant == CannonVariant.Ice)
-        {
-            worldPosition.y += 0.5f * cellSize;
-            worldPosition += new Vector3(offsetUnits.x * cellSize, ceilingMountedIceVerticalOffset * cellSize, 0f);
-        }
-        else if (offsetUnits.sqrMagnitude > 0f)
+        Vector2 offsetUnits = fireCannonPositionOffset;
+        if (offsetUnits.sqrMagnitude > 0f)
         {
             worldPosition += new Vector3(offsetUnits.x * cellSize, offsetUnits.y * cellSize, 0f);
         }
@@ -740,9 +728,7 @@ public class Level3Manager : MonoBehaviour
             selectedPrefab = cannonPrefab;
         }
 
-        Quaternion spawnRotation = variant == CannonVariant.Ice
-            ? Quaternion.Euler(0f, 0f, 180f)
-            : Quaternion.identity;
+        Quaternion spawnRotation = Quaternion.identity;
 
         GameObject cannon = selectedPrefab != null
             ? Instantiate(selectedPrefab, worldPosition, spawnRotation, transform)
