@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
@@ -65,6 +66,8 @@ public class GameManager : MonoBehaviour
     [SerializeField] private float level2TargetTimeSeconds = 180f; // Level 2: 3 minutes
     [Tooltip("Target time for Level 3. Set to 0 to use targetTimeSeconds.")]
     [SerializeField] private float level3TargetTimeSeconds = 120f; // Level 3: 2 minutes
+    [Tooltip("Target time for Level 4. Set to 0 to use targetTimeSeconds.")]
+    [SerializeField] private float level4TargetTimeSeconds = 150f; // Level 4: 2:30 minutes
     [Header("Level Intro Instructions")]
     [SerializeField] private bool showInstructionPanel = true;
     [SerializeField] private string instructionPanelSceneName = "Level1Scene";
@@ -99,6 +102,14 @@ public class GameManager : MonoBehaviour
         "Keep collecting tokens and avoid hazards!"
     };
     [SerializeField] private string level3InstructionContinuePrompt = "Press Space to start";
+    [SerializeField] private string level4InstructionSceneName = "Level4Scene";
+    [SerializeField] private string[] level4InstructionLines = new[]
+    {
+        "<b>Level 4</b>",
+        "",
+        "Template ready. Drop in your maze layout and hazards."
+    };
+    [SerializeField] private string level4InstructionContinuePrompt = "Press Space to start";
     
     [Header("UI Sprites")]
     [Tooltip("Sprite for Ember's full heart (Red)")]
@@ -521,6 +532,14 @@ public class GameManager : MonoBehaviour
             prompt = string.IsNullOrEmpty(level3InstructionContinuePrompt)
                 ? instructionContinuePrompt
                 : level3InstructionContinuePrompt;
+        }
+        else if (!string.IsNullOrEmpty(level4InstructionSceneName) &&
+                 currentScene == level4InstructionSceneName)
+        {
+            lines = level4InstructionLines;
+            prompt = string.IsNullOrEmpty(level4InstructionContinuePrompt)
+                ? instructionContinuePrompt
+                : level4InstructionContinuePrompt;
         }
         else if (string.IsNullOrEmpty(instructionPanelSceneName))
         {
@@ -1243,9 +1262,8 @@ public class GameManager : MonoBehaviour
 
         bool canAdvance = isVictory && hasNextScene;
 
-        bool isFinalLevelVictory = isVictory &&
-                                   !string.IsNullOrEmpty(level3InstructionSceneName) &&
-                                   SceneManager.GetActiveScene().name == level3InstructionSceneName;
+        string activeSceneName = SceneManager.GetActiveScene().name;
+        bool isFinalLevelVictory = isVictory && IsFinalLevelScene(activeSceneName);
 
         if (_victoryNextLevelButton != null)
         {
@@ -1874,6 +1892,21 @@ public class GameManager : MonoBehaviour
         int activeIndex = activeScene.buildIndex;
         int totalScenes = SceneManager.sceneCountInBuildSettings;
 
+        // Explicit Level3 -> Level4 handoff even if build order isn't set yet.
+        if (!string.IsNullOrEmpty(level3InstructionSceneName) &&
+            !string.IsNullOrEmpty(level4InstructionSceneName) &&
+            activeScene.name == level3InstructionSceneName)
+        {
+            sceneName = level4InstructionSceneName;
+            return true;
+        }
+
+        if (string.Equals(activeScene.name, "Level3Scene", StringComparison.OrdinalIgnoreCase))
+        {
+            sceneName = !string.IsNullOrEmpty(level4InstructionSceneName) ? level4InstructionSceneName : "Level4Scene";
+            return true;
+        }
+
         if (activeIndex >= 0 && totalScenes > 0)
         {
             for (int index = activeIndex + 1; index < totalScenes; index++)
@@ -1962,14 +1995,21 @@ public class GameManager : MonoBehaviour
         return text.Replace("Fireboy", "Ember").Replace("Watergirl", "Aqua");
     }
 
+    private bool IsFinalLevelScene(string sceneName)
+    {
+        return !string.IsNullOrEmpty(level4InstructionSceneName) &&
+               sceneName == level4InstructionSceneName;
+    }
+
     private bool IsScoredLevel()
     {
         string currentScene = SceneManager.GetActiveScene().name;
-        // Check if we're in any of the main level scenes (Level1, Level2, or Level3)
+        // Check if we're in any of the main level scenes (Level1 through Level4)
         // Tutorial uses GameManagerTutorial, so it's automatically excluded
         return (!string.IsNullOrEmpty(instructionPanelSceneName) && currentScene == instructionPanelSceneName) ||
                (!string.IsNullOrEmpty(level2InstructionSceneName) && currentScene == level2InstructionSceneName) ||
-               (!string.IsNullOrEmpty(level3InstructionSceneName) && currentScene == level3InstructionSceneName);
+               (!string.IsNullOrEmpty(level3InstructionSceneName) && currentScene == level3InstructionSceneName) ||
+               (!string.IsNullOrEmpty(level4InstructionSceneName) && currentScene == level4InstructionSceneName);
     }
 
     private float GetTargetTimeForCurrentLevel()
@@ -1985,6 +2025,11 @@ public class GameManager : MonoBehaviour
         if (!string.IsNullOrEmpty(level3InstructionSceneName) && currentScene == level3InstructionSceneName)
         {
             return level3TargetTimeSeconds > 0f ? level3TargetTimeSeconds : targetTimeSeconds;
+        }
+
+        if (!string.IsNullOrEmpty(level4InstructionSceneName) && currentScene == level4InstructionSceneName)
+        {
+            return level4TargetTimeSeconds > 0f ? level4TargetTimeSeconds : targetTimeSeconds;
         }
         
         // Default to Level 1 target time (or general target time)
