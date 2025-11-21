@@ -1,51 +1,116 @@
 using UnityEngine;
 
+[RequireComponent(typeof(Collider2D))]
 public class SteamArea : MonoBehaviour
 {
-    public float steamDuration = 10f;
-    private CoopPlayerController fireboy;
-    private CoopPlayerController watergirl;
+    [Header("Steam Settings")]
+    [SerializeField] private float steamDuration = 10f;
+    [SerializeField] private float touchDistance = 3f;
 
-    private bool fireInside = false;
-    private bool waterInside = false;
+    [Header("Debug")]
+    [SerializeField] private bool debugLogs = true;
+    [SerializeField] private bool debugDistances = true;
 
-    private void Start()
+    private CoopPlayerController _fireboy;
+    private CoopPlayerController _watergirl;
+
+    private bool _fireInside;
+    private bool _waterInside;
+    private bool _steamTriggeredWhileInside;
+
+    private void Reset()
     {
-        // 获取两个玩家引用
-        CoopPlayerController[] players = FindObjectsOfType<CoopPlayerController>();
-        foreach (var p in players)
+        var col = GetComponent<Collider2D>();
+        col.isTrigger = true;
+    }
+
+    private void Awake()
+    {
+        var col = GetComponent<Collider2D>();
+        col.isTrigger = true;
+    }
+
+    private void Update()
+    {
+        if (_fireboy == null || _watergirl == null)
         {
-            if (p.Role == PlayerRole.Fireboy) fireboy = p;
-            else watergirl = p;
+            var players = FindObjectsOfType<CoopPlayerController>();
+            foreach (var p in players)
+            {
+                if (p.Role == PlayerRole.Fireboy) _fireboy = p;
+                else if (p.Role == PlayerRole.Watergirl) _watergirl = p;
+            }
+        }
+
+        if (_fireboy == null || _watergirl == null) return;
+        if (!_fireInside || !_waterInside) return;
+
+        float sqrDist = (_fireboy.transform.position - _watergirl.transform.position).sqrMagnitude;
+        float threshold = touchDistance * touchDistance;
+
+        if (debugDistances)
+        {
+            Debug.Log($"[SteamArea] Both inside. sqrDist={sqrDist:F3}, threshold={threshold:F3}", this);
+        }
+
+        if (sqrDist <= threshold && !_steamTriggeredWhileInside)
+        {
+            TriggerSteamMode();
         }
     }
 
     private void OnTriggerEnter2D(Collider2D other)
     {
-        if (other.TryGetComponent(out CoopPlayerController player))
-        {
-            if (player.Role == PlayerRole.Fireboy) fireInside = true;
-            if (player.Role == PlayerRole.Watergirl) waterInside = true;
+        var player = other.GetComponent<CoopPlayerController>();
+        if (player == null) return;
 
-            TryActivateSteamMode();
+        if (player.Role == PlayerRole.Fireboy)
+        {
+            _fireInside = true;
+            if (debugLogs) Debug.Log("[SteamArea] Fireboy entered steam area.", this);
+        }
+        else if (player.Role == PlayerRole.Watergirl)
+        {
+            _waterInside = true;
+            if (debugLogs) Debug.Log("[SteamArea] Watergirl entered steam area.", this);
         }
     }
 
     private void OnTriggerExit2D(Collider2D other)
     {
-        if (other.TryGetComponent(out CoopPlayerController player))
+        var player = other.GetComponent<CoopPlayerController>();
+        if (player == null) return;
+
+        if (player.Role == PlayerRole.Fireboy)
         {
-            if (player.Role == PlayerRole.Fireboy) fireInside = false;
-            if (player.Role == PlayerRole.Watergirl) waterInside = false;
+            _fireInside = false;
+            if (debugLogs) Debug.Log("[SteamArea] Fireboy exited steam area.", this);
+        }
+        else if (player.Role == PlayerRole.Watergirl)
+        {
+            _waterInside = false;
+            if (debugLogs) Debug.Log("[SteamArea] Watergirl exited steam area.", this);
+        }
+
+        if (!_fireInside || !_waterInside)
+        {
+            _steamTriggeredWhileInside = false;
         }
     }
 
-    private void TryActivateSteamMode()
+    private void TriggerSteamMode()
     {
-        if (fireInside && waterInside)
+        _steamTriggeredWhileInside = true;
+
+        if (debugLogs)
         {
-            fireboy.GetComponent<PlayerSteamState>().EnterSteamMode(steamDuration);
-            watergirl.GetComponent<PlayerSteamState>().EnterSteamMode(steamDuration);
+            Debug.Log("[SteamArea] TriggerSteamMode(): activating steam mode for both players.", this);
         }
+
+        var fireSteam = _fireboy != null ? _fireboy.GetComponent<PlayerSteamState>() : null;
+        var waterSteam = _watergirl != null ? _watergirl.GetComponent<PlayerSteamState>() : null;
+
+        fireSteam?.EnterSteamMode(steamDuration);
+        waterSteam?.EnterSteamMode(steamDuration);
     }
 }

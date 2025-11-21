@@ -353,6 +353,42 @@ public class GameManager : MonoBehaviour
         }
     }
 
+    // ==================== Steam helpers ====================
+
+    /// <summary>
+    /// 判断某个具体玩家是否处于蒸汽模式
+    /// </summary>
+    private bool IsPlayerInSteamMode(CoopPlayerController player)
+    {
+        if (player == null) return false;
+
+        var steam = player.GetComponent<PlayerSteamState>();
+        return steam != null && steam.IsInSteamMode;
+    }
+
+    /// <summary>
+    /// 根据角色（Fireboy / Watergirl）判断该角色的玩家是否在蒸汽模式
+    /// </summary>
+    private bool IsRoleInSteamMode(PlayerRole role)
+    {
+        foreach (var player in _players)
+        {
+            if (player == null) continue;
+            if (player.Role != role) continue;
+
+            var steam = player.GetComponent<PlayerSteamState>();
+            if (steam != null && steam.IsInSteamMode)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+
+
+
     public void OnPlayersTouched(CoopPlayerController playerA, CoopPlayerController playerB)
     {
         if (!_gameActive || _gameFinished) return;
@@ -364,6 +400,13 @@ public class GameManager : MonoBehaviour
             return;
         }
 
+        // === 新增：如果任意一方处于蒸汽模式，则玩家互撞不扣血 ===
+        if (IsPlayerInSteamMode(playerA) || IsPlayerInSteamMode(playerB))
+        {
+            Debug.Log("[GameManager] OnPlayersTouched: touch ignored because at least one player is in STEAM MODE.");
+            return;
+        }
+
         DamageBothPlayers(playerA, playerB);
         if (_gameFinished) return;
 
@@ -372,6 +415,8 @@ public class GameManager : MonoBehaviour
             UpdateStatus("Careful! Keep your distance.");
         }
     }
+
+
 
     public void OnPlayerEnteredExit(CoopPlayerController player)
     {
@@ -1763,13 +1808,18 @@ public class GameManager : MonoBehaviour
     }
     // --- MODIFICATION END ---
 
-    // ... (DamageBothPlayers, DamagePlayer, ApplyDamage, etc. are UNCHANGED) ...
-    // ... (Scroll down to the end) ...
-    
+
     private void DamageBothPlayers(CoopPlayerController playerA, CoopPlayerController playerB)
     {
         if (!_gameActive || _gameFinished) return;
         if (playerA == null && playerB == null) return;
+
+        // === 新增：蒸汽模式下完全免疫“互相碰撞”伤害 ===
+        if (IsPlayerInSteamMode(playerA) || IsPlayerInSteamMode(playerB))
+        {
+            Debug.Log("[GameManager] DamageBothPlayers: cancelled, steam mode active for at least one player.");
+            return;
+        }
 
         if (playerA != null)
         {
@@ -1784,11 +1834,22 @@ public class GameManager : MonoBehaviour
         CheckForHeartDepletion();
     }
 
+
+
     public void DamagePlayer(PlayerRole role, int amount, DamageCause cause = DamageCause.Unknown, Vector3? worldOverride = null)
     {
         if (amount <= 0 || !_gameActive || _gameFinished) return;
+
+        // === 新增：蒸汽模式下所有伤害都免疫 ===
+        if (IsRoleInSteamMode(role))
+        {
+            Debug.Log($"[GameManager] DamagePlayer blocked for {role} because of STEAM MODE. Cause={cause}");
+            return;
+        }
+
         ApplyDamage(role, amount, suppressCheck: false, cause: cause, worldOverride: worldOverride);
     }
+
 
     private void ApplyDamage(PlayerRole role, int amount, bool suppressCheck, DamageCause cause = DamageCause.Unknown, Vector3? worldOverride = null)
     {
