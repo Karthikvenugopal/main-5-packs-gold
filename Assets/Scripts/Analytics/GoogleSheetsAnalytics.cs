@@ -17,9 +17,11 @@ namespace Analytics
             "level1scene",
             "level2scene",
             "level3scene",
+            "level4scene",
             "level1",
             "level2",
-            "level3"
+            "level3",
+            "level4"
         };
 
         private static string _webAppUrl;
@@ -234,7 +236,7 @@ namespace Analytics
         {
             if (AllowedLevels.Contains(levelId ?? string.Empty)) return true;
 
-            Debug.Log($"[Analytics] Skipping {context} for scene '{levelId}'. Only Level1/Level2/Level3 allowed.");
+            Debug.Log($"[Analytics] Skipping {context} for scene '{levelId}'. Only Level1/Level2/Level3/Level4 allowed.");
             return false;
         }
 
