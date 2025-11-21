@@ -25,9 +25,9 @@ public class CoopPlayerController : MonoBehaviour
     [SerializeField] private float hazardDamageCooldown = 0.5f;
 
     [Header("Feedback")]
-    [SerializeField, Range(1, 6)] private int hurtFlashCount = 4;
-    [SerializeField, Range(0.01f, 0.5f)] private float hurtFlashOnDuration = 0.3f;
-    [SerializeField, Range(0.01f, 0.5f)] private float hurtFlashOffDuration = 0.3f;
+    [SerializeField, Range(1, 6)] private int hurtFlashCount = 3;
+    [SerializeField, Range(0.01f, 0.5f)] private float hurtFlashOnDuration = 0.25f;
+    [SerializeField, Range(0.01f, 0.5f)] private float hurtFlashOffDuration = 0.2f;
     [SerializeField, Range(0f, 1f)] private float hurtFlashGreyBlend = 0.4f;
     [SerializeField, Range(0f, 1f)] private float hurtFlashBrightnessBoost = 0.09f;
     [Tooltip("Seconds spent easing down to the hurt scale.")]
@@ -312,14 +312,9 @@ public class CoopPlayerController : MonoBehaviour
 
     private Color BuildHurtFlashColor(Color roleColor)
     {
-        float brightness = Mathf.Clamp01(hurtFlashBrightnessBoost);
-        float greyBlend = Mathf.Clamp01(hurtFlashGreyBlend);
-
-        Color brightened = Color.Lerp(roleColor, Color.white, brightness);
-        Color greyTarget = Color.Lerp(brightened, Color.gray, greyBlend);
-
-        greyTarget.a = roleColor.a;
-        return greyTarget;
+        Color redFlash = Color.red;
+        redFlash.a = roleColor.a;
+        return redFlash;
     }
 
     public void SetMovementEnabled(bool enabled)
@@ -546,6 +541,48 @@ public class CoopPlayerController : MonoBehaviour
         Vector3 baseScale = _initialScale == Vector3.zero ? Vector3.one : _initialScale;
         transform.localScale = baseScale;
     }
+
+    /// <summary>
+    /// Allows non-wall enemies (like Wisp) to inflict damage on the player.
+    /// </summary>
+    /// <param name="enemyCollider">The enemy's Collider2D, used for instance ID for cooldown tracking.</param>
+    /// <param name="damageAmount">The amount of damage to inflict.</param>
+    public void TakeDamageFromEnemy(Collider2D enemyCollider, int damageAmount = 1)
+    {
+        if (_gameManager == null && _gameManagerTutorial == null) return;
+
+        // 1. Check damage cooldown (using the enemy's InstanceID as the cooldown key)
+        // This ensures the player isn't repeatedly damaged by the same Wisp within the hazardDamageCooldown period.
+        int enemyId = enemyCollider.GetInstanceID();
+        float now = Time.time;
+
+        if (_lastHazardDamageTimes.TryGetValue(enemyId, out float lastTime))
+        {
+            if (now - lastTime < Mathf.Max(0f, hazardDamageCooldown))
+            {
+                return; // Still on cooldown
+            }
+        }
+
+        _lastHazardDamageTimes[enemyId] = now;
+        
+        // 2. Trigger hurt feedback (uses the same scale animation as wall damage)
+        TriggerHurtScaleRoutine();
+        
+        // 3. Notify the Game Manager to deduct a heart
+        // Note: Wisp damage doesn't involve pushback. Using DamageCause.Unknown.
+        // Replace with DamageCause.Wisp if available in your GameManager.
+        GameManager.DamageCause cause = GameManager.DamageCause.Unknown; 
+        
+        _gameManagerTutorial?.DamagePlayer(_role, damageAmount);
+        
+        if (_gameManager != null)
+        {
+            // The Wisp doesn't cause pushback, but we notify the Game Manager to handle heart deduction and possible flash.
+            _gameManager.DamagePlayer(_role, damageAmount, cause, enemyCollider.transform.position); 
+        }
+    }
+
 
     private static float EaseOutQuad(float t)
     {

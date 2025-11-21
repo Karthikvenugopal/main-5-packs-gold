@@ -37,8 +37,9 @@ public class MazeBuilder_Level2 : MonoBehaviour
         "#.#.###.I...###########.###",
         "#.#.....#........H..I....##",
         "#.########H################",
-        "#..I..H.....##.###.##....##",
-        "#.############.###.##.....#",
+        "#..I..H.....#.#####.#....##",
+        "#.###########.#####.#.....#",
+        "#.........................#",
         "#.........................#",
         "#.........................#",
         "#.1111..2222..1111..2222.E#",
@@ -278,6 +279,8 @@ public class MazeBuilder_Level2 : MonoBehaviour
         DialogueTriggerZone dialogueTrigger = triggerZone.AddComponent<DialogueTriggerZone>();
     }
 
+    private const float CameraVerticalPadding = 0.8f;
+
     private void CenterMaze(string[] layout)
     {
         if (layout == null || layout.Length == 0) return;
@@ -290,12 +293,13 @@ public class MazeBuilder_Level2 : MonoBehaviour
             -(height - cellSize) / 2f,
             -10f
         );
+        center.y += CameraVerticalPadding;
 
         if (Camera.main != null)
         {
             Camera.main.transform.position = center;
 
-            float verticalSize = (height / 2f) + 1f;
+            float verticalSize = (height / 2f) + 1f + CameraVerticalPadding;
             float horizontalSize = ((width / 2f) + 1f) / Camera.main.aspect;
             Camera.main.orthographicSize = Mathf.Max(verticalSize, horizontalSize);
         }
