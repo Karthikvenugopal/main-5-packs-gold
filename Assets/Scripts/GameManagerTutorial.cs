@@ -289,8 +289,8 @@ public class GameManagerTutorial : MonoBehaviour
         bgRect.anchorMax = new Vector2(0.5f, 1f);
         bgRect.pivot = new Vector2(0.5f, 1f);
         bgRect.sizeDelta = new Vector2(680f, 120f);
-        // Position it 40 pixels down from the top-center of the bar
-        bgRect.anchoredPosition = new Vector2(0f, -40f);
+        // Position it further down from the top-center of the bar for clarity
+        bgRect.anchoredPosition = new Vector2(0f, -100f);
 
         Image image = background.AddComponent<Image>();
         image.color = messageBackground;
