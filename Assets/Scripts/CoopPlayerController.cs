@@ -25,9 +25,9 @@ public class CoopPlayerController : MonoBehaviour
     [SerializeField] private float hazardDamageCooldown = 0.5f;
 
     [Header("Feedback")]
-    [SerializeField, Range(1, 6)] private int hurtFlashCount = 4;
-    [SerializeField, Range(0.01f, 0.5f)] private float hurtFlashOnDuration = 0.3f;
-    [SerializeField, Range(0.01f, 0.5f)] private float hurtFlashOffDuration = 0.3f;
+    [SerializeField, Range(1, 6)] private int hurtFlashCount = 3;
+    [SerializeField, Range(0.01f, 0.5f)] private float hurtFlashOnDuration = 0.25f;
+    [SerializeField, Range(0.01f, 0.5f)] private float hurtFlashOffDuration = 0.2f;
     [SerializeField, Range(0f, 1f)] private float hurtFlashGreyBlend = 0.4f;
     [SerializeField, Range(0f, 1f)] private float hurtFlashBrightnessBoost = 0.09f;
     [Tooltip("Seconds spent easing down to the hurt scale.")]
@@ -312,14 +312,9 @@ public class CoopPlayerController : MonoBehaviour
 
     private Color BuildHurtFlashColor(Color roleColor)
     {
-        float brightness = Mathf.Clamp01(hurtFlashBrightnessBoost);
-        float greyBlend = Mathf.Clamp01(hurtFlashGreyBlend);
-
-        Color brightened = Color.Lerp(roleColor, Color.white, brightness);
-        Color greyTarget = Color.Lerp(brightened, Color.gray, greyBlend);
-
-        greyTarget.a = roleColor.a;
-        return greyTarget;
+        Color redFlash = Color.red;
+        redFlash.a = roleColor.a;
+        return redFlash;
     }
 
     public void SetMovementEnabled(bool enabled)
