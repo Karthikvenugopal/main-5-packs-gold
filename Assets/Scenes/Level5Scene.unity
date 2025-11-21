@@ -570,9 +570,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameManager
   isTutorialMode: 0
-  messageBackground: {r: 0, g: 0, b: 0, a: 0.55}
-  levelIntroMessage: 'Work together: Ember melts ice; Aqua extinguishes fire.'
-  levelStartMessage: Work together. Ember melts ice; Aqua extinguishes fire.
+  messageBackground: {r: 0, g: 0, b: 0, a: 0}
+  levelIntroMessage: 
+  levelStartMessage: 
   levelVictoryMessage: Victory! Both heroes reached safety. Press R to play again.
   waitForPartnerMessage: '{0} made it. Wait for your partner!'
   exitReminderMessage: Both heroes must stand in the exit to finish.
@@ -599,7 +599,7 @@ MonoBehaviour:
   targetTimeSeconds: 60
   level2TargetTimeSeconds: 180
   level3TargetTimeSeconds: 120
-  showInstructionPanel: 1
+  showInstructionPanel: 0
   instructionPanelSceneName: Level1Scene
   instructionLines:
   - <b>Heads up</b>
@@ -634,7 +634,7 @@ MonoBehaviour:
   heartIconSize: {x: 40, y: 40}
   tokenIconSize: {x: 40, y: 40}
   topUiBarHeight: 160
-  topUiBarColor: {r: 0.1, g: 0.1, b: 0.1, a: 0.8}
+  topUiBarColor: {r: 0.11764706, g: 0.05882353, b: 0.05882353, a: 1}
   heartLossSfx: {fileID: 0}
   heartLossSfxVolume: 0.9
   fireTokensCollected: 0
