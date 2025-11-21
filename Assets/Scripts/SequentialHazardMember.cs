@@ -1,14 +1,19 @@
 using UnityEngine;
 
+public interface ISequentialHazardManager
+{
+    void NotifySequenceHazardCleared(int sequenceId);
+}
+
 [DisallowMultipleComponent]
 public class SequentialHazardMember : MonoBehaviour
 {
-    private Level3Manager _manager;
+    private ISequentialHazardManager _manager;
     private int _sequenceId;
     private bool _initialized;
     private bool _notified;
 
-    public void Initialize(Level3Manager manager, int sequenceId)
+    public void Initialize(ISequentialHazardManager manager, int sequenceId)
     {
         _manager = manager;
         _sequenceId = sequenceId;

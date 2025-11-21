@@ -9,6 +9,7 @@ public class LevelSelectUI : MonoBehaviour
     [SerializeField] private string level1Scene = "Level1Scene";
     [SerializeField] private string level2Scene = "Level2Scene";
     [SerializeField] private string level3Scene = "Level3Scene";
+    [SerializeField] private string level5Scene = "Level5Scene";
 
     [Header("Button References")]
     [SerializeField] private Button[] levelButtons;
@@ -30,6 +31,7 @@ public class LevelSelectUI : MonoBehaviour
     public void LoadLevel1() => LoadScene(level1Scene);
     public void LoadLevel2() => LoadScene(level2Scene);
     public void LoadLevel3() => LoadScene(level3Scene);
+    public void LoadLevel5() => LoadScene(level5Scene);
 
     private void Awake()
     {
