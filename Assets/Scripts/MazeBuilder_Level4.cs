@@ -1,3 +1,5 @@
+
+
 using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
@@ -28,6 +30,7 @@ public class MazeBuilder_Level4 : MonoBehaviour, IPairedHazardManager
     [SerializeField] private GameObject fireHitEffectPrefab;
     [SerializeField] private GameObject iceHitEffectPrefab;
     [SerializeField] private GameObject exitPrefab;
+    [SerializeField] private GameObject wispPrefab;
 
     [Header("Dependencies")]
     [SerializeField] private GameManager gameManager;
@@ -51,6 +54,7 @@ public class MazeBuilder_Level4 : MonoBehaviour, IPairedHazardManager
     /// 1 = Fire cannon
     /// 2 = Ice cannon
     /// E = Exit
+    /// P = Wisp
     /// </summary>
     private static readonly string[] Layout =
     {
@@ -58,11 +62,11 @@ public class MazeBuilder_Level4 : MonoBehaviour, IPairedHazardManager
         "#F##..............#............#", // row 1
         "#.##.#####.####.###.######.###.#", // row 2
         "#............##.....######...#.#", // row 3
-        "##.#.############.##########.#.#", // row 4
-        "#W.#.###...######.##.....#...#.#", // row 5
+        "##.#Z############.##########.#.#", // row 4
+        "#P.#Z###...######.##.....#...#.#", // row 5
         "####.###.#.######.##.#.#.#.#.#.#", // row 6
         "####.....#.####...##.#.#.#.#.#.#", // row 7
-        "#....#.###.####.####.#.#.#.#.#.#", // row 8
+        "#W...#.###.####.####.#.#.#.#.#.#", // row 8
         "##########......###..........#.#", // row 9
         "###################.##########.#", // row 10
         "#################...##########.#", // row 11
@@ -207,6 +211,16 @@ public class MazeBuilder_Level4 : MonoBehaviour, IPairedHazardManager
                         SpawnExit(cellPosition);
                         break;
 
+                    case 'P':
+                        SpawnFloor(cellPosition);
+                        SpawnWisp(cellPosition);
+                        break;
+
+                    case 'Z':
+                        SpawnFloor(cellPosition);
+                        SpawnWispActivationZone(cellPosition);
+                        break;
+
                     default:
                         SpawnFloor(cellPosition);
                         break;
@@ -220,13 +234,27 @@ public class MazeBuilder_Level4 : MonoBehaviour, IPairedHazardManager
         if (wallPrefab == null) return;
         GameObject wall = Instantiate(wallPrefab, position, Quaternion.identity, transform);
         wall.layer = LayerMask.NameToLayer("Wall");
+
+        // Ensure walls are drawn above the floor (Order 1)
+        if (wall.TryGetComponent(out SpriteRenderer renderer))
+        {
+            renderer.sortingOrder = 1;
+        }
     }
+
 
     private void SpawnFloor(Vector2 position)
     {
         if (floorPrefab == null) return;
-        Instantiate(floorPrefab, position, Quaternion.identity, transform);
+        GameObject floor = Instantiate(floorPrefab, position, Quaternion.identity, transform);
+
+        // Set floor to the base layer (Order 0)
+        if (floor.TryGetComponent(out SpriteRenderer renderer))
+        {
+            renderer.sortingOrder = 0;
+        }
     }
+
 
     private GameObject SpawnIceWall(Vector2 position)
     {
@@ -239,6 +267,12 @@ public class MazeBuilder_Level4 : MonoBehaviour, IPairedHazardManager
         if (!iceWall.TryGetComponent(out IceWall component))
         {
             component = iceWall.AddComponent<IceWall>();
+        }
+        
+        // Ensure ice walls are drawn above the floor (Order 1)
+        if (iceWall.TryGetComponent(out SpriteRenderer renderer))
+        {
+            renderer.sortingOrder = 1;
         }
 
         return iceWall;
@@ -255,6 +289,12 @@ public class MazeBuilder_Level4 : MonoBehaviour, IPairedHazardManager
 
         GameObject fireWall = Instantiate(prefab, position, Quaternion.identity, transform);
         fireWall.layer = LayerMask.NameToLayer("Wall");
+        
+        // Ensure fire walls are drawn above the floor (Order 1)
+        if (fireWall.TryGetComponent(out SpriteRenderer renderer))
+        {
+            renderer.sortingOrder = 1;
+        }
         return fireWall;
     }
 
@@ -325,7 +365,7 @@ public class MazeBuilder_Level4 : MonoBehaviour, IPairedHazardManager
 
         SpriteRenderer renderer = exit.AddComponent<SpriteRenderer>();
         renderer.color = new Color(0.9f, 0.8f, 0.2f, 0.85f);
-        renderer.sortingOrder = 4;
+        renderer.sortingOrder = 4; // Exit zone is layer 4
 
         GameObject text = new GameObject("Label");
         text.transform.SetParent(exit.transform);
@@ -338,6 +378,49 @@ public class MazeBuilder_Level4 : MonoBehaviour, IPairedHazardManager
         tmp.alignment = TextAlignmentOptions.Center;
         tmp.fontStyle = FontStyles.Bold;
         tmp.enableWordWrapping = false;
+    }
+
+    // --- MODIFIED METHOD: Set sortingOrder to 3 ---
+    private void SpawnWisp(Vector2 position)
+    {
+        if (wispPrefab == null)
+        {
+            Debug.LogWarning("MazeBuilder_Level4: Wisp prefab is not assigned.", this);
+            return;
+        }
+
+        Vector3 worldPosition = new Vector3(
+            position.x + 0.5f * cellSize,
+            position.y -0.25f * cellSize,
+            0f
+        );
+        
+
+        GameObject wisp = Instantiate(wispPrefab, worldPosition, Quaternion.identity, transform);
+        
+        // Set Wisp to a high order (Order 3) so it's above walls (Order 1) and floor (Order 0)
+        if (wisp.TryGetComponent(out SpriteRenderer renderer))
+        {
+            renderer.sortingOrder = 3; 
+        }
+    }
+    // --- END MODIFIED METHOD ---
+
+    private void SpawnWispActivationZone(Vector2 position)
+    {
+        GameObject zone = new GameObject("WispActivationZone");
+        zone.transform.SetParent(transform);
+        zone.transform.position = new Vector3(
+            position.x + 0.5f * cellSize,
+            position.y - 0.5f * cellSize,
+            0f);
+
+        BoxCollider2D trigger = zone.AddComponent<BoxCollider2D>();
+        trigger.isTrigger = true;
+        trigger.size = new Vector2(cellSize, cellSize);
+        trigger.offset = Vector2.zero;
+
+        zone.AddComponent<WispActivationZone>();
     }
 
     private void PreparePairedHazards()

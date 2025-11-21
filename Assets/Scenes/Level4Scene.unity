@@ -397,6 +397,7 @@ MonoBehaviour:
   iceHitEffectPrefab: {fileID: 0}
   gameManager: {fileID: 1746984134}
   tokenPlacementManager: {fileID: 2110000000000000002}
+  wispPrefab: {fileID: 608675355870336799, guid: f6e0b7b2b03f245d690b2009444826fa, type: 3}
 --- !u!4 &920500693
 Transform:
   m_ObjectHideFlags: 0
@@ -538,7 +539,7 @@ MonoBehaviour:
   heartIconSize: {x: 30, y: 30}
   tokenIconSize: {x: 30, y: 30}
   topUiBarHeight: 160
-  topUiBarWidth: 4000
+  topUiBarWidth: 0
   topUiBarColor: {r: 0.12941177, g: 0.101960786, b: 0.16078432, a: 1}
   heartLossSfx: {fileID: 0}
   heartLossSfxVolume: 0.9

@@ -547,6 +547,48 @@ public class CoopPlayerController : MonoBehaviour
         transform.localScale = baseScale;
     }
 
+    /// <summary>
+    /// Allows non-wall enemies (like Wisp) to inflict damage on the player.
+    /// </summary>
+    /// <param name="enemyCollider">The enemy's Collider2D, used for instance ID for cooldown tracking.</param>
+    /// <param name="damageAmount">The amount of damage to inflict.</param>
+    public void TakeDamageFromEnemy(Collider2D enemyCollider, int damageAmount = 1)
+    {
+        if (_gameManager == null && _gameManagerTutorial == null) return;
+
+        // 1. Check damage cooldown (using the enemy's InstanceID as the cooldown key)
+        // This ensures the player isn't repeatedly damaged by the same Wisp within the hazardDamageCooldown period.
+        int enemyId = enemyCollider.GetInstanceID();
+        float now = Time.time;
+
+        if (_lastHazardDamageTimes.TryGetValue(enemyId, out float lastTime))
+        {
+            if (now - lastTime < Mathf.Max(0f, hazardDamageCooldown))
+            {
+                return; // Still on cooldown
+            }
+        }
+
+        _lastHazardDamageTimes[enemyId] = now;
+        
+        // 2. Trigger hurt feedback (uses the same scale animation as wall damage)
+        TriggerHurtScaleRoutine();
+        
+        // 3. Notify the Game Manager to deduct a heart
+        // Note: Wisp damage doesn't involve pushback. Using DamageCause.Unknown.
+        // Replace with DamageCause.Wisp if available in your GameManager.
+        GameManager.DamageCause cause = GameManager.DamageCause.Unknown; 
+        
+        _gameManagerTutorial?.DamagePlayer(_role, damageAmount);
+        
+        if (_gameManager != null)
+        {
+            // The Wisp doesn't cause pushback, but we notify the Game Manager to handle heart deduction and possible flash.
+            _gameManager.DamagePlayer(_role, damageAmount, cause, enemyCollider.transform.position); 
+        }
+    }
+
+
     private static float EaseOutQuad(float t)
     {
         return 1f - (1f - t) * (1f - t);

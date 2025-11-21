@@ -722,13 +722,24 @@ public class GameManager : MonoBehaviour
 
         _topUiBar = topBarGO.GetComponent<RectTransform>();
         
-        // Anchor it to the top-center and clamp its width so it doesn't exceed the maze area.
-        _topUiBar.anchorMin = new Vector2(0.5f, 1f); 
-        _topUiBar.anchorMax = new Vector2(0.5f, 1f); 
-        _topUiBar.pivot = new Vector2(0.5f, 1f);
-        
-        float clampedBarWidth = Mathf.Max(400f, topUiBarWidth);
-        _topUiBar.sizeDelta = new Vector2(clampedBarWidth, topUiBarHeight);
+        bool stretchBar = topUiBarWidth <= 0f;
+        if (stretchBar)
+        {
+            // Stretch edge-to-edge horizontally.
+            _topUiBar.anchorMin = new Vector2(0f, 1f);
+            _topUiBar.anchorMax = new Vector2(1f, 1f);
+            _topUiBar.pivot = new Vector2(0.5f, 1f);
+            _topUiBar.sizeDelta = new Vector2(0f, topUiBarHeight);
+        }
+        else
+        {
+            // Clamp to a fixed width centered at the top.
+            _topUiBar.anchorMin = new Vector2(0.5f, 1f); 
+            _topUiBar.anchorMax = new Vector2(0.5f, 1f); 
+            _topUiBar.pivot = new Vector2(0.5f, 1f);
+            float clampedBarWidth = Mathf.Max(400f, topUiBarWidth);
+            _topUiBar.sizeDelta = new Vector2(clampedBarWidth, topUiBarHeight);
+        }
         _topUiBar.anchoredPosition = Vector2.zero; // Position at the top
 
         // Create a centered content root that keeps hearts/tokens grouped together.
