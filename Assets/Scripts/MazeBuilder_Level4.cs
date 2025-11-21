@@ -1,3 +1,5 @@
+
+
 using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
@@ -28,6 +30,9 @@ public class MazeBuilder_Level4 : MonoBehaviour, IPairedHazardManager
     [SerializeField] private GameObject fireHitEffectPrefab;
     [SerializeField] private GameObject iceHitEffectPrefab;
     [SerializeField] private GameObject exitPrefab;
+    [SerializeField] private GameObject wispPrefab;
+    [SerializeField] private GameObject steamAreaPrefab;
+    [SerializeField] private GameObject steamWallPrefab;
 
     [Header("Dependencies")]
     [SerializeField] private GameManager gameManager;
@@ -51,24 +56,25 @@ public class MazeBuilder_Level4 : MonoBehaviour, IPairedHazardManager
     /// 1 = Fire cannon
     /// 2 = Ice cannon
     /// E = Exit
+    /// P = Wisp
     /// </summary>
     private static readonly string[] Layout =
     {
         "################################", // row 0
         "#F##..............#............#", // row 1
-        "#.##.#####.####.###.######.###.#", // row 2
-        "#............##.....######...#.#", // row 3
-        "##.#.############.##########.#.#", // row 4
-        "#W.#.###...######.##.....#...#.#", // row 5
+        "#.##.#####.####.###.######.###L#", // row 2
+        "#............##..M..######...#L#", // row 3
+        "##.#Z############.##########.#L#", // row 4
+        "#P.#Z###...######.##.....#...#.#", // row 5
         "####.###.#.######.##.#.#.#.#.#.#", // row 6
         "####.....#.####...##.#.#.#.#.#.#", // row 7
-        "#....#.###.####.####.#.#.#.#.#.#", // row 8
+        "#W...#.###.####.####.#.#.#.#.#.#", // row 8
         "##########......###..........#.#", // row 9
         "###################.##########.#", // row 10
-        "#################...##########.#", // row 11
+        "#################M..##########.#", // row 11
         "#..################...########.#", // row 12
         "#E......###########.#.########.#", // row 13
-        "#######....#####....#..........#", // row 14
+        "#######.LLL#####....#..........#", // row 14
         "##########.......#####.#######.#", // row 15
         "################################"  // row 16
     };
@@ -207,6 +213,26 @@ public class MazeBuilder_Level4 : MonoBehaviour, IPairedHazardManager
                         SpawnExit(cellPosition);
                         break;
 
+                    case 'P':
+                        SpawnFloor(cellPosition);
+                        SpawnWisp(cellPosition);
+                        break;
+
+                    case 'Z':
+                        SpawnFloor(cellPosition);
+                        SpawnWispActivationZone(cellPosition);
+                        break;
+                    case 'M':       // steam area
+                        SpawnFloor(cellPosition);
+                        SpawnSteamArea(cellPosition);
+                        break;
+
+                    case 'L':       // steam wall
+                        SpawnFloor(cellPosition);
+                        SpawnSteamWall(cellPosition);
+                        break;
+
+
                     default:
                         SpawnFloor(cellPosition);
                         break;
@@ -220,13 +246,27 @@ public class MazeBuilder_Level4 : MonoBehaviour, IPairedHazardManager
         if (wallPrefab == null) return;
         GameObject wall = Instantiate(wallPrefab, position, Quaternion.identity, transform);
         wall.layer = LayerMask.NameToLayer("Wall");
+
+        // Ensure walls are drawn above the floor (Order 1)
+        if (wall.TryGetComponent(out SpriteRenderer renderer))
+        {
+            renderer.sortingOrder = 1;
+        }
     }
+
 
     private void SpawnFloor(Vector2 position)
     {
         if (floorPrefab == null) return;
-        Instantiate(floorPrefab, position, Quaternion.identity, transform);
+        GameObject floor = Instantiate(floorPrefab, position, Quaternion.identity, transform);
+
+        // Set floor to the base layer (Order 0)
+        if (floor.TryGetComponent(out SpriteRenderer renderer))
+        {
+            renderer.sortingOrder = 0;
+        }
     }
+
 
     private GameObject SpawnIceWall(Vector2 position)
     {
@@ -239,6 +279,12 @@ public class MazeBuilder_Level4 : MonoBehaviour, IPairedHazardManager
         if (!iceWall.TryGetComponent(out IceWall component))
         {
             component = iceWall.AddComponent<IceWall>();
+        }
+        
+        // Ensure ice walls are drawn above the floor (Order 1)
+        if (iceWall.TryGetComponent(out SpriteRenderer renderer))
+        {
+            renderer.sortingOrder = 1;
         }
 
         return iceWall;
@@ -255,6 +301,12 @@ public class MazeBuilder_Level4 : MonoBehaviour, IPairedHazardManager
 
         GameObject fireWall = Instantiate(prefab, position, Quaternion.identity, transform);
         fireWall.layer = LayerMask.NameToLayer("Wall");
+        
+        // Ensure fire walls are drawn above the floor (Order 1)
+        if (fireWall.TryGetComponent(out SpriteRenderer renderer))
+        {
+            renderer.sortingOrder = 1;
+        }
         return fireWall;
     }
 
@@ -325,7 +377,7 @@ public class MazeBuilder_Level4 : MonoBehaviour, IPairedHazardManager
 
         SpriteRenderer renderer = exit.AddComponent<SpriteRenderer>();
         renderer.color = new Color(0.9f, 0.8f, 0.2f, 0.85f);
-        renderer.sortingOrder = 4;
+        renderer.sortingOrder = 4; // Exit zone is layer 4
 
         GameObject text = new GameObject("Label");
         text.transform.SetParent(exit.transform);
@@ -339,6 +391,98 @@ public class MazeBuilder_Level4 : MonoBehaviour, IPairedHazardManager
         tmp.fontStyle = FontStyles.Bold;
         tmp.enableWordWrapping = false;
     }
+
+    // --- MODIFIED METHOD: Set sortingOrder to 3 ---
+    private void SpawnWisp(Vector2 position)
+    {
+        if (wispPrefab == null)
+        {
+            Debug.LogWarning("MazeBuilder_Level4: Wisp prefab is not assigned.", this);
+            return;
+        }
+
+        Vector3 worldPosition = new Vector3(
+            position.x + 0.5f * cellSize,
+            position.y -0.25f * cellSize,
+            0f
+        );
+        
+
+        GameObject wisp = Instantiate(wispPrefab, worldPosition, Quaternion.identity, transform);
+        
+        // Set Wisp to a high order (Order 3) so it's above walls (Order 1) and floor (Order 0)
+        if (wisp.TryGetComponent(out SpriteRenderer renderer))
+        {
+            renderer.sortingOrder = 3; 
+        }
+    }
+    // --- END MODIFIED METHOD ---
+
+    private void SpawnWispActivationZone(Vector2 position)
+    {
+        GameObject zone = new GameObject("WispActivationZone");
+        zone.transform.SetParent(transform);
+        zone.transform.position = new Vector3(
+            position.x + 0.5f * cellSize,
+            position.y - 0.5f * cellSize,
+            0f);
+
+        BoxCollider2D trigger = zone.AddComponent<BoxCollider2D>();
+        trigger.isTrigger = true;
+        trigger.size = new Vector2(cellSize, cellSize);
+        trigger.offset = Vector2.zero;
+
+        zone.AddComponent<WispActivationZone>();
+    }
+
+    private void SpawnSteamArea(Vector2 position)
+    {
+        if (steamAreaPrefab == null)
+        {
+            Debug.LogWarning("MazeBuilder_Level4: Steam area prefab is not assigned.", this);
+            return;
+        }
+
+        Vector3 worldPosition = new Vector3(
+            position.x + 0.5f * cellSize,
+            position.y - 0.5f * cellSize,
+            0f
+        );
+
+        GameObject area = Instantiate(steamAreaPrefab, worldPosition, Quaternion.identity, transform);
+
+        if (area.TryGetComponent(out SpriteRenderer renderer))
+        {
+            renderer.sortingOrder = 2;          // 在墙上面一点
+            // 颜色如果你不在 prefab 里调，也可以在这里强行调
+            renderer.color = new Color(0.85f, 0.65f, 0.95f, 0.45f);
+        }
+
+
+    }
+
+
+    // 生成 Steam Wall（只能在 10s 蒸汽形态时通过的墙）
+    private GameObject SpawnSteamWall(Vector2 position)
+    {
+        if (steamWallPrefab == null)
+        {
+            Debug.LogWarning("MazeBuilder_Level4: Steam wall prefab is not assigned.", this);
+            return null;
+        }
+
+        GameObject wall = Instantiate(steamWallPrefab, position, Quaternion.identity, transform);
+        wall.layer = LayerMask.NameToLayer("Wall");   // 让它跟普通墙一样挡路
+
+        if (wall.TryGetComponent(out SpriteRenderer renderer))
+        {
+            renderer.sortingOrder = 1;                // 和普通墙同一层
+        }
+
+        return wall;
+    }
+
+
 
     private void PreparePairedHazards()
     {

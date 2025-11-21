@@ -15,7 +15,7 @@ public class HeartLossAnimator : MonoBehaviour
     [SerializeField] private string aquaContainerName = "AquaHeartsContainer";
 
     [Header("Animation Settings")]
-    [SerializeField] private float popScaleMultiplier = 1.6f;
+    [SerializeField] private float popScaleMultiplier = 2.0f;
     [SerializeField] private float popDuration = 0.12f;
     [SerializeField] private float highlightDuration = 0.18f;
     [SerializeField] private float shatterDuration = 0.16f;
@@ -24,7 +24,7 @@ public class HeartLossAnimator : MonoBehaviour
     [SerializeField] private ParticleSystem shatterEffectPrefab;
 
     [Header("Enhanced Feedback")]
-    [SerializeField] private float popScaleBoost = 1.35f;
+    [SerializeField] private float popScaleBoost = 1.5f;
     [SerializeField, Range(0f, 1f)] private float highlightBlendBoost = 0.2f;
     [SerializeField] private float highlightHoldDuration = 0.08f;
 
