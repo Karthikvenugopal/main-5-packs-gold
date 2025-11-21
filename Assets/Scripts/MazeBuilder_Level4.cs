@@ -54,23 +54,23 @@ public class MazeBuilder_Level4 : MonoBehaviour, IPairedHazardManager
     /// </summary>
     private static readonly string[] Layout =
     {
-"################################", // row 0
-"#F##..............#............#", // row 1
-"#.##.#####.####.###.######.###.#", // row 2
-"#............##.....######...#.#", // row 3
-"##.#.############.##########.#.#", // row 4
-"#W.#.###...######.##.....#...#.#", // row 5
-"####.###.#.######.##.#.#.#.#.#.#", // row 6
-"####.....#.####...##.#.#.#.#.#.#", // row 7
-"#....#.###.####.####.#.#.#.#.#.#", // row 8
-"##########......####.........#.#", // row 9
-"####################.#########.#", // row 10
-"##################...#########.#", // row 11
-"####################...#######.#", // row 12
-"#.......############.#.#######.#", // row 13
-"#######....#####.....#.........#", // row 14
-"##########.......#####.#######.#", // row 15
-"################################"  // row 16
+        "################################", // row 0
+        "#F##..............#............#", // row 1
+        "#.##.#####.####.###.######.###.#", // row 2
+        "#............##.....######...#.#", // row 3
+        "##.#.############.##########.#.#", // row 4
+        "#W.#.###...######.##.....#...#.#", // row 5
+        "####.###.#.######.##.#.#.#.#.#.#", // row 6
+        "####.....#.####...##.#.#.#.#.#.#", // row 7
+        "#....#.###.####.####.#.#.#.#.#.#", // row 8
+        "##########......###..........#.#", // row 9
+        "###################.##########.#", // row 10
+        "#################...##########.#", // row 11
+        "###################...########.#", // row 12
+        "#.......###########.#.########.#", // row 13
+        "#######....#####....#..........#", // row 14
+        "##########.......#####.#######.#", // row 15
+        "################################"  // row 16
     };
 
     private static readonly PairedHazardDefinition[] PairedHazardConfigurations =
@@ -84,7 +84,32 @@ public class MazeBuilder_Level4 : MonoBehaviour, IPairedHazardManager
             new Vector2Int(7, 7),
             PairedHazardType.Ice,
             new Vector2Int(10, 7),
-            PairedHazardType.Fire)
+            PairedHazardType.Fire),
+        new PairedHazardDefinition(
+            new Vector2Int(27, 5),
+            PairedHazardType.Fire,
+            new Vector2Int(26, 6),
+            PairedHazardType.Ice),
+        new PairedHazardDefinition(
+            new Vector2Int(26, 6),
+            PairedHazardType.Fire,
+            new Vector2Int(24, 6),
+            PairedHazardType.Ice),
+        new PairedHazardDefinition(
+            new Vector2Int(24, 6),
+            PairedHazardType.Fire,
+            new Vector2Int(22, 6),
+            PairedHazardType.Ice),
+        new PairedHazardDefinition(
+            new Vector2Int(20, 9),
+            PairedHazardType.Fire,
+            new Vector2Int(19, 10),
+            PairedHazardType.Ice),
+        new PairedHazardDefinition(
+            new Vector2Int(28, 9),
+            PairedHazardType.Fire,
+            new Vector2Int(23, 9),
+            PairedHazardType.Ice)
     };
 
     private readonly List<PairedHazardState> _pairedHazardStates = new List<PairedHazardState>();
