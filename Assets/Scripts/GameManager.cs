@@ -21,15 +21,16 @@ public class GameManager : MonoBehaviour
     // Assist metrics removed
 
     // --- MODIFICATION START ---
-    // ... (你所有的 [Header] 和 [SerializeField] 变量都保持不变) ...
     // ... (isTutorialMode, messageBackground, levelIntroMessage, etc.) ...
     [Header("Tutorial Settings")]
     [SerializeField] private bool isTutorialMode = false;
 
     [SerializeField] private Color messageBackground = new Color(0f, 0f, 0f, 0.55f);
+    [Header("UI Fonts")]
+    [SerializeField] private TMP_FontAsset upperUiFont;
     [Header("UI Messages")]
-    [SerializeField] private string levelIntroMessage = "Work together: melt the ice, douse the fire, and reach the exit.";
-    [SerializeField] private string levelStartMessage = "Work together. Ember melts ice; Aqua extinguishes fire.";
+    [SerializeField] private string levelIntroMessage = "";
+    [SerializeField] private string levelStartMessage = "";
     [SerializeField] private string levelVictoryMessage = "Victory! Both heroes reached safety. Press R to play again.";
     [SerializeField] private string waitForPartnerMessage = "{0} made it. Wait for your partner!";
     [SerializeField] private string exitReminderMessage = "Both heroes must stand in the exit to finish.";
@@ -74,7 +75,6 @@ public class GameManager : MonoBehaviour
         "",
         "Collect maximum number of tokens and exit",
         "",
-        "Remember: Ember melts ice; Aqua extinguishes fire.",
         "Caution: Touch each other? lose a heart.",
         "Caution: Touch wrong obstacle? lose a heart.",
         "Work together but never collide!"
@@ -130,8 +130,10 @@ public class GameManager : MonoBehaviour
     [Header("UI Layout")]
     [Tooltip("The height (in reference pixels) of the top UI bar")]
     [SerializeField] private float topUiBarHeight = 160f;
+    [Tooltip("The maximum width (in reference pixels) of the top UI bar")]
+    [SerializeField] private float topUiBarWidth = 1320f;
     [Tooltip("The background color of the top UI bar")]
-    [SerializeField] private Color topUiBarColor = new Color(0.1f, 0.1f, 0.1f, 0.8f);
+    [SerializeField] private Color topUiBarColor = new Color(0f, 0f, 0f, 0f);
     // --- MODIFICATION END ---
 
     [Header("Audio")]
@@ -152,6 +154,7 @@ public class GameManager : MonoBehaviour
     // --- MODIFICATION START ---
     // We add a reference for the top UI bar's RectTransform.
     private RectTransform _topUiBar;
+    private RectTransform _topUiContentRoot;
     // --- MODIFICATION END ---
     private HeartLossAnimator _heartLossAnimator;
     
@@ -192,6 +195,8 @@ public class GameManager : MonoBehaviour
     [SerializeField] private Analytics.LevelTimer levelTimer;
 
     private TextMeshProUGUI _statusLabel;
+    private Image _statusBackgroundImage;
+    private TMP_FontAsset _cachedUpperUiFont;
     private bool _levelReady;
     private bool _gameActive;
     private bool _gameFinished;
@@ -231,8 +236,8 @@ public class GameManager : MonoBehaviour
             useVictoryPanel = true;
         }
         EnsureHudCanvas();
-        CreateHeartsUI();
         CreateTokensUI();
+        CreateHeartsUI();
         CreateVictoryPanel();
 
         if (resetGlobalTokenTotalsOnLoad)
@@ -438,7 +443,46 @@ public class GameManager : MonoBehaviour
             _statusLabel.text = message;
         }
 
+        if (_statusBackgroundImage != null)
+        {
+            bool hasMessage = !string.IsNullOrWhiteSpace(message);
+            _statusBackgroundImage.gameObject.SetActive(hasMessage);
+        }
+
         Debug.Log(message);
+    }
+
+    private TMP_FontAsset GetUpperUiFont()
+    {
+        if (_cachedUpperUiFont != null)
+        {
+            return _cachedUpperUiFont;
+        }
+
+        if (upperUiFont != null)
+        {
+            _cachedUpperUiFont = upperUiFont;
+        }
+        else if (TMP_Settings.defaultFontAsset != null)
+        {
+            _cachedUpperUiFont = TMP_Settings.defaultFontAsset;
+        }
+
+        return _cachedUpperUiFont;
+    }
+
+    private void ApplyUpperUiFont(TextMeshProUGUI label)
+    {
+        if (label == null)
+        {
+            return;
+        }
+
+        var fontAsset = GetUpperUiFont();
+        if (fontAsset != null)
+        {
+            label.font = fontAsset;
+        }
     }
 
     // --- MODIFICATION START ---
@@ -472,6 +516,8 @@ public class GameManager : MonoBehaviour
 
         Image image = background.AddComponent<Image>();
         image.color = messageBackground;
+        _statusBackgroundImage = image;
+        image.gameObject.SetActive(false);
 
         GameObject textGO = new GameObject("StatusLabel");
         textGO.transform.SetParent(background.transform, false);
@@ -483,6 +529,7 @@ public class GameManager : MonoBehaviour
         textRect.offsetMax = new Vector2(-20f, -20f);
 
         _statusLabel = textGO.AddComponent<TextMeshProUGUI>();
+        ApplyUpperUiFont(_statusLabel);
         _statusLabel.alignment = TextAlignmentOptions.Center;
         _statusLabel.fontSize = 40f;
         _statusLabel.text = string.Empty;
@@ -559,6 +606,7 @@ public class GameManager : MonoBehaviour
         instructionsRect.sizeDelta = new Vector2(1900f, 50f);
 
         TextMeshProUGUI instructionsLabel = instructionsGO.AddComponent<TextMeshProUGUI>();
+        ApplyUpperUiFont(instructionsLabel);
         instructionsLabel.alignment = TextAlignmentOptions.Center;
         instructionsLabel.fontSize = 60f;
         instructionsLabel.text = lines != null && lines.Length > 0
@@ -577,6 +625,7 @@ public class GameManager : MonoBehaviour
         promptRect.sizeDelta = new Vector2(700f, 80f);
 
         TextMeshProUGUI promptLabel = promptGO.AddComponent<TextMeshProUGUI>();
+        ApplyUpperUiFont(promptLabel);
         promptLabel.alignment = TextAlignmentOptions.Center;
         promptLabel.fontSize = 36f;
         promptLabel.text = string.IsNullOrEmpty(prompt)
@@ -654,14 +703,24 @@ public class GameManager : MonoBehaviour
 
         _topUiBar = topBarGO.GetComponent<RectTransform>();
         
-        // Anchor it to the top edge and stretch 100% wide
-        _topUiBar.anchorMin = new Vector2(0f, 1f); 
-        _topUiBar.anchorMax = new Vector2(1f, 1f); 
+        // Anchor it to the top-center and clamp its width so it doesn't exceed the maze area.
+        _topUiBar.anchorMin = new Vector2(0.5f, 1f); 
+        _topUiBar.anchorMax = new Vector2(0.5f, 1f); 
         _topUiBar.pivot = new Vector2(0.5f, 1f);
         
-        // Set its height using the new variable
-        _topUiBar.sizeDelta = new Vector2(0f, topUiBarHeight); // 0f for width = 100% stretch
+        float clampedBarWidth = Mathf.Max(400f, topUiBarWidth);
+        _topUiBar.sizeDelta = new Vector2(clampedBarWidth, topUiBarHeight);
         _topUiBar.anchoredPosition = Vector2.zero; // Position at the top
+
+        // Create a centered content root that keeps hearts/tokens grouped together.
+        GameObject topUiContent = new GameObject("TopUIContent");
+        topUiContent.transform.SetParent(topBarGO.transform, false);
+        _topUiContentRoot = topUiContent.AddComponent<RectTransform>();
+        _topUiContentRoot.anchorMin = Vector2.zero;
+        _topUiContentRoot.anchorMax = Vector2.one;
+        _topUiContentRoot.offsetMin = new Vector2(40f, 20f);
+        _topUiContentRoot.offsetMax = new Vector2(-40f, -20f);
+
         // --- END NEW ---
     }
     // --- MODIFICATION END ---
@@ -677,49 +736,33 @@ public class GameManager : MonoBehaviour
     }
 
     // --- MODIFICATION START ---
-    // This function is modified to parent the HeartsMasterContainer to the _topUiBar
-    // and anchor it to the top-right *of the bar*.
+    // This function now parents the Hearts UI into the centered Top UI stack.
     private void CreateHeartsUI()
     {
         if (_hudCanvas == null) return;
         
         // --- 1. Create the Master Container for all "Life" UI ---
-        GameObject heartsMasterContainer = new GameObject("HeartsMasterContainer");
+        GameObject heartsMasterContainer = new GameObject("HeartsMasterContainer", typeof(RectTransform));
         
-        // --- MODIFICATION: Parent to the Top UI Bar ---
-        heartsMasterContainer.transform.SetParent(_topUiBar, false);
+        // --- MODIFICATION: Parent to the centered Top UI content root ---
+        var heartsParent = _topUiContentRoot != null ? _topUiContentRoot : _topUiBar;
+        heartsMasterContainer.transform.SetParent(heartsParent, false);
+
+        RectTransform masterRect = heartsMasterContainer.GetComponent<RectTransform>();
+        masterRect.anchorMin = new Vector2(1f, 0.5f); 
+        masterRect.anchorMax = new Vector2(1f, 0.5f);
+        masterRect.pivot = new Vector2(1f, 0.5f);
+        masterRect.anchoredPosition = new Vector2(-20f, 0f); 
+        masterRect.sizeDelta = new Vector2(360f, 200f); 
 
         VerticalLayoutGroup masterLayout = heartsMasterContainer.AddComponent<VerticalLayoutGroup>();
         masterLayout.spacing = 10;
-        masterLayout.childAlignment = TextAnchor.UpperRight;
+        masterLayout.childAlignment = TextAnchor.MiddleCenter;
         masterLayout.childControlWidth = false;
         masterLayout.childControlHeight = false;
         
         ContentSizeFitter masterFitter = heartsMasterContainer.AddComponent<ContentSizeFitter>();
         masterFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
-
-        RectTransform masterRect = heartsMasterContainer.GetComponent<RectTransform>();
-        
-        // --- MODIFICATION: Anchor to the top-right *of the bar* ---
-        masterRect.anchorMin = new Vector2(1f, 1f); 
-        masterRect.anchorMax = new Vector2(1f, 1f);
-        masterRect.pivot = new Vector2(1f, 1f);
-        // Position it 40px in from the top-right corner of the bar
-        masterRect.anchoredPosition = new Vector2(-40f, -40f); 
-        masterRect.sizeDelta = new Vector2(360f, 200f); 
-
-        // --- 2. Create the "Life" Title ---
-        GameObject titleLabelGO = new GameObject("TitleLabel");
-        titleLabelGO.transform.SetParent(heartsMasterContainer.transform, false);
-        TextMeshProUGUI titleLabel = titleLabelGO.AddComponent<TextMeshProUGUI>();
-        titleLabel.text = "Life";
-        titleLabel.fontSize = 42f;
-        titleLabel.fontStyle = FontStyles.Bold;
-        titleLabel.color = Color.white;
-        titleLabel.alignment = TextAlignmentOptions.Right;
-
-        LayoutElement titleLayout = titleLabelGO.AddComponent<LayoutElement>();
-        titleLayout.preferredWidth = 360f; 
         
         // --- 3. Create Hearts Container for Ember ---
         GameObject emberHeartsGO = new GameObject("EmberHeartsContainer");
@@ -730,7 +773,7 @@ public class GameManager : MonoBehaviour
         
         HorizontalLayoutGroup emberLayout = emberHeartsGO.AddComponent<HorizontalLayoutGroup>();
         emberLayout.spacing = 10; 
-        emberLayout.childAlignment = TextAnchor.MiddleRight;
+        emberLayout.childAlignment = TextAnchor.MiddleCenter;
         emberLayout.childControlWidth = false;
         emberLayout.childControlHeight = false;
         emberLayout.padding = new RectOffset(10, 10, 5, 5); 
@@ -742,6 +785,7 @@ public class GameManager : MonoBehaviour
         GameObject emberLabelGO = new GameObject("Label");
         emberLabelGO.transform.SetParent(emberHeartsGO.transform, false); 
         TextMeshProUGUI emberLabel = emberLabelGO.AddComponent<TextMeshProUGUI>();
+        ApplyUpperUiFont(emberLabel);
         emberLabel.text = "Ember:";
         emberLabel.fontSize = 40f;
         emberLabel.color = Color.white;
@@ -773,7 +817,7 @@ public class GameManager : MonoBehaviour
         
         HorizontalLayoutGroup aquaLayout = aquaHeartsGO.AddComponent<HorizontalLayoutGroup>();
         aquaLayout.spacing = 10;
-        aquaLayout.childAlignment = TextAnchor.MiddleRight;
+        aquaLayout.childAlignment = TextAnchor.MiddleCenter;
         aquaLayout.childControlWidth = false;
         aquaLayout.childControlHeight = false;
         aquaLayout.padding = new RectOffset(10, 10, 5, 5); 
@@ -784,6 +828,7 @@ public class GameManager : MonoBehaviour
         GameObject aquaLabelGO = new GameObject("Label");
         aquaLabelGO.transform.SetParent(aquaHeartsGO.transform, false); 
         TextMeshProUGUI aquaLabel = aquaLabelGO.AddComponent<TextMeshProUGUI>();
+        ApplyUpperUiFont(aquaLabel);
         aquaLabel.text = "Aqua:";
         aquaLabel.fontSize = 40f;
         aquaLabel.color = Color.white;
@@ -821,50 +866,34 @@ public class GameManager : MonoBehaviour
     // --- MODIFICATION END ---
     
     // --- MODIFICATION START ---
-    // This function is modified to parent the TokensMasterContainer to the _topUiBar
-    // and anchor it to the top-left *of the bar*.
+    // This function now parents the Tokens UI into the centered Top UI stack.
     private void CreateTokensUI()
     {
         if (_hudCanvas == null) return;
         
         // --- 1. Create the Master Container for all "Collect" UI ---
-        GameObject tokensMasterContainer = new GameObject("TokensMasterContainer");
+        GameObject tokensMasterContainer = new GameObject("TokensMasterContainer", typeof(RectTransform));
         
-        // --- MODIFICATION: Parent to the Top UI Bar ---
-        tokensMasterContainer.transform.SetParent(_topUiBar, false);
+        // --- MODIFICATION: Parent to the centered Top UI content root ---
+        var tokensParent = _topUiContentRoot != null ? _topUiContentRoot : _topUiBar;
+        tokensMasterContainer.transform.SetParent(tokensParent, false);
+
+        RectTransform masterRect = tokensMasterContainer.GetComponent<RectTransform>();
+        masterRect.anchorMin = new Vector2(0f, 0.5f); 
+        masterRect.anchorMax = new Vector2(0f, 0.5f);
+        masterRect.pivot = new Vector2(0f, 0.5f);
+        masterRect.anchoredPosition = new Vector2(20f, 0f);
+        masterRect.sizeDelta = new Vector2(520f, 200f); 
 
         VerticalLayoutGroup masterLayout = tokensMasterContainer.AddComponent<VerticalLayoutGroup>();
         masterLayout.spacing = 10;
-        masterLayout.childAlignment = TextAnchor.UpperLeft;
+        masterLayout.childAlignment = TextAnchor.MiddleCenter;
         masterLayout.childControlWidth = false;
         masterLayout.childControlHeight = false;
         
         ContentSizeFitter masterFitter = tokensMasterContainer.AddComponent<ContentSizeFitter>();
         masterFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
         masterFitter.horizontalFit = ContentSizeFitter.FitMode.PreferredSize; // Let it wrap width
-
-        RectTransform masterRect = tokensMasterContainer.GetComponent<RectTransform>();
-        
-        // --- MODIFICATION: Anchor to the top-left *of the bar* ---
-        masterRect.anchorMin = new Vector2(0f, 1f); 
-        masterRect.anchorMax = new Vector2(0f, 1f);
-        masterRect.pivot = new Vector2(0f, 1f);
-        // Position it 40px in from the top-left corner of the bar
-        masterRect.anchoredPosition = new Vector2(40f, -40f);
-        masterRect.sizeDelta = new Vector2(520f, 200f); 
-
-        // --- 2. Create the "Collect" Title ---
-        GameObject titleLabelGO = new GameObject("TitleLabel");
-        titleLabelGO.transform.SetParent(tokensMasterContainer.transform, false); 
-        TextMeshProUGUI titleLabel = titleLabelGO.AddComponent<TextMeshProUGUI>();
-        titleLabel.text = "Collect";
-        titleLabel.fontSize = 42f;
-        titleLabel.fontStyle = FontStyles.Bold;
-        titleLabel.color = Color.white;
-        titleLabel.alignment = TextAlignmentOptions.Left;
-
-        LayoutElement titleLayout = titleLabelGO.AddComponent<LayoutElement>();
-        titleLayout.preferredWidth = 520f;
         
         // --- 3. Create Token Container for Ember ---
         GameObject emberTokensGO = new GameObject("EmberTokensContainer");
@@ -875,7 +904,7 @@ public class GameManager : MonoBehaviour
         
         HorizontalLayoutGroup emberLayout = emberTokensGO.AddComponent<HorizontalLayoutGroup>();
         emberLayout.spacing = 10; 
-        emberLayout.childAlignment = TextAnchor.MiddleLeft; 
+        emberLayout.childAlignment = TextAnchor.MiddleCenter; 
         emberLayout.childControlWidth = false;
         emberLayout.childControlHeight = false;
         emberLayout.padding = new RectOffset(10, 10, 5, 5); 
@@ -891,6 +920,7 @@ public class GameManager : MonoBehaviour
         GameObject emberLabelGO = new GameObject("Label");
         emberLabelGO.transform.SetParent(emberTokensGO.transform, false); 
         TextMeshProUGUI emberLabel = emberLabelGO.AddComponent<TextMeshProUGUI>();
+        ApplyUpperUiFont(emberLabel);
         emberLabel.text = "Fire:";
         emberLabel.fontSize = 40f;
         emberLabel.color = Color.white;
@@ -907,7 +937,7 @@ public class GameManager : MonoBehaviour
         
         HorizontalLayoutGroup aquaLayout = aquaTokensGO.AddComponent<HorizontalLayoutGroup>();
         aquaLayout.spacing = 10;
-        aquaLayout.childAlignment = TextAnchor.MiddleLeft; 
+        aquaLayout.childAlignment = TextAnchor.MiddleCenter; 
         aquaLayout.childControlWidth = false;
         aquaLayout.childControlHeight = false;
         aquaLayout.padding = new RectOffset(10, 10, 5, 5); 
@@ -922,6 +952,7 @@ public class GameManager : MonoBehaviour
         GameObject aquaLabelGO = new GameObject("Label");
         aquaLabelGO.transform.SetParent(aquaTokensGO.transform, false); 
         TextMeshProUGUI aquaLabel = aquaLabelGO.AddComponent<TextMeshProUGUI>();
+        ApplyUpperUiFont(aquaLabel);
         aquaLabel.text = "Water:";
         aquaLabel.fontSize = 40f;
         aquaLabel.color = Color.white;
@@ -1554,7 +1585,7 @@ public class GameManager : MonoBehaviour
         _totalWaterTokens = waterCount;
         
         // 1. Find the master container, *then* the sub-containers
-        Transform searchRoot = _topUiBar != null ? _topUiBar : _hudCanvas.transform;
+        Transform searchRoot = _topUiContentRoot != null ? _topUiContentRoot : (_topUiBar != null ? _topUiBar : _hudCanvas.transform);
         Transform tokensMasterContainer = searchRoot.Find("TokensMasterContainer");
         if (tokensMasterContainer == null)
         {
