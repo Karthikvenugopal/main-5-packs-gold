@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
 
-public class Level3Manager : MonoBehaviour
+public class Level3Manager : MonoBehaviour, ISequentialHazardManager
 {
     [Header("Maze Settings")]
     [Min(0.1f)]
@@ -52,7 +52,7 @@ public class Level3Manager : MonoBehaviour
         "#....#.#.#.#.#.#.#.#...##",
         "##...#.#.#.#.#...#.#...##",
         "##222#.#.....#.#...#111##",
-        "#########################"
+        "#########################" 
    
     };
 
@@ -505,7 +505,7 @@ public class Level3Manager : MonoBehaviour
         _sequenceStates[sequenceId] = state;
     }
 
-    internal void NotifySequenceHazardCleared(int sequenceId)
+    public void NotifySequenceHazardCleared(int sequenceId)
     {
         if (_tearingDown) return;
         if (!_sequenceStates.TryGetValue(sequenceId, out SequenceState state)) return;

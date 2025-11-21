@@ -19,7 +19,7 @@ Retry Density (failures/attempts):
 `=QUERY(Data!A2:E, "select C, count(E)-sum(D), count(E), (count(E)-sum(D))/count(E) group by C label C 'level_id', count(E)-sum(D) 'failures', count(E) 'attempts', (count(E)-sum(D))/count(E) 'retry_density'", 0)`
 
 - If you only want whitelisted levels (Level1/2/3), use:
-`=QUERY(Data!A2:E, "select C, count(E)-sum(D), count(E), (count(E)-sum(D))/count(E) where (C='Level1' or C='Level1Scene' or C='Level2' or C='Level2Scene' or C='Level3' or C='Level3Scene') group by C label C 'level_id', count(E)-sum(D) 'failures', count(E) 'attempts', (count(E)-sum(D))/count(E) 'retry_density'", 0)`
+`=QUERY(Data!A2:E, "select C, count(E)-sum(D), count(E), (count(E)-sum(D))/count(E) where (C='Level1' or C='Level1Scene' or C='Level2' or C='Level2Scene' or C='Level3' or C='Level3Scene' or C='Level4' or C='Level4Scene') group by C label C 'level_id', count(E)-sum(D) 'failures', count(E) 'attempts', (count(E)-sum(D))/count(E) 'retry_density'", 0)`
 
 Notes
 
