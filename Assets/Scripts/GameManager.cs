@@ -166,6 +166,9 @@ public class GameManager : MonoBehaviour
     // We add a reference for the top UI bar's RectTransform.
     private RectTransform _topUiBar;
     private RectTransform _topUiContentRoot;
+    private bool _topUiBarIsStretched;
+    private float _topUiHorizontalPadding;
+    private Vector2 _uiReferenceResolution = Vector2.zero;
     // --- MODIFICATION END ---
     private HeartLossAnimator _heartLossAnimator;
     
@@ -567,8 +570,8 @@ public class GameManager : MonoBehaviour
         bgRect.anchorMax = new Vector2(0.5f, 1f); // Top-Center
         bgRect.pivot = new Vector2(0.5f, 1f);
         bgRect.sizeDelta = new Vector2(680f, 120f);
-        // Position it 40 pixels down from the top-center of the bar
-        bgRect.anchoredPosition = new Vector2(0f, -40f); 
+        // Position it further down from the top-center of the bar for clarity
+        bgRect.anchoredPosition = new Vector2(0f, -100f); 
 
         Image image = background.AddComponent<Image>();
         image.color = messageBackground;
@@ -752,7 +755,9 @@ public class GameManager : MonoBehaviour
 
         CanvasScaler scaler = canvasGO.AddComponent<CanvasScaler>();
         scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-        scaler.referenceResolution = new Vector2(1920, 1080);
+        Vector2 referenceResolution = new Vector2(1920, 1080);
+        scaler.referenceResolution = referenceResolution;
+        _uiReferenceResolution = referenceResolution;
         scaler.matchWidthOrHeight = 0.5f;
 
         canvasGO.AddComponent<GraphicRaycaster>();
@@ -768,6 +773,7 @@ public class GameManager : MonoBehaviour
         _topUiBar = topBarGO.GetComponent<RectTransform>();
         
         bool stretchBar = topUiBarWidth <= 0f;
+        _topUiBarIsStretched = stretchBar;
         if (stretchBar)
         {
             // Stretch edge-to-edge horizontally.
@@ -775,6 +781,7 @@ public class GameManager : MonoBehaviour
             _topUiBar.anchorMax = new Vector2(1f, 1f);
             _topUiBar.pivot = new Vector2(0.5f, 1f);
             _topUiBar.sizeDelta = new Vector2(0f, topUiBarHeight);
+            _topUiHorizontalPadding = 0f;
         }
         else
         {
@@ -784,6 +791,8 @@ public class GameManager : MonoBehaviour
             _topUiBar.pivot = new Vector2(0.5f, 1f);
             float clampedBarWidth = Mathf.Max(400f, topUiBarWidth);
             _topUiBar.sizeDelta = new Vector2(clampedBarWidth, topUiBarHeight);
+            float referenceWidth = _uiReferenceResolution.x <= 0f ? clampedBarWidth : _uiReferenceResolution.x;
+            _topUiHorizontalPadding = Mathf.Max(0f, (referenceWidth - clampedBarWidth) * 0.5f);
         }
         _topUiBar.anchoredPosition = Vector2.zero; // Position at the top
 
@@ -827,7 +836,9 @@ public class GameManager : MonoBehaviour
         masterRect.anchorMin = new Vector2(1f, 0.5f); 
         masterRect.anchorMax = new Vector2(1f, 0.5f);
         masterRect.pivot = new Vector2(1f, 0.5f);
-        masterRect.anchoredPosition = new Vector2(-20f, 0f); 
+        float heartsScreenInset = _topUiBarIsStretched ? 0f : 40f;
+        float heartsHorizontalShift = Mathf.Max(0f, _topUiHorizontalPadding - heartsScreenInset);
+        masterRect.anchoredPosition = new Vector2(heartsHorizontalShift, 0f); 
         masterRect.sizeDelta = new Vector2(360f, 200f); 
 
         HorizontalLayoutGroup masterLayout = heartsMasterContainer.AddComponent<HorizontalLayoutGroup>();
@@ -989,7 +1000,9 @@ public class GameManager : MonoBehaviour
         masterRect.anchorMin = new Vector2(0f, 0.5f); 
         masterRect.anchorMax = new Vector2(0f, 0.5f);
         masterRect.pivot = new Vector2(0f, 0.5f);
-        masterRect.anchoredPosition = new Vector2(20f, 0f);
+        float tokensScreenInset = _topUiBarIsStretched ? 0f : 40f;
+        float tokensHorizontalShift = Mathf.Min(0f, tokensScreenInset - _topUiHorizontalPadding);
+        masterRect.anchoredPosition = new Vector2(tokensHorizontalShift, 0f);
         masterRect.sizeDelta = new Vector2(520f, 200f); 
 
         HorizontalLayoutGroup masterLayout = tokensMasterContainer.AddComponent<HorizontalLayoutGroup>();
