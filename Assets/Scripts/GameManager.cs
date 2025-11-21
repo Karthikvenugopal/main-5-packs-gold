@@ -755,18 +755,50 @@ public class GameManager : MonoBehaviour
         masterRect.anchoredPosition = new Vector2(-20f, 0f); 
         masterRect.sizeDelta = new Vector2(360f, 200f); 
 
-        VerticalLayoutGroup masterLayout = heartsMasterContainer.AddComponent<VerticalLayoutGroup>();
-        masterLayout.spacing = 10;
-        masterLayout.childAlignment = TextAnchor.MiddleCenter;
+        HorizontalLayoutGroup masterLayout = heartsMasterContainer.AddComponent<HorizontalLayoutGroup>();
+        masterLayout.spacing = 16f;
+        masterLayout.childAlignment = TextAnchor.MiddleRight;
         masterLayout.childControlWidth = false;
         masterLayout.childControlHeight = false;
+        masterLayout.childForceExpandWidth = false;
+        masterLayout.childForceExpandHeight = false;
         
         ContentSizeFitter masterFitter = heartsMasterContainer.AddComponent<ContentSizeFitter>();
         masterFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+        masterFitter.horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
         
-        // --- 3. Create Hearts Container for Ember ---
+        // --- 2. Create the "Lives" Title ---
+        GameObject heartsTitleGO = new GameObject("TitleLabel");
+        heartsTitleGO.transform.SetParent(heartsMasterContainer.transform, false);
+        TextMeshProUGUI heartsTitle = heartsTitleGO.AddComponent<TextMeshProUGUI>();
+        ApplyUpperUiFont(heartsTitle);
+        heartsTitle.text = "Lives";
+        heartsTitle.fontSize = 42f;
+        // heartsTitle.fontStyle = FontStyles.Bold;
+        heartsTitle.color = Color.white;
+        heartsTitle.alignment = TextAlignmentOptions.Right;
+        LayoutElement heartsTitleLayout = heartsTitleGO.AddComponent<LayoutElement>();
+        heartsTitleLayout.preferredWidth = 140f;
+        
+        // --- 3. Container for heart rows ---
+        GameObject heartsContentGO = new GameObject("HeartsContent");
+        heartsContentGO.transform.SetParent(heartsMasterContainer.transform, false);
+        RectTransform heartsContentRect = heartsContentGO.AddComponent<RectTransform>();
+        heartsContentRect.sizeDelta = new Vector2(360f, 200f);
+        VerticalLayoutGroup heartsContentLayout = heartsContentGO.AddComponent<VerticalLayoutGroup>();
+        heartsContentLayout.spacing = 10f;
+        heartsContentLayout.childAlignment = TextAnchor.MiddleCenter;
+        heartsContentLayout.childControlWidth = false;
+        heartsContentLayout.childControlHeight = false;
+        heartsContentLayout.childForceExpandWidth = false;
+        heartsContentLayout.childForceExpandHeight = false;
+        ContentSizeFitter heartsContentFitter = heartsContentGO.AddComponent<ContentSizeFitter>();
+        heartsContentFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+        heartsContentFitter.horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+        // --- 4. Create Hearts Container for Ember ---
         GameObject emberHeartsGO = new GameObject("EmberHeartsContainer");
-        emberHeartsGO.transform.SetParent(heartsMasterContainer.transform, false); 
+        emberHeartsGO.transform.SetParent(heartsContentGO.transform, false); 
         
         Image emberBg = emberHeartsGO.AddComponent<Image>();
         emberBg.color = new Color(0f, 0f, 0f, 0.35f); 
@@ -808,9 +840,9 @@ public class GameManager : MonoBehaviour
             _emberHeartImages.Add(heartImg);
         }
 
-        // --- 4. Create Hearts Container for Aqua ---
+        // --- 5. Create Hearts Container for Aqua ---
         GameObject aquaHeartsGO = new GameObject("AquaHeartsContainer");
-        aquaHeartsGO.transform.SetParent(heartsMasterContainer.transform, false); 
+        aquaHeartsGO.transform.SetParent(heartsContentGO.transform, false); 
 
         Image aquaBg = aquaHeartsGO.AddComponent<Image>();
         aquaBg.color = new Color(0f, 0f, 0f, 0.35f); 
@@ -885,19 +917,49 @@ public class GameManager : MonoBehaviour
         masterRect.anchoredPosition = new Vector2(20f, 0f);
         masterRect.sizeDelta = new Vector2(520f, 200f); 
 
-        VerticalLayoutGroup masterLayout = tokensMasterContainer.AddComponent<VerticalLayoutGroup>();
-        masterLayout.spacing = 10;
-        masterLayout.childAlignment = TextAnchor.MiddleCenter;
+        HorizontalLayoutGroup masterLayout = tokensMasterContainer.AddComponent<HorizontalLayoutGroup>();
+        masterLayout.spacing = 16f;
+        masterLayout.childAlignment = TextAnchor.MiddleLeft;
         masterLayout.childControlWidth = false;
         masterLayout.childControlHeight = false;
+        masterLayout.childForceExpandWidth = false;
+        masterLayout.childForceExpandHeight = false;
         
         ContentSizeFitter masterFitter = tokensMasterContainer.AddComponent<ContentSizeFitter>();
         masterFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
         masterFitter.horizontalFit = ContentSizeFitter.FitMode.PreferredSize; // Let it wrap width
+
+        // --- 2. Create the "Collect" Title ---
+        GameObject tokensTitleGO = new GameObject("TitleLabel");
+        tokensTitleGO.transform.SetParent(tokensMasterContainer.transform, false);
+        TextMeshProUGUI tokensTitle = tokensTitleGO.AddComponent<TextMeshProUGUI>();
+        ApplyUpperUiFont(tokensTitle);
+        tokensTitle.text = "Collect";
+        tokensTitle.fontSize = 42f;
+        // tokensTitle.fontStyle = FontStyles.Bold;
+        tokensTitle.color = Color.white;
+        tokensTitle.alignment = TextAlignmentOptions.Left;
+        LayoutElement tokensTitleLayout = tokensTitleGO.AddComponent<LayoutElement>();
+        tokensTitleLayout.preferredWidth = 150f;
         
+        GameObject tokensContentGO = new GameObject("TokensContent");
+        tokensContentGO.transform.SetParent(tokensMasterContainer.transform, false);
+        RectTransform tokensContentRect = tokensContentGO.AddComponent<RectTransform>();
+        tokensContentRect.sizeDelta = new Vector2(520f, 200f);
+        VerticalLayoutGroup tokensContentLayout = tokensContentGO.AddComponent<VerticalLayoutGroup>();
+        tokensContentLayout.spacing = 10f;
+        tokensContentLayout.childAlignment = TextAnchor.MiddleLeft;
+        tokensContentLayout.childControlWidth = false;
+        tokensContentLayout.childControlHeight = false;
+        tokensContentLayout.childForceExpandWidth = false;
+        tokensContentLayout.childForceExpandHeight = false;
+        ContentSizeFitter tokensContentFitter = tokensContentGO.AddComponent<ContentSizeFitter>();
+        tokensContentFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+        tokensContentFitter.horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
+
         // --- 3. Create Token Container for Ember ---
         GameObject emberTokensGO = new GameObject("EmberTokensContainer");
-        emberTokensGO.transform.SetParent(tokensMasterContainer.transform, false); 
+        emberTokensGO.transform.SetParent(tokensContentGO.transform, false); 
         
         Image emberBg = emberTokensGO.AddComponent<Image>();
         emberBg.color = new Color(0f, 0f, 0f, 0.35f); 
@@ -930,7 +992,7 @@ public class GameManager : MonoBehaviour
 
         // --- 4. Create Token Container for Aqua ---
         GameObject aquaTokensGO = new GameObject("AquaTokensContainer");
-        aquaTokensGO.transform.SetParent(tokensMasterContainer.transform, false); 
+        aquaTokensGO.transform.SetParent(tokensContentGO.transform, false); 
         
         Image aquaBg = aquaTokensGO.AddComponent<Image>();
         aquaBg.color = new Color(0f, 0f, 0f, 0.35f); 
@@ -1593,8 +1655,10 @@ public class GameManager : MonoBehaviour
             return;
         }
         
-        Transform emberContainer = tokensMasterContainer.Find("EmberTokensContainer");
-        Transform aquaContainer = tokensMasterContainer.Find("AquaTokensContainer");
+        Transform emberContainer = tokensMasterContainer.Find("TokensContent/EmberTokensContainer") ??
+                                   tokensMasterContainer.Find("EmberTokensContainer");
+        Transform aquaContainer = tokensMasterContainer.Find("TokensContent/AquaTokensContainer") ??
+                                  tokensMasterContainer.Find("AquaTokensContainer");
 
         // 2. Clear any old token images (in case of scene restart)
         foreach (Image img in _emberTokenImages)

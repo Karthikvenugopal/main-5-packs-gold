@@ -31,6 +31,8 @@ public class MazeBuilder_Level1 : MonoBehaviour
         "###################"
     };
 
+    private const float CameraVerticalPadding = 0.4f;
+
     private const string FireboySpawnName = "FireboySpawn";
     private const string WatergirlSpawnName = "WatergirlSpawn";
 
@@ -309,12 +311,13 @@ public class MazeBuilder_Level1 : MonoBehaviour
             -(height - cellSize) / 2f,
             -10f
         );
+        center.y += CameraVerticalPadding;
 
         if (Camera.main != null)
         {
             Camera.main.transform.position = center;
 
-            float verticalSize = (height / 2f) + 1f;
+            float verticalSize = (height / 2f) + 1f + CameraVerticalPadding;
             float horizontalSize = ((width / 2f) + 1f) / Camera.main.aspect;
             Camera.main.orthographicSize = Mathf.Max(verticalSize, horizontalSize);
         }

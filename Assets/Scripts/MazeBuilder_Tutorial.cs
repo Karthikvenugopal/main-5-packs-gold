@@ -181,6 +181,8 @@ public class MazeBuilder_Tutorial : MonoBehaviour
         marker.transform.SetParent(transform);
     }
 
+    private const float CameraVerticalPadding = 0.8f;
+
     private void CenterMaze(string[] layout)
     {
         if (layout == null || layout.Length == 0) return;
@@ -193,15 +195,15 @@ public class MazeBuilder_Tutorial : MonoBehaviour
             -(height - cellSize) / 2f,
             -10f
         );
+        center.y += CameraVerticalPadding;
 
         if (Camera.main != null)
         {
             Camera.main.transform.position = center;
 
-            float verticalSize = (height / 2f) + 1f;
+            float verticalSize = (height / 2f) + 1f + CameraVerticalPadding;
             float horizontalSize = ((width / 2f) + 1f) / Camera.main.aspect;
             Camera.main.orthographicSize = Mathf.Max(verticalSize, horizontalSize);
         }
     }
 }
-
