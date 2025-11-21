@@ -82,8 +82,8 @@ public class WispEnemy : MonoBehaviour
 
     private Vector2 GridToWorldPosition(Vector2 gridPos)
     {
-        float x = gridPos.x * _mazeCellSize + 0.2f * _mazeCellSize;
-        float y = -gridPos.y * _mazeCellSize - 0.2f * _mazeCellSize; 
+        float x = gridPos.x * _mazeCellSize + 0.1f * _mazeCellSize;
+        float y = -gridPos.y * _mazeCellSize - 0.1f * _mazeCellSize; 
         
         return new Vector2(x, y);
     }

@@ -198,6 +198,7 @@ GameObject:
   - component: {fileID: 519420032}
   - component: {fileID: 519420031}
   - component: {fileID: 519420029}
+  - component: {fileID: 519420033}
   m_Layer: 7
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -279,6 +280,50 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &519420033
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 519420028}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a79441f348de89743a2939f4d699eac1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.UniversalAdditionalCameraData
+  m_RenderShadows: 1
+  m_RequiresDepthTextureOption: 2
+  m_RequiresOpaqueTextureOption: 2
+  m_CameraType: 0
+  m_Cameras: []
+  m_RendererIndex: -1
+  m_VolumeLayerMask:
+    serializedVersion: 2
+    m_Bits: 1
+  m_VolumeTrigger: {fileID: 0}
+  m_VolumeFrameworkUpdateModeOption: 2
+  m_RenderPostProcessing: 0
+  m_Antialiasing: 0
+  m_AntialiasingQuality: 2
+  m_StopNaN: 0
+  m_Dithering: 0
+  m_ClearDepth: 1
+  m_AllowXRRendering: 1
+  m_AllowHDROutput: 1
+  m_UseScreenCoordOverride: 0
+  m_ScreenSizeOverride: {x: 0, y: 0, z: 0, w: 0}
+  m_ScreenCoordScaleBias: {x: 0, y: 0, z: 0, w: 0}
+  m_RequiresDepthTexture: 0
+  m_RequiresColorTexture: 0
+  m_TaaSettings:
+    m_Quality: 3
+    m_FrameInfluence: 0.1
+    m_JitterScale: 1
+    m_MipBias: 0
+    m_VarianceClampScale: 0.9
+    m_ContrastAdaptiveSharpening: 0
+  m_Version: 2
 --- !u!1001 &549460520
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -395,9 +440,16 @@ MonoBehaviour:
   cannonHitEffectPrefab: {fileID: 0}
   fireHitEffectPrefab: {fileID: 0}
   iceHitEffectPrefab: {fileID: 0}
+  exitPrefab: {fileID: 0}
+  wispPrefab: {fileID: 608675355870336799, guid: f6e0b7b2b03f245d690b2009444826fa, type: 3}
+  steamAreaPrefab: {fileID: 1782639606961843302, guid: f7e6fcaa46eed45e99fa7c34af995fd1, type: 3}
+  steamWallPrefab: {fileID: 4020497483579227255, guid: 10dc098c0270d42fa9712fe241c30404, type: 3}
   gameManager: {fileID: 1746984134}
   tokenPlacementManager: {fileID: 2110000000000000002}
-  wispPrefab: {fileID: 608675355870336799, guid: f6e0b7b2b03f245d690b2009444826fa, type: 3}
+  showPairedHazardOutlines: 1
+  fireOutlineColor: {r: 0.95, g: 0.45, b: 0.15, a: 0.9}
+  iceOutlineColor: {r: 0.4, g: 0.75, b: 1, a: 0.9}
+  outlineWidth: 0.05
 --- !u!4 &920500693
 Transform:
   m_ObjectHideFlags: 0
@@ -476,6 +528,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::GameManager
   isTutorialMode: 0
   messageBackground: {r: 0, g: 0, b: 0, a: 0}
+  upperUiFont: {fileID: 0}
   levelIntroMessage: 
   levelStartMessage: 
   levelVictoryMessage: Victory! Both heroes reached safety. Press R to play again.
@@ -504,6 +557,7 @@ MonoBehaviour:
   targetTimeSeconds: 60
   level2TargetTimeSeconds: 180
   level3TargetTimeSeconds: 120
+  level4TargetTimeSeconds: 150
   showInstructionPanel: 0
   instructionPanelSceneName: Level1Scene
   instructionLines:
@@ -528,6 +582,12 @@ MonoBehaviour:
   - 
   - Keep collecting tokens and avoid hazards!
   level3InstructionContinuePrompt: Press Space to start
+  level4InstructionSceneName: Level4Scene
+  level4InstructionLines:
+  - <b>Level 4</b>
+  - 
+  - Template ready. Drop in your maze layout and hazards.
+  level4InstructionContinuePrompt: Press Space to start
   emberHeartFullSprite: {fileID: 6341348101557482619, guid: 3b91ad87000d64526b2b182ed1ef4834, type: 3}
   emberHeartEmptySprite: {fileID: -4643077359141595314, guid: 3333514574fc144eb95cc807c8348464, type: 3}
   aquaHeartFullSprite: {fileID: -2880978766386009668, guid: 28fb0f56d13b04528a3ef03f381a909e, type: 3}

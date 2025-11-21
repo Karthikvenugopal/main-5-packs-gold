@@ -31,6 +31,8 @@ public class MazeBuilder_Level4 : MonoBehaviour, IPairedHazardManager
     [SerializeField] private GameObject iceHitEffectPrefab;
     [SerializeField] private GameObject exitPrefab;
     [SerializeField] private GameObject wispPrefab;
+    [SerializeField] private GameObject steamAreaPrefab;
+    [SerializeField] private GameObject steamWallPrefab;
 
     [Header("Dependencies")]
     [SerializeField] private GameManager gameManager;
@@ -60,19 +62,19 @@ public class MazeBuilder_Level4 : MonoBehaviour, IPairedHazardManager
     {
         "################################", // row 0
         "#F##..............#............#", // row 1
-        "#.##.#####.####.###.######.###.#", // row 2
-        "#............##.....######...#.#", // row 3
-        "##.#Z############.##########.#.#", // row 4
+        "#.##.#####.####.###.######.###L#", // row 2
+        "#............##..M..######...#L#", // row 3
+        "##.#Z############.##########.#L#", // row 4
         "#P.#Z###...######.##.....#...#.#", // row 5
         "####.###.#.######.##.#.#.#.#.#.#", // row 6
         "####.....#.####...##.#.#.#.#.#.#", // row 7
         "#W...#.###.####.####.#.#.#.#.#.#", // row 8
         "##########......###..........#.#", // row 9
         "###################.##########.#", // row 10
-        "#################...##########.#", // row 11
+        "#################M..##########.#", // row 11
         "#..################...########.#", // row 12
         "#E......###########.#.########.#", // row 13
-        "#######....#####....#..........#", // row 14
+        "#######.LLL#####....#..........#", // row 14
         "##########.......#####.#######.#", // row 15
         "################################"  // row 16
     };
@@ -220,6 +222,16 @@ public class MazeBuilder_Level4 : MonoBehaviour, IPairedHazardManager
                         SpawnFloor(cellPosition);
                         SpawnWispActivationZone(cellPosition);
                         break;
+                    case 'M':       // steam area
+                        SpawnFloor(cellPosition);
+                        SpawnSteamArea(cellPosition);
+                        break;
+
+                    case 'L':       // steam wall
+                        SpawnFloor(cellPosition);
+                        SpawnSteamWall(cellPosition);
+                        break;
+
 
                     default:
                         SpawnFloor(cellPosition);
@@ -422,6 +434,55 @@ public class MazeBuilder_Level4 : MonoBehaviour, IPairedHazardManager
 
         zone.AddComponent<WispActivationZone>();
     }
+
+    private void SpawnSteamArea(Vector2 position)
+    {
+        if (steamAreaPrefab == null)
+        {
+            Debug.LogWarning("MazeBuilder_Level4: Steam area prefab is not assigned.", this);
+            return;
+        }
+
+        Vector3 worldPosition = new Vector3(
+            position.x + 0.5f * cellSize,
+            position.y - 0.5f * cellSize,
+            0f
+        );
+
+        GameObject area = Instantiate(steamAreaPrefab, worldPosition, Quaternion.identity, transform);
+
+        if (area.TryGetComponent(out SpriteRenderer renderer))
+        {
+            renderer.sortingOrder = 2;          // 在墙上面一点
+            // 颜色如果你不在 prefab 里调，也可以在这里强行调
+            renderer.color = new Color(0.85f, 0.65f, 0.95f, 0.45f);
+        }
+
+
+    }
+
+
+    // 生成 Steam Wall（只能在 10s 蒸汽形态时通过的墙）
+    private GameObject SpawnSteamWall(Vector2 position)
+    {
+        if (steamWallPrefab == null)
+        {
+            Debug.LogWarning("MazeBuilder_Level4: Steam wall prefab is not assigned.", this);
+            return null;
+        }
+
+        GameObject wall = Instantiate(steamWallPrefab, position, Quaternion.identity, transform);
+        wall.layer = LayerMask.NameToLayer("Wall");   // 让它跟普通墙一样挡路
+
+        if (wall.TryGetComponent(out SpriteRenderer renderer))
+        {
+            renderer.sortingOrder = 1;                // 和普通墙同一层
+        }
+
+        return wall;
+    }
+
+
 
     private void PreparePairedHazards()
     {
