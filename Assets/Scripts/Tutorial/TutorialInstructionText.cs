@@ -144,6 +144,26 @@ public class TutorialInstructionText : MonoBehaviour
         }
     }
 
+    private System.Collections.IEnumerator CheckRendererDelayed()
+    {
+        yield return null; // Wait one frame for TextMeshPro to fully initialize
+        
+        if (_textMesh != null)
+        {
+            MeshRenderer renderer = _textMesh.GetComponent<MeshRenderer>();
+            if (renderer != null)
+            {
+                renderer.sortingOrder = 10;
+                renderer.enabled = true;
+                Debug.Log($"[TutorialInstructionText] Renderer found after delay on {gameObject.name}, enabled: {renderer.enabled}");
+            }
+            else
+            {
+                Debug.LogError($"[TutorialInstructionText] Still no MeshRenderer found after delay on {gameObject.name}");
+            }
+        }
+    }
+
     private void SetupPlayerGlow()
     {
         // Auto-detect player if enabled and target not set
@@ -286,11 +306,44 @@ public class TutorialInstructionText : MonoBehaviour
 
     private void SetupText()
     {
+        // Ensure GameObject is active before setting up TextMeshPro
+        if (!gameObject.activeSelf)
+        {
+            gameObject.SetActive(true);
+        }
+
         // Get or create TextMeshPro component
         _textMesh = GetComponent<TextMeshPro>();
         if (_textMesh == null)
         {
             _textMesh = gameObject.AddComponent<TextMeshPro>();
+            Debug.Log($"[TutorialInstructionText] Created TextMeshPro component on {gameObject.name}");
+        }
+
+        // Ensure font is assigned (get default from TMP Settings if not set)
+        // Note: TextMeshPro should auto-assign default font, but we'll ensure it's set
+        if (_textMesh.font == null)
+        {
+            if (TMP_Settings.defaultFontAsset != null)
+            {
+                _textMesh.font = TMP_Settings.defaultFontAsset;
+                Debug.Log($"[TutorialInstructionText] Assigned default font to {gameObject.name}");
+            }
+            else
+            {
+                Debug.LogError($"[TutorialInstructionText] No default font asset found in TMP Settings for {gameObject.name}");
+            }
+        }
+        
+        // Ensure font material is assigned (critical for rendering)
+        // TextMeshPro should automatically assign the material when font is set, but we'll ensure it
+        if (_textMesh.font != null && _textMesh.fontSharedMaterial == null)
+        {
+            // The material should be automatically assigned, but if not, try to get it from the font
+            if (_textMesh.font.material != null)
+            {
+                _textMesh.fontSharedMaterial = _textMesh.font.material;
+            }
         }
 
         // Configure text
@@ -311,6 +364,27 @@ public class TutorialInstructionText : MonoBehaviour
             _textMesh.rectTransform.sizeDelta = new Vector2(width, height);
         }
 
+        // Configure renderer for world-space visibility (ensure it renders above other objects)
+        MeshRenderer renderer = _textMesh.GetComponent<MeshRenderer>();
+        if (renderer != null)
+        {
+            renderer.sortingOrder = 10; // High sorting order to ensure visibility
+            renderer.enabled = true; // Ensure renderer is enabled
+            Debug.Log($"[TutorialInstructionText] Renderer found on {gameObject.name}, sortingOrder: {renderer.sortingOrder}, enabled: {renderer.enabled}, material: {renderer.sharedMaterial != null}");
+        }
+        else
+        {
+            Debug.LogWarning($"[TutorialInstructionText] No MeshRenderer found on {gameObject.name} after creating TextMeshPro");
+            // Try to get it after a frame delay
+            StartCoroutine(CheckRendererDelayed());
+        }
+
+        // Force mesh update to ensure text renders
+        _textMesh.ForceMeshUpdate();
+        
+        // Debug info
+        Debug.Log($"[TutorialInstructionText] SetupText complete for {gameObject.name}: text='{instructionText}', font={_textMesh.font != null}, position={transform.position}, active={gameObject.activeSelf}");
+
         // Store original color for fade effect
         _originalColor = textColor;
     }
@@ -320,13 +394,46 @@ public class TutorialInstructionText : MonoBehaviour
     /// </summary>
     public void Show()
     {
+        Debug.Log($"[TutorialInstructionText] Show() called for {gameObject.name}");
+        
+        // Ensure GameObject is active
+        if (!gameObject.activeSelf)
+        {
+            gameObject.SetActive(true);
+            Debug.Log($"[TutorialInstructionText] Activated GameObject {gameObject.name}");
+        }
+
         if (_textMesh == null) SetupText();
+        
+        if (_textMesh == null)
+        {
+            Debug.LogError($"[TutorialInstructionText] TextMeshPro is null after SetupText for {gameObject.name}");
+            return;
+        }
         
         _isVisible = true;
         _isHiding = false;
         _hasFiredEvent = false;
         _textMesh.color = _originalColor;
         _textMesh.gameObject.SetActive(true);
+        
+        // Ensure renderer is enabled
+        MeshRenderer renderer = _textMesh.GetComponent<MeshRenderer>();
+        if (renderer != null)
+        {
+            renderer.enabled = true;
+            Debug.Log($"[TutorialInstructionText] Enabled renderer on {gameObject.name}, sortingOrder: {renderer.sortingOrder}");
+        }
+        else
+        {
+            Debug.LogWarning($"[TutorialInstructionText] No MeshRenderer found when showing {gameObject.name}");
+        }
+        
+        // Force mesh update to ensure text renders
+        _textMesh.ForceMeshUpdate();
+        
+        // Additional debug
+        Debug.Log($"[TutorialInstructionText] Show() complete for {gameObject.name}: text='{_textMesh.text}', font={_textMesh.font != null}, color={_textMesh.color}, position={transform.position}, bounds={_textMesh.bounds}");
 
         // Start text glow effect
         if (enableTextGlow)
@@ -383,7 +490,17 @@ public class TutorialInstructionText : MonoBehaviour
         }
         else
         {
-            _textMesh.gameObject.SetActive(false);
+            // Disable renderer instead of deactivating GameObject to preserve script functionality
+            MeshRenderer renderer = _textMesh.GetComponent<MeshRenderer>();
+            if (renderer != null)
+            {
+                renderer.enabled = false;
+            }
+            else
+            {
+                // Fallback: deactivate GameObject if renderer not found
+                _textMesh.gameObject.SetActive(false);
+            }
             // Fire event when hidden (immediate)
             FireHiddenEvent();
         }
@@ -456,7 +573,17 @@ public class TutorialInstructionText : MonoBehaviour
             yield return null;
         }
 
-        _textMesh.gameObject.SetActive(false);
+        // Disable renderer instead of deactivating GameObject
+        MeshRenderer renderer = _textMesh.GetComponent<MeshRenderer>();
+        if (renderer != null)
+        {
+            renderer.enabled = false;
+        }
+        else
+        {
+            // Fallback: deactivate GameObject if renderer not found
+            _textMesh.gameObject.SetActive(false);
+        }
         _fadeCoroutine = null;
 
         // Fire event when fade completes

@@ -243,7 +243,7 @@ Camera:
     x: 0
     y: 0
     width: 1
-    height: 0.8515
+    height: 1
   near clip plane: 0.3
   far clip plane: 1000
   field of view: 60
@@ -475,8 +475,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::GameManager
   isTutorialMode: 0
   messageBackground: {r: 0, g: 0, b: 0, a: 0.55}
-  levelIntroMessage: 'Work together: Ember melts ice; Aqua extinguishes fire.'
-  levelStartMessage: Work together. Ember melts ice; Aqua extinguishes fire.
+  levelIntroMessage: 
+  levelStartMessage: 
   levelVictoryMessage: Victory! Both heroes reached safety. Press R to play again.
   waitForPartnerMessage: '{0} made it. Wait for your partner!'
   exitReminderMessage: Both heroes must stand in the exit to finish.
@@ -538,7 +538,7 @@ MonoBehaviour:
   heartIconSize: {x: 30, y: 30}
   tokenIconSize: {x: 30, y: 30}
   topUiBarHeight: 160
-  topUiBarColor: {r: 0.1, g: 0.1, b: 0.1, a: 0.8}
+  topUiBarColor: {r: 0, g: 0, b: 0, a: 0}
   heartLossSfx: {fileID: 0}
   heartLossSfxVolume: 0.9
   fireTokensCollected: 0

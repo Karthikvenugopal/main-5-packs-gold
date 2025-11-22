@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.Events;
 using UnityEngine.UI;
 using TMPro;
 
@@ -9,6 +10,8 @@ public class LevelSelectUI : MonoBehaviour
     [SerializeField] private string level1Scene = "Level1Scene";
     [SerializeField] private string level2Scene = "Level2Scene";
     [SerializeField] private string level3Scene = "Level3Scene";
+    [SerializeField] private string level5Scene = "Level5Scene";
+    [SerializeField] private string level4Scene = "Level4Scene";
 
     [Header("Button References")]
     [SerializeField] private Button[] levelButtons;
@@ -30,11 +33,14 @@ public class LevelSelectUI : MonoBehaviour
     public void LoadLevel1() => LoadScene(level1Scene);
     public void LoadLevel2() => LoadScene(level2Scene);
     public void LoadLevel3() => LoadScene(level3Scene);
+    // public void LoadLevel5() => LoadScene(level5Scene); // Temporarily commented out
+    public void LoadLevel4() => LoadScene(level4Scene);
 
     private void Awake()
     {
         CaptureButtonsFromChildren();
         ApplyButtonStyle();
+        WireButtonCallbacks();
     }
 
 #if UNITY_EDITOR
@@ -42,6 +48,7 @@ public class LevelSelectUI : MonoBehaviour
     {
         CaptureButtonsFromChildren();
         ApplyButtonStyle();
+        WireButtonCallbacks();
     }
 #endif
 
@@ -89,6 +96,26 @@ public class LevelSelectUI : MonoBehaviour
         }
     }
 
+    private void WireButtonCallbacks()
+    {
+        if (levelButtons == null) return;
+
+        AssignButtonHandler(0, LoadLevel1);
+        AssignButtonHandler(1, LoadLevel2);
+        AssignButtonHandler(2, LoadLevel3);
+        AssignButtonHandler(3, LoadLevel4);
+    }
+
+    private void AssignButtonHandler(int index, UnityAction handler)
+    {
+        if (index < 0 || index >= levelButtons.Length) return;
+        var button = levelButtons[index];
+        if (button == null) return;
+
+        button.onClick.RemoveAllListeners();
+        button.onClick.AddListener(handler);
+    }
+
     private void LoadScene(string sceneName)
     {
         if (string.IsNullOrEmpty(sceneName))
@@ -100,4 +127,3 @@ public class LevelSelectUI : MonoBehaviour
         SceneManager.LoadScene(sceneName);
     }
 }
-

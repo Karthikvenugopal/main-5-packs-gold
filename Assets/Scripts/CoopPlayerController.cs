@@ -25,9 +25,9 @@ public class CoopPlayerController : MonoBehaviour
     [SerializeField] private float hazardDamageCooldown = 0.5f;
 
     [Header("Feedback")]
-    [SerializeField, Range(1, 6)] private int hurtFlashCount = 4;
-    [SerializeField, Range(0.01f, 0.5f)] private float hurtFlashOnDuration = 0.3f;
-    [SerializeField, Range(0.01f, 0.5f)] private float hurtFlashOffDuration = 0.3f;
+    [SerializeField, Range(1, 6)] private int hurtFlashCount = 3;
+    [SerializeField, Range(0.01f, 0.5f)] private float hurtFlashOnDuration = 0.25f;
+    [SerializeField, Range(0.01f, 0.5f)] private float hurtFlashOffDuration = 0.2f;
     [SerializeField, Range(0f, 1f)] private float hurtFlashGreyBlend = 0.4f;
     [SerializeField, Range(0f, 1f)] private float hurtFlashBrightnessBoost = 0.09f;
     [Tooltip("Seconds spent easing down to the hurt scale.")]
@@ -38,6 +38,7 @@ public class CoopPlayerController : MonoBehaviour
     [SerializeField, Min(0f)] private float hurtScaleRecoverDuration = 1f;
     [Tooltip("Multiplier applied to local scale when hurt.")]
     [SerializeField, Range(0.1f, 1f)] private float hurtScaleMultiplier = 0.6f;
+
     [Header("Hazard Pushback")]
     [Tooltip("Distance (in world units) the player is pushed away from their own obstacle.")]
     [SerializeField, Range(0.1f, 1.5f)] private float hazardPushDistance = 0.45f;
@@ -49,6 +50,7 @@ public class CoopPlayerController : MonoBehaviour
     [SerializeField, Range(0.1f, 1f)] private float hazardBounceDuration = 0.22f;
     [Tooltip("Energy retained on each bounce (1 = no slowdown, 0 = stop immediately).")]
     [SerializeField, Range(0f, 1f)] private float hazardBounceElasticity = 0.75f;
+
     [Header("Hazard Input Lock")]
     [Tooltip("Seconds to ignore user movement input after being hurt by own obstacle.")]
     [SerializeField, Range(0.5f, 5f)] private float hazardInputLockDuration = 1.5f;
@@ -71,6 +73,10 @@ public class CoopPlayerController : MonoBehaviour
 
     private readonly Dictionary<int, float> _lastHazardDamageTimes = new();
 
+    // 蒸汽状态引用
+    private PlayerSteamState _steamState;
+    public bool IsInSteamMode => _steamState != null && _steamState.IsInSteamMode;
+
     public PlayerRole Role => _role;
 
     private void Awake()
@@ -88,6 +94,12 @@ public class CoopPlayerController : MonoBehaviour
         {
             int wallLayer = LayerMask.NameToLayer("Wall");
             collisionMask = wallLayer >= 0 ? (1 << wallLayer) : Physics2D.AllLayers;
+        }
+
+        _steamState = GetComponent<PlayerSteamState>();
+        if (_steamState == null)
+        {
+            Debug.LogWarning($"[CoopPlayerController] {name} has NO PlayerSteamState component. Steam mode will never be on.");
         }
     }
 
@@ -228,6 +240,13 @@ public class CoopPlayerController : MonoBehaviour
     {
         if (collider == null) return false;
 
+        // 蒸汽模式：不触发任何特殊墙体逻辑
+        if (IsInSteamMode)
+        {
+            Debug.Log($"[CoopPlayerController] {name} is in STEAM MODE, ignore special obstacle: {collider.name}", this);
+            return false;
+        }
+
         if (collider.TryGetComponent(out IceWall iceWall))
         {
             if (_role == PlayerRole.Fireboy && iceWall.TryMelt(_role))
@@ -312,14 +331,9 @@ public class CoopPlayerController : MonoBehaviour
 
     private Color BuildHurtFlashColor(Color roleColor)
     {
-        float brightness = Mathf.Clamp01(hurtFlashBrightnessBoost);
-        float greyBlend = Mathf.Clamp01(hurtFlashGreyBlend);
-
-        Color brightened = Color.Lerp(roleColor, Color.white, brightness);
-        Color greyTarget = Color.Lerp(brightened, Color.gray, greyBlend);
-
-        greyTarget.a = roleColor.a;
-        return greyTarget;
+        Color redFlash = Color.red;
+        redFlash.a = roleColor.a;
+        return redFlash;
     }
 
     public void SetMovementEnabled(bool enabled)
@@ -351,6 +365,13 @@ public class CoopPlayerController : MonoBehaviour
 
     private bool TryApplyHazardDamage(Collider2D hazard)
     {
+        // 蒸汽模式：完全免疫 Hazard 伤害
+        if (IsInSteamMode)
+        {
+            Debug.Log($"[CoopPlayerController] {name} in STEAM MODE, ignore hazard damage from {hazard.name}", this);
+            return false;
+        }
+
         if (hazard == null || (_gameManager == null && _gameManagerTutorial == null)) return false;
 
         int hazardId = hazard.GetInstanceID();
@@ -415,7 +436,6 @@ public class CoopPlayerController : MonoBehaviour
         float distance = Mathf.Max(0.01f, hazardPushDistance);
         Vector2 target = origin + direction * distance;
 
-        // Snap using MovePosition so physics interpolation stays smooth.
         _rigidbody.MovePosition(target);
         _moveInput = Vector2.zero;
         _pendingPushOverride = true;
@@ -545,6 +565,44 @@ public class CoopPlayerController : MonoBehaviour
         }
         Vector3 baseScale = _initialScale == Vector3.zero ? Vector3.one : _initialScale;
         transform.localScale = baseScale;
+    }
+
+    /// <summary>
+    /// Allows non-wall enemies (like Wisp) to inflict damage on the player.
+    /// </summary>
+    public void TakeDamageFromEnemy(Collider2D enemyCollider, int damageAmount = 1)
+    {
+        // 蒸汽模式：敌人也不能掉心
+        if (IsInSteamMode)
+        {
+            Debug.Log($"[CoopPlayerController] {name} in STEAM MODE, ignore enemy damage from {enemyCollider.name}", this);
+            return;
+        }
+
+        if (_gameManager == null && _gameManagerTutorial == null) return;
+
+        int enemyId = enemyCollider.GetInstanceID();
+        float now = Time.time;
+
+        if (_lastHazardDamageTimes.TryGetValue(enemyId, out float lastTime))
+        {
+            if (now - lastTime < Mathf.Max(0f, hazardDamageCooldown))
+            {
+                return;
+            }
+        }
+
+        _lastHazardDamageTimes[enemyId] = now;
+        TriggerHurtScaleRoutine();
+
+        GameManager.DamageCause cause = GameManager.DamageCause.Unknown;
+
+        _gameManagerTutorial?.DamagePlayer(_role, damageAmount);
+
+        if (_gameManager != null)
+        {
+            _gameManager.DamagePlayer(_role, damageAmount, cause, enemyCollider.transform.position);
+        }
     }
 
     private static float EaseOutQuad(float t)
