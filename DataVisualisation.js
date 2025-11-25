@@ -150,6 +150,9 @@ function ensureTokenCompletionSheet_(ss, opts) {
   ]]);
   sh.getRange('G:G').setNumberFormat('0');
   sh.getRange('D:D').setNumberFormat('0%');
+  safeGetCharts_(sh).forEach(function(chart) {
+    sh.removeChart(chart);
+  });
   return sh;
 }
 

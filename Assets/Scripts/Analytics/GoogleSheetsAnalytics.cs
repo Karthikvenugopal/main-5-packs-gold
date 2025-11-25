@@ -11,6 +11,7 @@ namespace Analytics
     public static class GoogleSheetsAnalytics
     {
         private const string ConfigResourceName = "google_sheets_config"; // Resources/google_sheets_config.json
+        private const string DefaultSheetId = "analytics_elemental_final";
 
         private static readonly HashSet<string> AllowedLevels = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
@@ -18,10 +19,12 @@ namespace Analytics
             "level2scene",
             "level3scene",
             "level4scene",
+            "level5scene",
             "level1",
             "level2",
             "level3",
-            "level4"
+            "level4",
+            "level5"
         };
 
         private static string _webAppUrl;
@@ -60,6 +63,12 @@ namespace Analytics
             catch (Exception e)
             {
                 Debug.LogWarning($"[Analytics] Failed to load config: {e.Message}");
+            }
+
+            // Fallback to the default sheet if one is not provided in config
+            if (string.IsNullOrWhiteSpace(_sheetId))
+            {
+                _sheetId = DefaultSheetId;
             }
 
             if (string.IsNullOrWhiteSpace(_webAppUrl))
@@ -236,7 +245,7 @@ namespace Analytics
         {
             if (AllowedLevels.Contains(levelId ?? string.Empty)) return true;
 
-            Debug.Log($"[Analytics] Skipping {context} for scene '{levelId}'. Only Level1/Level2/Level3/Level4 allowed.");
+            Debug.Log($"[Analytics] Skipping {context} for scene '{levelId}'. Only Level1/Level2/Level3/Level4/Level5 allowed.");
             return false;
         }
 
@@ -245,6 +254,9 @@ namespace Analytics
             if (!string.IsNullOrWhiteSpace(_sheetId))
             {
                 data["sid"] = _sheetId;
+                #if UNITY_EDITOR || DEVELOPMENT_BUILD
+                Debug.Log($"[Analytics] Using sheet id '{_sheetId}'");
+                #endif
             }
         }
 
