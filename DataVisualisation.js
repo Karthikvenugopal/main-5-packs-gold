@@ -36,7 +36,7 @@ function ensureAvgTimeSuccessSheet_(ss, opts) {
   if (!sh) sh = ss.insertSheet('AvgTime_Success');
   else if (opts && opts.reset) sh.clear();
 
-  const formula = `=QUERY(Data!A2:E, "select C, avg(E) where D = TRUE and (C='Level1Scene' or C='Level1' or C='Level2Scene' or C='Level2' or C='Level3Scene' or C='Level3') group by C label C 'level_id', avg(E) 'avg_time_success_s'", 0)`;
+  const formula = `=QUERY(Data!A2:E, "select C, avg(E) where D = TRUE group by C label C 'level_id', avg(E) 'avg_time_success_s'", 0)`;
   sh.getRange('A1').setValue(formula);
 
   if (opts && opts.reset) sh.getCharts().forEach(c => sh.removeChart(c));
@@ -59,7 +59,7 @@ function ensureAvgTimeFailureSheet_(ss, opts) {
   if (!sh) sh = ss.insertSheet('AvgTime_Failure');
   else if (opts && opts.reset) sh.clear();
 
-  const formula = `=QUERY(Data!A2:E, "select C, avg(E) where D = FALSE and (C='Level1Scene' or C='Level1' or C='Level2Scene' or C='Level2' or C='Level3Scene' or C='Level3') group by C label C 'level_id', avg(E) 'avg_time_failure_s'", 0)`;
+  const formula = `=QUERY(Data!A2:E, "select C, avg(E) where D = FALSE group by C label C 'level_id', avg(E) 'avg_time_failure_s'", 0)`;
   sh.getRange('A1').setValue(formula);
 
   if (opts && opts.reset) sh.getCharts().forEach(c => sh.removeChart(c));
@@ -87,12 +87,10 @@ function ensureRetryDensitySheet_(ss, opts) {
   const last = dataSh.getLastRow();
   const rows = last > 1 ? dataSh.getRange(2, 1, last - 1, 5).getValues() : [];
 
-  const allowed = new Set(['level1','level1scene','level2','level2scene','level3','level3scene']);
   const stats = new Map(); // level -> { total, fail }
   rows.forEach(r => {
     const level = String(r[2] || '').trim();
-    const lvlLower = level.toLowerCase();
-    if (!allowed.has(lvlLower)) return;
+    if (!level) return;
     let success = r[3];
     if (typeof success !== 'boolean') success = /^(1|true|yes|y)$/i.test(String(success || ''));
     const s = stats.get(level) || { total: 0, fail: 0 };
@@ -262,13 +260,6 @@ function extractTokenCompletionStats_(data) {
 
 function processEvent_(ss, data) {
   const level = String(data.level_id || '').trim();
-  const lvlLower = level.toLowerCase();
-  const allowed = new Set(['level1', 'level1scene', 'level2', 'level2scene', 'level3', 'level3scene']);
-  if (!allowed.has(lvlLower)) {
-    return ContentService.createTextOutput(JSON.stringify({ ok: true, ignored: true }))
-      .setMimeType(ContentService.MimeType.JSON);
-  }
-
   const evt = String(data.event || '').trim().toLowerCase();
 
   if (evt === 'fail' || /^restart/.test(evt) || evt === 'retry') {
@@ -357,7 +348,7 @@ function ensureDataSheet_(ss) {
 
 function purgeNonWhitelistedRows() {
   const ss = SpreadsheetApp.getActive();
-  const allowed = new Set(['level1', 'level1scene', 'level2', 'level2scene', 'level3', 'level3scene']);
+  const allowed = null; // allow all levels; keep rows untouched
 
   const purgeSheet = (name, levelCol) => {
     const sh = ss.getSheetByName(name);
@@ -368,7 +359,7 @@ function purgeNonWhitelistedRows() {
     const toDelete = [];
     for (let i = 0; i < rng.length; i++) {
       const v = String(rng[i][0] || '').toLowerCase();
-      if (!allowed.has(v)) toDelete.push(i + 2);
+      if (allowed && !allowed.has(v)) toDelete.push(i + 2);
     }
     for (let j = toDelete.length - 1; j >= 0; j--) {
       sh.deleteRow(toDelete[j]);
@@ -383,7 +374,6 @@ function purgeNonWhitelistedRows() {
 // Force the AvgTime_* formulas to only include Level1/Level2
 function repairAverageTimeSheets() {
   const ss = SpreadsheetApp.getActive();
-  const where = "(C='Level1Scene' or C='Level1' or C='Level2Scene' or C='Level2' or C='Level3Scene' or C='Level3')";
 
   const setFormula = (name, f) => {
     let sh = ss.getSheetByName(name);
@@ -392,8 +382,8 @@ function repairAverageTimeSheets() {
     sh.getRange('A1').setValue(f);
   };
 
-  setFormula('AvgTime_Success', `=QUERY(Data!A2:E, "select C, avg(E) where D = TRUE and ${where} group by C label C 'level_id', avg(E) 'avg_time_success_s'", 0)`);
-  setFormula('AvgTime_Failure', `=QUERY(Data!A2:E, "select C, avg(E) where D = FALSE and ${where} group by C label C 'level_id', avg(E) 'avg_time_failure_s'", 0)`);
+  setFormula('AvgTime_Success', `=QUERY(Data!A2:E, "select C, avg(E) where D = TRUE group by C label C 'level_id', avg(E) 'avg_time_success_s'", 0)`);
+  setFormula('AvgTime_Failure', `=QUERY(Data!A2:E, "select C, avg(E) where D = FALSE group by C label C 'level_id', avg(E) 'avg_time_failure_s'", 0)`);
 }
 
 // ---------- Heart Loss Metrics ----------
