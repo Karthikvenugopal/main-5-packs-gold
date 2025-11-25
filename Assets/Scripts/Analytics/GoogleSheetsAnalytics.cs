@@ -13,20 +13,6 @@ namespace Analytics
         private const string ConfigResourceName = "google_sheets_config"; // Resources/google_sheets_config.json
         private const string DefaultSheetId = "analytics_elemental_final";
 
-        private static readonly HashSet<string> AllowedLevels = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-        {
-            "level1scene",
-            "level2scene",
-            "level3scene",
-            "level4scene",
-            "level5scene",
-            "level1",
-            "level2",
-            "level3",
-            "level4",
-            "level5"
-        };
-
         private static string _webAppUrl;
         private static string _sheetId; // Optional spreadsheet id for standalone Apps Script
         private static string _sessionId;
@@ -243,9 +229,8 @@ namespace Analytics
 
         private static bool EnsureLevelAllowed(string levelId, string context)
         {
-            if (AllowedLevels.Contains(levelId ?? string.Empty)) return true;
-
-            Debug.Log($"[Analytics] Skipping {context} for scene '{levelId}'. Only Level1/Level2/Level3/Level4/Level5 allowed.");
+            if (!string.IsNullOrWhiteSpace(levelId)) return true;
+            Debug.Log($"[Analytics] Skipping {context}: level id is empty.");
             return false;
         }
 
