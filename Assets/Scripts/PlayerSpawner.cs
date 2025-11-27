@@ -5,6 +5,7 @@ public class PlayerSpawner : MonoBehaviour
     [SerializeField] private GameObject playerPrefab;
     [SerializeField] private GameManager gameManager;
     [SerializeField] private GameManagerTutorial gameManagerTutorial;
+    [SerializeField] private float playerVerticalOffset = 0.5f;
 
     private void Start()
     {
@@ -28,7 +29,10 @@ public class PlayerSpawner : MonoBehaviour
             return;
         }
 
-        GameObject playerObject = Instantiate(playerPrefab, spawnMarker.transform.position, Quaternion.identity);
+        Vector3 spawnPosition = spawnMarker.transform.position;
+        spawnPosition.y -= playerVerticalOffset;
+
+        GameObject playerObject = Instantiate(playerPrefab, spawnPosition, Quaternion.identity);
         playerObject.name = role.ToString();
         playerObject.tag = role == PlayerRole.Fireboy ? "FirePlayer" : "WaterPlayer";
 
