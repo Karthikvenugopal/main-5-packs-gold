@@ -174,12 +174,12 @@ public class MazeBuilder_Level4 : MonoBehaviour, IPairedHazardManager
 
                     case 'F':
                         SpawnFloor(cellPosition);
-                        CreateSpawnMarker(cellPosition, FireSpawnName, offsetUpOneCell: true);
+                        CreateSpawnMarker(cellPosition, FireSpawnName, offsetUpOneCell: true, shiftHalfTileLeft: true);
                         break;
 
                     case 'W':
                         SpawnFloor(cellPosition);
-                        CreateSpawnMarker(cellPosition, WaterSpawnName, offsetUpOneCell: true);
+                        CreateSpawnMarker(cellPosition, WaterSpawnName, offsetUpOneCell: true, shiftHalfTileLeft: true);
                         break;
 
                     case 'I':
@@ -757,16 +757,27 @@ public class MazeBuilder_Level4 : MonoBehaviour, IPairedHazardManager
         _tearingDown = true;
     }
 
-    private void CreateSpawnMarker(Vector2 position, string name, bool offsetUpOneCell = false)
+    private void CreateSpawnMarker(Vector2 position, string name, bool offsetUpOneCell = false, bool shiftHalfTileLeft = false)
     {
         Vector2 worldOffset = new Vector2(0.5f * cellSize, -0.5f * cellSize);
         if (offsetUpOneCell)
         {
             worldOffset += new Vector2(0f, cellSize);
         }
+        if (shiftHalfTileLeft)
+        {
+            worldOffset += new Vector2(-0.5f * cellSize, 0f);
+        }
 
-        GameObject marker = new GameObject(name);
-        marker.transform.position = position + worldOffset;
+        Vector3 targetPosition = position + worldOffset;
+
+        GameObject marker = GameObject.Find(name);
+        if (marker == null)
+        {
+            marker = new GameObject(name);
+        }
+
+        marker.transform.position = targetPosition;
         marker.transform.SetParent(transform);
     }
 
