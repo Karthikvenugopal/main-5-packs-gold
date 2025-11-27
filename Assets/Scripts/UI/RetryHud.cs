@@ -24,8 +24,19 @@ public class RetryHud : MonoBehaviour
     private static void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
         var name = scene.name;
-        if (!IsGameplayLevel(name)) return;
-        if (FindObjectOfType<RetryHud>() != null) return;
+        var existing = Object.FindObjectOfType<RetryHud>();
+
+        if (!IsGameplayLevel(name))
+        {
+            if (existing != null)
+            {
+                existing.DestroySelf();
+            }
+            return;
+        }
+
+        if (existing != null) return;
+
         var host = new GameObject("__RetryHUD");
         Object.DontDestroyOnLoad(host);
         host.AddComponent<RetryHud>().CreateUI();
@@ -187,5 +198,21 @@ public class RetryHud : MonoBehaviour
         }
 
         SceneManager.LoadScene("MainMenu");
+    }
+
+    private void DestroySelf()
+    {
+        if (_paused)
+        {
+            Time.timeScale = 1f;
+            _paused = false;
+        }
+
+        if (_modalPanel != null)
+        {
+            _modalPanel.SetActive(false);
+        }
+
+        Destroy(gameObject);
     }
 }
