@@ -13,6 +13,8 @@ GameObject:
   - component: {fileID: 1557306749652676932}
   - component: {fileID: 772786837209400136}
   - component: {fileID: -2899828019193919791}
+  - component: {fileID: 2348213408170307117}
+  - component: {fileID: 398678040470151851}
   m_Layer: 0
   m_Name: Player
   m_TagString: Player
@@ -202,3 +204,51 @@ CircleCollider2D:
   m_CompositeOrder: 0
   m_Offset: {x: 0, y: 0}
   m_Radius: 0.5
+--- !u!114 &2348213408170307117
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7307446650723487989}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 43d4d8a2aa9d472f99a8021ecf6d9e48, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CoopPlayerController
+  moveSpeed: 4
+  collisionMask:
+    serializedVersion: 2
+    m_Bits: 0
+  collisionBoxScale: 0.75
+  fireboyColor: {r: 0.93, g: 0.39, b: 0.18, a: 1}
+  watergirlColor: {r: 0.2, g: 0.45, b: 0.95, a: 1}
+  hazardDamageCooldown: 0.5
+  hurtFlashCount: 3
+  hurtFlashOnDuration: 0.25
+  hurtFlashOffDuration: 0.2
+  hurtFlashGreyBlend: 0.4
+  hurtFlashBrightnessBoost: 0.09
+  hurtScaleShrinkDuration: 1
+  hurtScaleHoldDuration: 1
+  hurtScaleRecoverDuration: 1
+  hurtScaleMultiplier: 0.6
+  hazardPushDistance: 0.45
+  hazardPushAngularVariance: 20
+  hazardBounceSpeed: 3.5
+  hazardBounceDuration: 0.22
+  hazardBounceElasticity: 0.75
+  hazardInputLockDuration: 1.5
+--- !u!114 &398678040470151851
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7307446650723487989}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2417cdd36be5e48e78b42c59b229cd7a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerSteamState
+  defaultSteamDuration: 10

@@ -36,7 +36,6 @@ public class TutorialSequenceManager : MonoBehaviour
     private bool _wasdSequenceStarted = false;
     private bool _arrowSequenceStarted = false;
     private bool _workTogetherShown = false;
-    private bool _instructionsHiddenOnExit = false;
 
     private void Start()
     {
@@ -54,41 +53,6 @@ public class TutorialSequenceManager : MonoBehaviour
 
         // Subscribe to FireWall crossed event
         FireWall.OnWatergirlCrossed += OnWatergirlCrossedFirewall;
-
-        // Subscribe to GameManagerTutorial exit events
-        GameManagerTutorial.OnPlayerEnteredExitEvent += OnPlayerEnteredExit;
-    }
-
-    private void OnPlayerEnteredExit(CoopPlayerController player)
-    {
-        if (_instructionsHiddenOnExit) return;
-        _instructionsHiddenOnExit = true;
-
-        // Hide all instruction texts when one player reaches exit
-        HideInstructionTexts();
-    }
-
-    private void HideInstructionTexts()
-    {
-        if (instructionFireLoss != null)
-        {
-            instructionFireLoss.Hide();
-        }
-
-        if (instructionIceMelt != null)
-        {
-            instructionIceMelt.Hide();
-        }
-
-        if (instructionIceFreeze != null)
-        {
-            instructionIceFreeze.Hide();
-        }
-
-        if (instructionFirePutOut != null)
-        {
-            instructionFirePutOut.Hide();
-        }
     }
 
     private void OnWatergirlCrossedFirewall(FireWall fireWall)
@@ -212,8 +176,5 @@ public class TutorialSequenceManager : MonoBehaviour
         
         // Unsubscribe from FireWall event
         FireWall.OnWatergirlCrossed -= OnWatergirlCrossedFirewall;
-
-        // Unsubscribe from GameManagerTutorial exit event
-        GameManagerTutorial.OnPlayerEnteredExitEvent -= OnPlayerEnteredExit;
     }
 }
