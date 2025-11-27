@@ -418,7 +418,7 @@ public class MazeBuilder_Level4 : MonoBehaviour, IPairedHazardManager
 
         if (wisp.TryGetComponent(out WispEnemy wispEnemy))
         {
-            wispEnemy.ConfigureGridAlignment(cellSize, new Vector2(0.5f, 0.5f), new Vector2(0f, -0.5f));
+            wispEnemy.ConfigureGridAlignment(cellSize, new Vector2(0.5f, 0.5f), new Vector2(-0.5f, -0.5f));
         }
     }
     // --- END MODIFIED METHOD ---
