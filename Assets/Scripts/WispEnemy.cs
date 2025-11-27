@@ -15,11 +15,19 @@ public class WispEnemy : MonoBehaviour
     [SerializeField] private float waypointTolerance = 0.1f;
     [SerializeField] private LayerMask obstacleLayers; // Kept for OnTriggerEnter2D context
     [SerializeField] private float _mazeCellSize = 1.0f; 
-    
+
     // --- NEW PARAMETER: Reduce the effective radius Wisp uses to check for walls ---
     [Header("Collision Tuning")]
     [Tooltip("Multiplier to shrink the Wisp's Collider radius for movement checks.")]
     [SerializeField, Range(0.1f, 1f)] private float collisionRadiusMultiplier = 0.6f;
+
+    [Header("Grid Alignment")]
+    [Tooltip("Horizontal offset inside each cell (0 = left edge, 0.5 = center).")]
+    [SerializeField, Range(0f, 1f)] private float horizontalCellOffset = 0.1f;
+    [Tooltip("Vertical offset inside each cell (0 = top edge, 0.5 = center).")]
+    [SerializeField, Range(0f, 1f)] private float verticalCellOffset = 0.1f;
+
+    private Vector2 _cellOffset = Vector2.zero;
 
     private static readonly Vector2[] PatrolGridPoints = new Vector2[]
     {
@@ -82,10 +90,29 @@ public class WispEnemy : MonoBehaviour
 
     private Vector2 GridToWorldPosition(Vector2 gridPos)
     {
-        float x = gridPos.x * _mazeCellSize + 0.1f * _mazeCellSize;
-        float y = -gridPos.y * _mazeCellSize - 0.1f * _mazeCellSize; 
+        float offsetX = Mathf.Clamp01(horizontalCellOffset);
+        float offsetY = Mathf.Clamp01(verticalCellOffset);
+        float x = (gridPos.x + offsetX + _cellOffset.x) * _mazeCellSize;
+        float y = -(gridPos.y + offsetY + _cellOffset.y) * _mazeCellSize; 
         
         return new Vector2(x, y);
+    }
+
+    public void ConfigureGridAlignment(float cellSize, Vector2 normalizedOffset)
+    {
+        ConfigureGridAlignment(cellSize, normalizedOffset, Vector2.zero);
+    }
+
+    public void ConfigureGridAlignment(float cellSize, Vector2 normalizedOffset, Vector2 cellOffset)
+    {
+        if (cellSize > 0f)
+        {
+            _mazeCellSize = cellSize;
+        }
+
+        horizontalCellOffset = Mathf.Clamp01(normalizedOffset.x);
+        verticalCellOffset = Mathf.Clamp01(normalizedOffset.y);
+        _cellOffset = cellOffset;
     }
 
     private void Start()
