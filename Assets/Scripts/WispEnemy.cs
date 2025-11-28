@@ -23,9 +23,9 @@ public class WispEnemy : MonoBehaviour
 
     [Header("Grid Alignment")]
     [Tooltip("Horizontal offset inside each cell (0 = left edge, 0.5 = center).")]
-    [SerializeField, Range(0f, 1f)] private float horizontalCellOffset = 0.1f;
+    [SerializeField, Range(0f, 1f)] private float horizontalCellOffset = 0.5f;
     [Tooltip("Vertical offset inside each cell (0 = top edge, 0.5 = center).")]
-    [SerializeField, Range(0f, 1f)] private float verticalCellOffset = 0.1f;
+    [SerializeField, Range(0f, 1f)] private float verticalCellOffset = 0.5f;
 
     private Vector2 _cellOffset = Vector2.zero;
 

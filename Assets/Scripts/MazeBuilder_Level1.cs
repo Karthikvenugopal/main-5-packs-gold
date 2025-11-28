@@ -238,7 +238,8 @@ public class MazeBuilder_Level1 : MonoBehaviour
         Vector2 triggerWorldPosition = GetCellCenterPosition(targetCol, targetRow) + new Vector2(1f * cellSize, 0f);
 
         // Calculate fixed position (slightly right and higher near the top-left corner)
-        Vector2 fixedDialoguePosition = new Vector2(1.5f * cellSize, -0.3f * cellSize);
+        // Adjusted for centered player: moved slightly right to avoid overlap
+        Vector2 fixedDialoguePosition = new Vector2(2.0f * cellSize, -0.3f * cellSize);
 
         // Create trigger zone GameObject
         GameObject triggerZone = new GameObject("EmberControlsDialogueTrigger");
@@ -275,7 +276,8 @@ public class MazeBuilder_Level1 : MonoBehaviour
         Vector2 triggerWorldPosition = GetCellCenterPosition(targetCol, targetRow) + new Vector2(1f * cellSize, 0f);
 
         // Calculate fixed position for dialogue at bottom left corner of maze
-        Vector2 fixedDialoguePosition = new Vector2(1.5f * cellSize, -8.0f * cellSize);
+        // Adjusted for centered player: moved slightly right to avoid overlap
+        Vector2 fixedDialoguePosition = new Vector2(2.0f * cellSize, -8.0f * cellSize);
 
         // Create trigger zone GameObject
         GameObject triggerZone = new GameObject("AquaControlsDialogueTrigger");

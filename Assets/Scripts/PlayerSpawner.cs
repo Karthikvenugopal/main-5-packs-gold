@@ -5,7 +5,7 @@ public class PlayerSpawner : MonoBehaviour
     [SerializeField] private GameObject playerPrefab;
     [SerializeField] private GameManager gameManager;
     [SerializeField] private GameManagerTutorial gameManagerTutorial;
-    [SerializeField] private float playerVerticalOffset = 0.5f;
+    [SerializeField] private float playerVerticalOffset = 0f;
 
     private void Start()
     {
