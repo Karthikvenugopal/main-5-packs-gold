@@ -279,6 +279,8 @@ public class MazeBuilder_Level2 : MonoBehaviour
 
         // Add DialogueTriggerZone component
         DialogueTriggerZone dialogueTrigger = triggerZone.AddComponent<DialogueTriggerZone>();
+        // Lower the text relative to the player (default is 0.8f Y offset, setting to 0.3f)
+        dialogueTrigger.SetOffsetFromPlayer(new Vector2(5f, 0.3f));
     }
 
     private const float CameraVerticalPadding = 0.8f;
