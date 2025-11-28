@@ -61,9 +61,9 @@ public class MazeBuilder_Level4 : MonoBehaviour, IPairedHazardManager
     private static readonly string[] Layout =
     {
         "################################", // row 0
-        "#F##..............#............#", // row 1
+        "#F##.............3#............#", // row 1
         "#.##.#####.####.###.######.###L#", // row 2
-        "#............##..M..######...#L#", // row 3
+        "#...........4##..M..######...#L#", // row 3
         "##.#Z############.##########.#L#", // row 4
         "#P.#Z###...######.##.....#...#.#", // row 5
         "####.###.#.######.##.#.#.#.#.#.#", // row 6
@@ -208,6 +208,16 @@ public class MazeBuilder_Level4 : MonoBehaviour, IPairedHazardManager
                         SpawnCannon(cellPosition, CannonVariant.Ice);
                         break;
 
+                    case '3':
+                        SpawnFloor(cellPosition);
+                        SpawnLevel4Cannon(cellPosition, CannonVariant.Fire);
+                        break;
+
+                    case '4':
+                        SpawnFloor(cellPosition);
+                        SpawnLevel4Cannon(cellPosition, CannonVariant.Ice);
+                        break;
+
                     case 'E':
                         SpawnFloor(cellPosition);
                         SpawnExit(cellPosition);
@@ -334,6 +344,58 @@ public class MazeBuilder_Level4 : MonoBehaviour, IPairedHazardManager
         }
 
         cannon.transform.position = worldPosition;
+
+        if (!cannon.TryGetComponent(out CannonHazard hazard))
+        {
+            hazard = cannon.AddComponent<CannonHazard>();
+        }
+
+        GameObject selectedProjectile = variant == CannonVariant.Fire ? fireProjectilePrefab : iceProjectilePrefab;
+        if (selectedProjectile == null)
+        {
+            selectedProjectile = cannonProjectilePrefab;
+        }
+
+        GameObject selectedHitEffect = variant == CannonVariant.Fire ? fireHitEffectPrefab : iceHitEffectPrefab;
+        if (selectedHitEffect == null)
+        {
+            selectedHitEffect = cannonHitEffectPrefab;
+        }
+
+        hazard.Initialize(gameManager, cellSize, variant, selectedProjectile, selectedHitEffect);
+    }
+
+    private void SpawnLevel4Cannon(Vector2 position, CannonVariant variant)
+    {
+        // Move half a tile up: position.y is top of cell, -0.5 is center. 
+        // "Half a tile up" from center (-0.5) is 0.0 (top of cell).
+        // Or simply add 0.5f * cellSize to the previous center calculation.
+        Vector3 worldPosition = new Vector3(
+            position.x + 0.5f * cellSize,
+            position.y, // Was position.y - 0.5f * cellSize
+            0f
+        );
+
+        GameObject selectedPrefab = variant == CannonVariant.Fire ? fireCannonPrefab : iceCannonPrefab;
+        if (selectedPrefab == null)
+        {
+            selectedPrefab = cannonPrefab;
+        }
+
+        // Rotate 90 degrees to the left (Counter-Clockwise)
+        Quaternion rotation = Quaternion.Euler(0, 0, 90);
+
+        GameObject cannon = selectedPrefab != null
+            ? Instantiate(selectedPrefab, worldPosition, rotation, transform)
+            : new GameObject(variant == CannonVariant.Fire ? "FireCannon" : "IceCannon");
+
+        if (cannon.transform.parent != transform)
+        {
+            cannon.transform.SetParent(transform);
+        }
+
+        cannon.transform.position = worldPosition;
+        cannon.transform.rotation = rotation;
 
         if (!cannon.TryGetComponent(out CannonHazard hazard))
         {

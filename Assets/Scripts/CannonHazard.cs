@@ -88,11 +88,12 @@ public class CannonHazard : MonoBehaviour
 
         if (_projectilePrefabToUse != null)
         {
-            projectileGO = Instantiate(_projectilePrefabToUse, transform.position, Quaternion.identity, transform.parent);
+            projectileGO = Instantiate(_projectilePrefabToUse, transform.position, transform.rotation, transform.parent);
         }
         else
         {
             projectileGO = CreateFallbackProjectile();
+            projectileGO.transform.rotation = transform.rotation;
         }
 
         projectileGO.transform.SetParent(transform.parent, true);
