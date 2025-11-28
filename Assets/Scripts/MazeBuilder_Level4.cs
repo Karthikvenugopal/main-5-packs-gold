@@ -174,12 +174,12 @@ public class MazeBuilder_Level4 : MonoBehaviour, IPairedHazardManager
 
                     case 'F':
                         SpawnFloor(cellPosition);
-                        CreateSpawnMarker(cellPosition, FireSpawnName);
+                        CreateSpawnMarker(cellPosition, FireSpawnName, offsetUpOneCell: true, shiftHalfTileLeft: true);
                         break;
 
                     case 'W':
                         SpawnFloor(cellPosition);
-                        CreateSpawnMarker(cellPosition, WaterSpawnName);
+                        CreateSpawnMarker(cellPosition, WaterSpawnName, offsetUpOneCell: true, shiftHalfTileLeft: true);
                         break;
 
                     case 'I':
@@ -403,7 +403,7 @@ public class MazeBuilder_Level4 : MonoBehaviour, IPairedHazardManager
 
         Vector3 worldPosition = new Vector3(
             position.x + 0.5f * cellSize,
-            position.y -0.25f * cellSize,
+            position.y - 0.5f * cellSize + cellSize,
             0f
         );
         
@@ -414,6 +414,11 @@ public class MazeBuilder_Level4 : MonoBehaviour, IPairedHazardManager
         if (wisp.TryGetComponent(out SpriteRenderer renderer))
         {
             renderer.sortingOrder = 3; 
+        }
+
+        if (wisp.TryGetComponent(out WispEnemy wispEnemy))
+        {
+            wispEnemy.ConfigureGridAlignment(cellSize, new Vector2(0.5f, 0.5f), new Vector2(-0.5f, -0.5f));
         }
     }
     // --- END MODIFIED METHOD ---
@@ -752,10 +757,27 @@ public class MazeBuilder_Level4 : MonoBehaviour, IPairedHazardManager
         _tearingDown = true;
     }
 
-    private void CreateSpawnMarker(Vector2 position, string name)
+    private void CreateSpawnMarker(Vector2 position, string name, bool offsetUpOneCell = false, bool shiftHalfTileLeft = false)
     {
-        GameObject marker = new GameObject(name);
-        marker.transform.position = position + new Vector2(0.5f * cellSize, -0.5f * cellSize);
+        Vector2 worldOffset = new Vector2(0.5f * cellSize, -0.5f * cellSize);
+        if (offsetUpOneCell)
+        {
+            worldOffset += new Vector2(0f, cellSize);
+        }
+        if (shiftHalfTileLeft)
+        {
+            worldOffset += new Vector2(-0.5f * cellSize, 0f);
+        }
+
+        Vector3 targetPosition = position + worldOffset;
+
+        GameObject marker = GameObject.Find(name);
+        if (marker == null)
+        {
+            marker = new GameObject(name);
+        }
+
+        marker.transform.position = targetPosition;
         marker.transform.SetParent(transform);
     }
 
