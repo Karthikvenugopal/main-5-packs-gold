@@ -403,12 +403,18 @@ function ensureHeartLossChartsOnSheet_(ss, opts) {
   const l1Where = "(C='Level1Scene' or C='Level1')";
   const l2Where = "(C='Level2Scene' or C='Level2')";
   const l3Where = "(C='Level3Scene' or C='Level3')";
+  const l4Where = "(C='Level4Scene' or C='Level4')";
+  const l5Where = "(C='Level5Scene' or C='Level5')";
   const f1 = `=QUERY(HeartLoss!A2:F, "select E, count(A) where ${l1Where} group by E label E 'cause', count(A) 'loss_count'", 0)`;
   const f2 = `=QUERY(HeartLoss!A2:F, "select E, count(A) where ${l2Where} group by E label E 'cause', count(A) 'loss_count'", 0)`;
   const f3 = `=QUERY(HeartLoss!A2:F, "select E, count(A) where ${l3Where} group by E label E 'cause', count(A) 'loss_count'", 0)`;
+  const f4 = `=QUERY(HeartLoss!A2:F, "select E, count(A) where ${l4Where} group by E label E 'cause', count(A) 'loss_count'", 0)`;
+  const f5 = `=QUERY(HeartLoss!A2:F, "select E, count(A) where ${l5Where} group by E label E 'cause', count(A) 'loss_count'", 0)`;
   sh.getRange('H1').setValue(f1);
   sh.getRange('K1').setValue(f2);
   sh.getRange('N1').setValue(f3);
+  sh.getRange('Q1').setValue(f4);
+  sh.getRange('T1').setValue(f5);
 
   if (opts && opts.reset) sh.getCharts().forEach(c => sh.removeChart(c));
   if (sh.getCharts().length < 1) {
@@ -444,6 +450,28 @@ function ensureHeartLossChartsOnSheet_(ss, opts) {
       .setOption('vAxis', { title: 'Loss Count' })
       .build();
     sh.insertChart(c3);
+
+    const c4 = sh.newChart()
+      .asColumnChart()
+      .addRange(sh.getRange('Q:R'))
+      .setPosition(46, 8, 0, 0)
+      .setOption('title', 'Heart Losses by Cause - Level 4')
+      .setOption('legend', { position: 'none' })
+      .setOption('hAxis', { title: 'Cause' })
+      .setOption('vAxis', { title: 'Loss Count' })
+      .build();
+    sh.insertChart(c4);
+
+    const c5 = sh.newChart()
+      .asColumnChart()
+      .addRange(sh.getRange('T:U'))
+      .setPosition(61, 8, 0, 0)
+      .setOption('title', 'Heart Losses by Cause - Level 5')
+      .setOption('legend', { position: 'none' })
+      .setOption('hAxis', { title: 'Cause' })
+      .setOption('vAxis', { title: 'Loss Count' })
+      .build();
+    sh.insertChart(c5);
   }
 }
 
