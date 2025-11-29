@@ -2103,18 +2103,7 @@ public class GameManager : MonoBehaviour
         UpdateHeartsUI(); // This will now update the images
         TriggerHurtEffect(role);
 
-        // analytics: heart loss event
-        try
-        {
-            EnsureLevelTimer();
-            float elapsed = levelTimer != null ? levelTimer.ElapsedSeconds : 0f;
-            Analytics.GoogleSheetsAnalytics.SendHeartLoss(
-                null,
-                role == PlayerRole.Fireboy ? "fire" : "water",
-                cause.ToString(),
-                elapsed);
-        }
-        catch { }
+        SendAnalyticsForDamage(role, cause, worldOverride);
 
         if (!suppressCheck)
         {
@@ -2126,6 +2115,31 @@ public class GameManager : MonoBehaviour
     {
         if (_fireHearts > 0 && _waterHearts > 0) return;
         HandleOutOfHearts();
+    }
+
+    private Vector3 ResolvePlayerWorldPosition(PlayerRole role)
+    {
+        for (int i = 0; i < _players.Count; i++)
+        {
+            var p = _players[i];
+            if (p != null && p.Role == role)
+            {
+                return p.transform.position;
+            }
+        }
+        // Fallback: average all players we have, or origin.
+        Vector3 sum = Vector3.zero;
+        int count = 0;
+        for (int i = 0; i < _players.Count; i++)
+        {
+            var p = _players[i];
+            if (p != null)
+            {
+                sum += p.transform.position;
+                count++;
+            }
+        }
+        return count > 0 ? sum / count : Vector3.zero;
     }
 
         private void HandleOutOfHearts()
@@ -2140,6 +2154,8 @@ public class GameManager : MonoBehaviour
             CancelNextSceneLoad();
             UpdateStatus(levelDefeatMessage);
             ShowEndPanel(EndGameState.Defeat);
+            SendAnalyticsForDamage(PlayerRole.Fireboy, DamageCause.Unknown, null); // fallback hotspot on defeat
+            SendAnalyticsForDamage(PlayerRole.Watergirl, DamageCause.Unknown, null);
     }
 
     private void OnVictoryRestartClicked()
@@ -2179,6 +2195,39 @@ public class GameManager : MonoBehaviour
             player.PlayHurtFlash();
             break;
         }
+    }
+
+    private void SendAnalyticsForDamage(PlayerRole role, DamageCause cause, Vector3? worldOverride)
+    {
+        try
+        {
+            EnsureLevelTimer();
+            float elapsed = levelTimer != null ? levelTimer.ElapsedSeconds : 0f;
+            Analytics.GoogleSheetsAnalytics.SendHeartLoss(
+                null,
+                role == PlayerRole.Fireboy ? "fire" : "water",
+                cause.ToString(),
+                elapsed);
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            Vector3 posForLog = worldOverride ?? ResolvePlayerWorldPosition(role);
+            Debug.Log($"[Analytics] Sending fail hotspot role={role} cause={cause} pos={posForLog} time={elapsed:0.0}s");
+#endif
+
+            Vector3 worldPos = worldOverride ?? ResolvePlayerWorldPosition(role);
+            int heartsRemaining = Mathf.Max(0, _fireHearts + _waterHearts);
+            Analytics.GoogleSheetsAnalytics.SendFailureHotspot(
+                SceneManager.GetActiveScene().name,
+                worldPos,
+                elapsed,
+                heartsRemaining,
+                fireTokensCollected,
+                waterTokensCollected,
+                cellSize: 1f,
+                victimRole: role.ToString(),
+                cause: cause.ToString());
+        }
+        catch { }
     }
 
         private void HandleVictory()
