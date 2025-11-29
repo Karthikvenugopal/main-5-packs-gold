@@ -26,6 +26,9 @@ public class Level5Manager : MonoBehaviour
     [SerializeField] private GameObject cannonHitEffectPrefab;
     [SerializeField] private GameObject fireHitEffectPrefab;
     [SerializeField] private GameObject iceHitEffectPrefab;
+    [Header("Steam Components")]
+    [SerializeField] private GameObject steamAreaPrefab;
+    [SerializeField] private GameObject steamWallPrefab;
 
     [Header("Dependencies")]
     [SerializeField] private GameManager gameManager;
@@ -44,19 +47,20 @@ public class Level5Manager : MonoBehaviour
         // "###.###########.#######.####",
         // "############################"
 
-        "###########################",
-        "#S...#....................#",
-        "#.##.#.##.##.##.###########",
-        "#.##.#.##.##.##.###########",
-        "#.##.#..................###",
-        "#.##F################...###",
-        "#F##.#.............##...###",
-        "#..................##...###",
-        "##.....#I#####..........###",
-        "##222..#.....I..........###",
-        "########.######....##...###",
-        "#W.I.....######111.##...###",
-        "###########################"
+        "#########################",
+        "#S...#..............LLLL#",
+        "#.##.#.##.##.##.#########",
+        "#.##.#.##.##.##.#########",
+        "#.##.#................###",
+        "#.##F################.###",
+        "#F##.#.............##.###",
+        "#..................##.FM#",
+        "##.....#I#####.....##.###",
+        "##222..#.....I........###",
+        "########.######....##.###",
+        "########.######....##I###",
+        "#W.F.....######111.##M###",
+        "#########################"
     };
 
     private const string FireSpawnName = "FireboySpawn";
@@ -127,6 +131,16 @@ public class Level5Manager : MonoBehaviour
                     case 'E':
                         SpawnFloor(cellPosition);
                         SpawnExit(cellPosition);
+                        break;
+
+                    case 'M':       // steam area
+                        SpawnFloor(cellPosition);
+                        SpawnSteamArea(cellPosition);
+                        break;
+
+                    case 'L':       // steam wall
+                        SpawnFloor(cellPosition);
+                        SpawnSteamWall(cellPosition);
                         break;
 
                     default:
@@ -292,5 +306,47 @@ public class Level5Manager : MonoBehaviour
             position.y - 0.5f * cellSize,
             0f
         );
+    }
+
+    private void SpawnSteamArea(Vector2 position)
+    {
+        if (steamAreaPrefab == null)
+        {
+            Debug.LogWarning("Level5Manager: Steam area prefab is not assigned.", this);
+            return;
+        }
+
+        Vector3 worldPosition = new Vector3(
+            position.x + 0.5f * cellSize,
+            position.y - 0.5f * cellSize,
+            0f
+        );
+
+        GameObject area = Instantiate(steamAreaPrefab, worldPosition, Quaternion.identity, transform);
+
+        if (area.TryGetComponent(out SpriteRenderer renderer))
+        {
+            renderer.sortingOrder = 2;          // Above walls
+            renderer.color = new Color(0.85f, 0.65f, 0.95f, 0.45f);
+        }
+    }
+
+    private GameObject SpawnSteamWall(Vector2 position)
+    {
+        if (steamWallPrefab == null)
+        {
+            Debug.LogWarning("Level5Manager: Steam wall prefab is not assigned.", this);
+            return null;
+        }
+
+        GameObject wall = Instantiate(steamWallPrefab, position, Quaternion.identity, transform);
+        wall.layer = LayerMask.NameToLayer("Wall");   // Make it block like a normal wall
+
+        if (wall.TryGetComponent(out SpriteRenderer renderer))
+        {
+            renderer.sortingOrder = 1;                // Same layer as normal walls
+        }
+
+        return wall;
     }
 }
