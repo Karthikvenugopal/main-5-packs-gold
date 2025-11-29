@@ -163,6 +163,10 @@ public class GameManager : MonoBehaviour
     private static int s_totalWaterTokensCollected;
 
     private const float SteamTimerFallbackDuration = 10f;
+    private const float SteamTimerBounceFrequency = 5f;
+    private const float SteamTimerBounceAmplitude = 0.08f;
+    private const float SteamTimerFlashFrequency = 8f;
+    private const float SteamTimerFlashThreshold = 5f;
     private const float SteamPopupDuration = 1.8f;
     private static readonly Color SteamPopupBaseColor = new Color(0.7f, 0.18f, 0.95f, 1f);
     private Canvas _hudCanvas;
@@ -336,9 +340,11 @@ public class GameManager : MonoBehaviour
         }
 
         UpdateSteamTimerLabel();
+        ApplySteamTimerEffects();
 
         if (!_steamTimerActive && _steamTimerContainer != null)
         {
+            _steamTimerContainer.transform.localScale = Vector3.one;
             _steamTimerContainer.SetActive(false);
         }
     }
@@ -357,6 +363,26 @@ public class GameManager : MonoBehaviour
         float fractional = Mathf.Clamp01(remaining - minutes * 60f - seconds);
         int hundredths = Mathf.Clamp(Mathf.FloorToInt(fractional * 100f), 0, 99);
         return $"steam ver.:{minutes:00}:{seconds:00}:{hundredths:00}";
+    }
+
+    private void ApplySteamTimerEffects()
+    {
+        if (_steamTimerContainer == null || _steamTimerLabel == null) return;
+
+        float t = Time.unscaledTime;
+        float scaleOffset = Mathf.Sin(t * SteamTimerBounceFrequency) * SteamTimerBounceAmplitude;
+        _steamTimerContainer.transform.localScale = Vector3.one * (1f + scaleOffset);
+
+        float remaining = Mathf.Max(0f, _steamTimerRemaining);
+        if (_steamTimerActive && remaining <= SteamTimerFlashThreshold)
+        {
+            float flash = (Mathf.Sin(t * SteamTimerFlashFrequency) + 1f) * 0.5f;
+            _steamTimerLabel.color = Color.Lerp(Color.white, Color.red, flash);
+        }
+        else
+        {
+            _steamTimerLabel.color = Color.white;
+        }
     }
 
     public void RegisterPlayer(CoopPlayerController player)
