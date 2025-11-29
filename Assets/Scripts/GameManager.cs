@@ -163,11 +163,16 @@ public class GameManager : MonoBehaviour
     private static int s_totalWaterTokensCollected;
 
     private const float SteamTimerFallbackDuration = 10f;
+    private const float SteamPopupDuration = 1.8f;
+    private static readonly Color SteamPopupBaseColor = new Color(0.7f, 0.18f, 0.95f, 1f);
     private Canvas _hudCanvas;
     private GameObject _steamTimerContainer;
     private TextMeshProUGUI _steamTimerLabel;
     private bool _steamTimerActive;
     private float _steamTimerRemaining;
+    private GameObject _steamPopupContainer;
+    private TextMeshProUGUI _steamPopupLabel;
+    private Coroutine _steamPopupCoroutine;
     
     // --- MODIFICATION START ---
     // We add a reference for the top UI bar's RectTransform.
@@ -261,6 +266,7 @@ public class GameManager : MonoBehaviour
         CreateTokensUI();
         CreateHeartsUI();
         CreateSteamTimerUI();
+        CreateSteamPopupUI();
         CreateVictoryPanel();
 
         if (resetGlobalTokenTotalsOnLoad)
@@ -326,6 +332,7 @@ public class GameManager : MonoBehaviour
         {
             _steamTimerRemaining = 0f;
             _steamTimerActive = false;
+            ShowSteamPopup("TIMES UP!");
         }
 
         UpdateSteamTimerLabel();
@@ -1216,6 +1223,84 @@ public class GameManager : MonoBehaviour
 
         _steamTimerContainer.SetActive(true);
         UpdateSteamTimerLabel();
+        ShowSteamPopup("STEAM\nMODE!");
+    }
+
+    private void CreateSteamPopupUI()
+    {
+        if (_hudCanvas == null) return;
+
+        GameObject popup = new GameObject("SteamPopupContainer");
+        popup.transform.SetParent(_hudCanvas.transform, false);
+        popup.transform.SetAsLastSibling();
+
+        var rect = popup.AddComponent<RectTransform>();
+        rect.anchorMin = new Vector2(0.5f, 0.5f);
+        rect.anchorMax = new Vector2(0.5f, 0.5f);
+        rect.pivot = new Vector2(0.5f, 0.5f);
+        rect.sizeDelta = new Vector2(840f, 220f);
+        rect.anchoredPosition = Vector2.zero;
+
+        _steamPopupContainer = popup;
+        _steamPopupContainer.SetActive(false);
+
+        GameObject labelGO = new GameObject("SteamPopupLabel");
+        labelGO.transform.SetParent(popup.transform, false);
+
+        var labelRect = labelGO.AddComponent<RectTransform>();
+        labelRect.anchorMin = Vector2.zero;
+        labelRect.anchorMax = Vector2.one;
+        labelRect.offsetMin = Vector2.zero;
+        labelRect.offsetMax = Vector2.zero;
+
+        _steamPopupLabel = labelGO.AddComponent<TextMeshProUGUI>();
+        ApplyUpperUiFont(_steamPopupLabel);
+        _steamPopupLabel.alignment = TextAlignmentOptions.Center;
+        _steamPopupLabel.fontSize = 110f;
+        _steamPopupLabel.fontStyle = FontStyles.Bold;
+        _steamPopupLabel.color = SteamPopupBaseColor;
+        _steamPopupLabel.raycastTarget = false;
+    }
+
+    private void ShowSteamPopup(string text)
+    {
+        if (_steamPopupContainer == null || _steamPopupLabel == null) return;
+
+        _steamPopupLabel.text = text;
+        _steamPopupLabel.color = SteamPopupBaseColor;
+        _steamPopupContainer.transform.localScale = Vector3.one;
+        _steamPopupContainer.SetActive(true);
+
+        if (_steamPopupCoroutine != null)
+        {
+            StopCoroutine(_steamPopupCoroutine);
+        }
+
+        _steamPopupCoroutine = StartCoroutine(AnimateSteamPopup());
+    }
+
+    private IEnumerator AnimateSteamPopup()
+    {
+        float elapsed = 0f;
+        while (elapsed < SteamPopupDuration)
+        {
+            float progress = Mathf.Clamp01(elapsed / SteamPopupDuration);
+            float bounceScale = Mathf.Lerp(1.5f, 1f, progress);
+            bounceScale += Mathf.Sin(progress * Mathf.PI) * 0.2f;
+            _steamPopupContainer.transform.localScale = Vector3.one * bounceScale;
+
+            Color color = Color.Lerp(SteamPopupBaseColor, Color.white, progress);
+            color.a = Mathf.Lerp(1f, 0f, progress);
+            _steamPopupLabel.color = color;
+
+            elapsed += Time.unscaledDeltaTime;
+            yield return null;
+        }
+
+        _steamPopupLabel.color = new Color(SteamPopupBaseColor.r, SteamPopupBaseColor.g, SteamPopupBaseColor.b, 0f);
+        _steamPopupContainer.transform.localScale = Vector3.one;
+        _steamPopupContainer.SetActive(false);
+        _steamPopupCoroutine = null;
     }
 
     private void CreateVictoryPanel()
@@ -2238,6 +2323,12 @@ public class GameManager : MonoBehaviour
         if (Instance == this)
         {
             Instance = null;
+        }
+
+        if (_steamPopupCoroutine != null)
+        {
+            StopCoroutine(_steamPopupCoroutine);
+            _steamPopupCoroutine = null;
         }
     }
 
