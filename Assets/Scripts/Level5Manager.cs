@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 /// <summary>
 /// Lightweight level controller that simply builds the maze layout defined below.
@@ -67,6 +68,8 @@ public class Level5Manager : MonoBehaviour
     private const string WaterSpawnName = "WatergirlSpawn";
 
     private bool _exitPlaced;
+    private float _swapCooldown = 0f;
+    private const float SwapCooldownDuration = 0.5f; // Prevent rapid swapping
 
     private void Start()
     {
@@ -74,6 +77,75 @@ public class Level5Manager : MonoBehaviour
         CenterMaze(Layout);
         // tokenPlacementManager?.SpawnTokens(); // Disabled during Level 5 maze design pass
         gameManager?.OnLevelReady();
+    }
+
+    private void Update()
+    {
+        // Only allow position swapping in Level 5
+        if (!IsLevel5())
+        {
+            return;
+        }
+
+        // Update cooldown timer
+        if (_swapCooldown > 0f)
+        {
+            _swapCooldown -= Time.deltaTime;
+        }
+
+        // Check for space bar press
+        if (Input.GetKeyDown(KeyCode.Space) && _swapCooldown <= 0f)
+        {
+            SwapPlayerPositions();
+            _swapCooldown = SwapCooldownDuration;
+        }
+    }
+
+    private bool IsLevel5()
+    {
+        string currentScene = SceneManager.GetActiveScene().name;
+        string sceneLower = currentScene.ToLowerInvariant();
+        return sceneLower == "level5scene" || sceneLower == "level5";
+    }
+
+    private void SwapPlayerPositions()
+    {
+        // Find both players
+        CoopPlayerController fireboy = null;
+        CoopPlayerController watergirl = null;
+
+        CoopPlayerController[] players = FindObjectsOfType<CoopPlayerController>();
+        
+        foreach (var player in players)
+        {
+            if (player == null) continue;
+            
+            if (player.Role == PlayerRole.Fireboy)
+            {
+                fireboy = player;
+            }
+            else if (player.Role == PlayerRole.Watergirl)
+            {
+                watergirl = player;
+            }
+        }
+
+        // Only swap if both players are found
+        if (fireboy == null || watergirl == null)
+        {
+            Debug.LogWarning("Level5Manager: Cannot swap positions - one or both players not found.");
+            return;
+        }
+
+        // Store positions
+        Vector3 fireboyPosition = fireboy.transform.position;
+        Vector3 watergirlPosition = watergirl.transform.position;
+
+        // Swap positions
+        fireboy.transform.position = watergirlPosition;
+        watergirl.transform.position = fireboyPosition;
+
+        Debug.Log("Level5Manager: Player positions swapped!");
     }
 
     private void BuildMaze(string[] layout)
