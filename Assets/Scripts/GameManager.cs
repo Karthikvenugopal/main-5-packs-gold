@@ -166,7 +166,7 @@ public class GameManager : MonoBehaviour
     private const float SteamTimerBounceFrequency = 5f;
     private const float SteamTimerBounceAmplitude = 0.08f;
     private const float SteamTimerFlashFrequency = 8f;
-    private const float SteamTimerFlashThreshold = 5f;
+    private const float SteamTimerFlashThreshold = 3f;
     private const float SteamPopupDuration = 1.8f;
     private static readonly Color SteamPopupBaseColor = new Color(0.7f, 0.18f, 0.95f, 1f);
     private Canvas _hudCanvas;
@@ -362,7 +362,7 @@ public class GameManager : MonoBehaviour
         int seconds = (int)(remaining % 60f);
         float fractional = Mathf.Clamp01(remaining - minutes * 60f - seconds);
         int hundredths = Mathf.Clamp(Mathf.FloorToInt(fractional * 100f), 0, 99);
-        return $"steam ver.:{minutes:00}:{seconds:00}:{hundredths:00}";
+        return $"STEAM MODE:{minutes:00}:{seconds:00}:{hundredths:00}";
     }
 
     private void ApplySteamTimerEffects()
