@@ -55,45 +55,45 @@ public class MazeBuilder_Level1 : MonoBehaviour
             for (int x = 0; x < row.Length; x++)
             {
                 char cell = row[x];
-                Vector2 cellPosition = new Vector2(x * cellSize, -y * cellSize);
+                Vector2 cellCenter = GetCellCenterPosition(x, y);
 
                 switch (cell)
                 {
                     case '#':
-                        SpawnWall(cellPosition);
+                        SpawnWall(cellCenter);
                         break;
 
                     case '.':
-                        SpawnFloor(cellPosition);
+                        SpawnFloor(cellCenter);
                         break;
 
                     case 'F':
-                        SpawnFloor(cellPosition);
-                        CreateSpawnMarker(cellPosition, FireboySpawnName);
+                        SpawnFloor(cellCenter);
+                        CreateSpawnMarker(cellCenter, FireboySpawnName);
                         break;
 
                     case 'W':
-                        SpawnFloor(cellPosition);
-                        CreateSpawnMarker(cellPosition, WatergirlSpawnName);
+                        SpawnFloor(cellCenter);
+                        CreateSpawnMarker(cellCenter, WatergirlSpawnName);
                         break;
 
                     case 'I':
-                        SpawnFloor(cellPosition);
-                        SpawnIceWall(cellPosition);
+                        SpawnFloor(cellCenter);
+                        SpawnIceWall(cellCenter);
                         break;
 
                     case 'H':
-                        SpawnFloor(cellPosition);
-                        SpawnFireWall(cellPosition);
+                        SpawnFloor(cellCenter);
+                        SpawnFireWall(cellCenter);
                         break;
 
                     case 'E':
-                        SpawnFloor(cellPosition);
-                        SpawnExit(cellPosition);
+                        SpawnFloor(cellCenter);
+                        SpawnExit(cellCenter);
                         break;
 
                     default:
-                        SpawnFloor(cellPosition);
+                        SpawnFloor(cellCenter);
                         break;
                 }
             }
@@ -142,7 +142,7 @@ public class MazeBuilder_Level1 : MonoBehaviour
     private void SpawnExit(Vector2 position)
     {
         GameObject exit = new GameObject("Exit");
-        exit.transform.position = position + new Vector2(0.5f * cellSize, -0.5f * cellSize);
+        exit.transform.position = position;
         exit.transform.SetParent(transform);
 
         BoxCollider2D trigger = exit.AddComponent<BoxCollider2D>();
@@ -173,7 +173,7 @@ public class MazeBuilder_Level1 : MonoBehaviour
     private void CreateSpawnMarker(Vector2 position, string name)
     {
         GameObject marker = new GameObject(name);
-        marker.transform.position = position + new Vector2(0.5f * cellSize, -0.5f * cellSize);
+        marker.transform.position = position;
         marker.transform.SetParent(transform);
     }
 
@@ -197,8 +197,7 @@ public class MazeBuilder_Level1 : MonoBehaviour
         }
 
         // Calculate world position (same as BuildMaze uses)
-        Vector2 cellPosition = new Vector2(targetCol * cellSize, -targetRow * cellSize);
-        Vector2 worldPosition = cellPosition + new Vector2(0.5f * cellSize, -0.5f * cellSize);
+        Vector2 worldPosition = GetCellCenterPosition(targetCol, targetRow);
 
         // Create trigger zone GameObject
         GameObject triggerZone = new GameObject("DialogueTriggerZone");
@@ -236,11 +235,11 @@ public class MazeBuilder_Level1 : MonoBehaviour
         }
 
         // Calculate trigger world position (same as BuildMaze uses)
-        Vector2 cellPosition = new Vector2(targetCol * cellSize, -targetRow * cellSize);
-        Vector2 triggerWorldPosition = cellPosition + new Vector2(1.5f * cellSize, -0.5f * cellSize);
+        Vector2 triggerWorldPosition = GetCellCenterPosition(targetCol, targetRow) + new Vector2(1f * cellSize, 0f);
 
         // Calculate fixed position (slightly right and higher near the top-left corner)
-        Vector2 fixedDialoguePosition = new Vector2(1.5f * cellSize, -0.3f * cellSize);
+        // Adjusted for centered player: moved slightly right to avoid overlap, and lowered to match player shift
+        Vector2 fixedDialoguePosition = new Vector2(2.0f * cellSize, -0.8f * cellSize);
 
         // Create trigger zone GameObject
         GameObject triggerZone = new GameObject("EmberControlsDialogueTrigger");
@@ -274,11 +273,11 @@ public class MazeBuilder_Level1 : MonoBehaviour
         }
 
         // Calculate trigger world position (same as BuildMaze uses)
-        Vector2 cellPosition = new Vector2(targetCol * cellSize, -targetRow * cellSize);
-        Vector2 triggerWorldPosition = cellPosition + new Vector2(1.5f * cellSize, -0.5f * cellSize);
+        Vector2 triggerWorldPosition = GetCellCenterPosition(targetCol, targetRow) + new Vector2(1f * cellSize, 0f);
 
         // Calculate fixed position for dialogue at bottom left corner of maze
-        Vector2 fixedDialoguePosition = new Vector2(1.5f * cellSize, -8.0f * cellSize);
+        // Adjusted for centered player: moved slightly right to avoid overlap, and lowered to match player shift
+        Vector2 fixedDialoguePosition = new Vector2(2.0f * cellSize, -8.5f * cellSize);
 
         // Create trigger zone GameObject
         GameObject triggerZone = new GameObject("AquaControlsDialogueTrigger");
@@ -297,6 +296,13 @@ public class MazeBuilder_Level1 : MonoBehaviour
         dialogueTrigger.SetFontSize(3f);
         // Set fixed position mode - dialogue will appear at fixed position when player enters trigger
         dialogueTrigger.SetFixedPosition(fixedDialoguePosition);
+    }
+
+    private Vector2 GetCellCenterPosition(int x, int y)
+    {
+        float worldX = (x + 0.5f) * cellSize;
+        float worldY = -(y + 0.5f) * cellSize;
+        return new Vector2(worldX, worldY);
     }
 
     private void CenterMaze(string[] layout)
