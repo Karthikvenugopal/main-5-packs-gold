@@ -11,7 +11,8 @@ namespace Analytics
     public static class GoogleSheetsAnalytics
     {
         private const string ConfigResourceName = "google_sheets_config"; // Resources/google_sheets_config.json
-        private const string DefaultSheetId = "analytics_elemental_final";
+        // Leave empty by default; use ScriptProperty SHEET_ID or set in Resources/google_sheets_config.json when needed.
+        private const string DefaultSheetId = "";
 
         private static string _webAppUrl;
         private static string _sheetId; // Optional spreadsheet id for standalone Apps Script
@@ -312,7 +313,14 @@ namespace Analytics
 
                 if (failed)
                 {
-                    Debug.LogWarning($"[Analytics] {(isGet ? "GET" : "POST")} failed: {errorSummary}");
+                    string body = request.downloadHandler != null ? request.downloadHandler.text : string.Empty;
+                    string snippet = string.Empty;
+                    if (!string.IsNullOrEmpty(body))
+                    {
+                        snippet = body.Length > 240 ? body.Substring(0, 240) + " …" : body;
+                    }
+
+                    Debug.LogWarning($"[Analytics] {(isGet ? "GET" : "POST")} failed: {errorSummary}. Body: {snippet}");
                 }
                 else
                 {
