@@ -17,6 +17,7 @@ public class SteamArea : MonoBehaviour
     private bool _fireInside;
     private bool _waterInside;
     private bool _steamTriggeredWhileInside;
+    private GameManager _cachedGameManager;
 
     private void Reset()
     {
@@ -112,5 +113,13 @@ public class SteamArea : MonoBehaviour
 
         fireSteam?.EnterSteamMode(steamDuration);
         waterSteam?.EnterSteamMode(steamDuration);
+        GetGameManager()?.StartSteamCountdown(steamDuration);
+    }
+
+    private GameManager GetGameManager()
+    {
+        if (_cachedGameManager != null) return _cachedGameManager;
+        _cachedGameManager = GameManager.Instance ?? FindObjectOfType<GameManager>();
+        return _cachedGameManager;
     }
 }

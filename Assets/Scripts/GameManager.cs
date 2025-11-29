@@ -10,6 +10,8 @@ using UnityEngine.UI;
 
 public class GameManager : MonoBehaviour
 {
+    public static GameManager Instance { get; private set; }
+
     public enum DamageCause
     {
         Unknown = 0,
@@ -160,7 +162,12 @@ public class GameManager : MonoBehaviour
     private static int s_totalFireTokensCollected;
     private static int s_totalWaterTokensCollected;
 
+    private const float SteamTimerFallbackDuration = 10f;
     private Canvas _hudCanvas;
+    private GameObject _steamTimerContainer;
+    private TextMeshProUGUI _steamTimerLabel;
+    private bool _steamTimerActive;
+    private float _steamTimerRemaining;
     
     // --- MODIFICATION START ---
     // We add a reference for the top UI bar's RectTransform.
@@ -243,6 +250,7 @@ public class GameManager : MonoBehaviour
 
     private void Awake()
     {
+        Instance = this;
         NormalizeDisplayStrings();
         if (!useVictoryPanel)
         {
@@ -252,6 +260,7 @@ public class GameManager : MonoBehaviour
         EnsureHudCanvas();
         CreateTokensUI();
         CreateHeartsUI();
+        CreateSteamTimerUI();
         CreateVictoryPanel();
 
         if (resetGlobalTokenTotalsOnLoad)
@@ -280,6 +289,7 @@ public class GameManager : MonoBehaviour
     
     private void Update()
     {
+        UpdateSteamTimer();
         UpdateTokenBreathing();
         if (_waitingForInstructionAck)
         {
@@ -301,6 +311,45 @@ public class GameManager : MonoBehaviour
         {
             HandleVictory();
         }
+    }
+
+    private void UpdateSteamTimer()
+    {
+        if (!_steamTimerActive)
+        {
+            return;
+        }
+
+        _steamTimerRemaining -= Time.unscaledDeltaTime;
+
+        if (_steamTimerRemaining <= 0f)
+        {
+            _steamTimerRemaining = 0f;
+            _steamTimerActive = false;
+        }
+
+        UpdateSteamTimerLabel();
+
+        if (!_steamTimerActive && _steamTimerContainer != null)
+        {
+            _steamTimerContainer.SetActive(false);
+        }
+    }
+
+    private void UpdateSteamTimerLabel()
+    {
+        if (_steamTimerLabel == null) return;
+        _steamTimerLabel.text = FormatSteamTimerText(_steamTimerRemaining);
+    }
+
+    private static string FormatSteamTimerText(float remaining)
+    {
+        remaining = Mathf.Max(0f, remaining);
+        int minutes = (int)(remaining / 60f);
+        int seconds = (int)(remaining % 60f);
+        float fractional = Mathf.Clamp01(remaining - minutes * 60f - seconds);
+        int hundredths = Mathf.Clamp(Mathf.FloorToInt(fractional * 100f), 0, 99);
+        return $"steam ver.:{minutes:00}:{seconds:00}:{hundredths:00}";
     }
 
     public void RegisterPlayer(CoopPlayerController player)
@@ -1113,6 +1162,61 @@ public class GameManager : MonoBehaviour
         UpdateTokensUI();
     }
     // --- MODIFICATION END ---
+
+    private void CreateSteamTimerUI()
+    {
+        if (_hudCanvas == null || _topUiContentRoot == null) return;
+
+        GameObject timerContainer = new GameObject("SteamTimerContainer");
+        timerContainer.transform.SetParent(_topUiContentRoot, false);
+
+        RectTransform rect = timerContainer.AddComponent<RectTransform>();
+        rect.anchorMin = new Vector2(0.5f, 0.5f);
+        rect.anchorMax = new Vector2(0.5f, 0.5f);
+        rect.pivot = new Vector2(0.5f, 0.5f);
+        rect.sizeDelta = new Vector2(420f, 80f);
+        rect.anchoredPosition = Vector2.zero;
+
+        Image background = timerContainer.AddComponent<Image>();
+        background.color = new Color(0f, 0f, 0f, 0.45f);
+        background.raycastTarget = false;
+
+        GameObject labelGO = new GameObject("SteamTimerLabel");
+        labelGO.transform.SetParent(timerContainer.transform, false);
+
+        RectTransform labelRect = labelGO.AddComponent<RectTransform>();
+        labelRect.anchorMin = Vector2.zero;
+        labelRect.anchorMax = Vector2.one;
+        labelRect.offsetMin = Vector2.zero;
+        labelRect.offsetMax = Vector2.zero;
+
+        _steamTimerLabel = labelGO.AddComponent<TextMeshProUGUI>();
+        ApplyUpperUiFont(_steamTimerLabel);
+        _steamTimerLabel.alignment = TextAlignmentOptions.Center;
+        _steamTimerLabel.fontSize = 34f;
+        _steamTimerLabel.color = Color.white;
+        _steamTimerLabel.raycastTarget = false;
+        UpdateSteamTimerLabel();
+
+        _steamTimerContainer = timerContainer;
+        _steamTimerContainer.SetActive(false);
+    }
+
+    public void StartSteamCountdown(float duration)
+    {
+        if (_steamTimerContainer == null || _steamTimerLabel == null) return;
+
+        if (duration <= 0f)
+        {
+            duration = SteamTimerFallbackDuration;
+        }
+
+        _steamTimerRemaining = duration;
+        _steamTimerActive = true;
+
+        _steamTimerContainer.SetActive(true);
+        UpdateSteamTimerLabel();
+    }
 
     private void CreateVictoryPanel()
     {
@@ -2129,6 +2233,11 @@ public class GameManager : MonoBehaviour
         if (_victoryMainMenuButton != null)
         {
             _victoryMainMenuButton.onClick.RemoveListener(OnVictoryMainMenuClicked);
+        }
+
+        if (Instance == this)
+        {
+            Instance = null;
         }
     }
 
