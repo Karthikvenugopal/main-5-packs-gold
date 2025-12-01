@@ -46,8 +46,8 @@ public class RetryHud : MonoBehaviour
     {
         if (string.IsNullOrEmpty(name)) return false;
         name = name.ToLowerInvariant();
-        return name == "level1scene" || name == "level2scene" || name == "level3scene" || name == "level4scene" ||
-               name == "level1" || name == "level2" || name == "level3" || name == "level4" ||
+        return name == "level1scene" || name == "level2scene" || name == "level3scene" || name == "level4scene" || name == "level5scene" ||
+               name == "level1" || name == "level2" || name == "level3" || name == "level4" || name == "level5" ||
                name == "tutorial" || name == "tutorialscene";
     }
 
