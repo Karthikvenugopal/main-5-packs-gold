@@ -190,6 +190,7 @@ public class GameManager : MonoBehaviour
     private GameObject _steamPopupContainer;
     private TextMeshProUGUI _steamPopupLabel;
     private Coroutine _steamPopupCoroutine;
+    private TextMeshProUGUI _swapCounterLabel;
     
     // --- MODIFICATION START ---
     // We add a reference for the top UI bar's RectTransform.
@@ -287,6 +288,7 @@ public class GameManager : MonoBehaviour
             CreateSteamTimerUI();
             CreateSteamPopupUI();
         }
+        CreateSwapCounterUI();
         CreateVictoryPanel();
 
         if (resetGlobalTokenTotalsOnLoad)
@@ -640,6 +642,24 @@ public class GameManager : MonoBehaviour
         {
             label.font = fontAsset;
         }
+    }
+
+    private bool IsCurrentSceneLevel5()
+    {
+        string currentScene = SceneManager.GetActiveScene().name;
+        if (string.IsNullOrEmpty(currentScene))
+        {
+            return false;
+        }
+
+        if (!string.IsNullOrEmpty(level5InstructionSceneName) &&
+            string.Equals(currentScene, level5InstructionSceneName, StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        return string.Equals(currentScene, "Level5Scene", StringComparison.OrdinalIgnoreCase) ||
+               string.Equals(currentScene, "Level5", StringComparison.OrdinalIgnoreCase);
     }
 
     // --- MODIFICATION START ---
@@ -1323,6 +1343,97 @@ public class GameManager : MonoBehaviour
         _steamPopupLabel.fontStyle = FontStyles.Bold;
         _steamPopupLabel.color = SteamPopupBaseColor;
         _steamPopupLabel.raycastTarget = false;
+    }
+
+    private void CreateSwapCounterUI()
+    {
+        _swapCounterLabel = null;
+
+        if (!IsCurrentSceneLevel5() || _hudCanvas == null)
+        {
+            return;
+        }
+
+        Transform parent = _topUiContentRoot != null
+            ? _topUiContentRoot
+            : (_topUiBar != null ? _topUiBar : _hudCanvas.transform);
+        if (parent == null)
+        {
+            return;
+        }
+
+        GameObject swapContainer = new GameObject("SwapCounterContainer");
+        swapContainer.transform.SetParent(parent, false);
+
+        RectTransform rect = swapContainer.AddComponent<RectTransform>();
+        bool parentIsCanvas = parent == _hudCanvas.transform;
+        if (parentIsCanvas)
+        {
+            rect.anchorMin = new Vector2(0.5f, 1f);
+            rect.anchorMax = new Vector2(0.5f, 1f);
+            rect.pivot = new Vector2(0.5f, 1f);
+            rect.anchoredPosition = new Vector2(0f, -20f);
+        }
+        else
+        {
+            rect.anchorMin = new Vector2(0.5f, 0.5f);
+            rect.anchorMax = new Vector2(0.5f, 0.5f);
+            rect.pivot = new Vector2(0.5f, 0.5f);
+            rect.anchoredPosition = Vector2.zero;
+        }
+
+        rect.sizeDelta = new Vector2(360f, 110f);
+
+        Image bg = swapContainer.AddComponent<Image>();
+        bg.color = new Color(0f, 0f, 0f, 0.35f);
+        bg.raycastTarget = false;
+
+        GameObject labelGO = new GameObject("SwapCounterLabel");
+        labelGO.transform.SetParent(swapContainer.transform, false);
+
+        RectTransform labelRect = labelGO.AddComponent<RectTransform>();
+        labelRect.anchorMin = Vector2.zero;
+        labelRect.anchorMax = Vector2.one;
+        labelRect.offsetMin = new Vector2(15f, 15f);
+        labelRect.offsetMax = new Vector2(-15f, -15f);
+
+        _swapCounterLabel = labelGO.AddComponent<TextMeshProUGUI>();
+        ApplyUpperUiFont(_swapCounterLabel);
+        _swapCounterLabel.alignment = TextAlignmentOptions.Center;
+        _swapCounterLabel.fontSize = 44f;
+        _swapCounterLabel.color = Color.white;
+        _swapCounterLabel.text = string.Empty;
+        _swapCounterLabel.raycastTarget = false;
+    }
+
+    public void UpdateSwapCounterDisplay(int remainingSwaps, int maxSwaps)
+    {
+        if (_swapCounterLabel == null)
+        {
+            return;
+        }
+
+        maxSwaps = Mathf.Max(0, maxSwaps);
+        remainingSwaps = Mathf.Clamp(remainingSwaps, 0, maxSwaps);
+
+        if (maxSwaps <= 0)
+        {
+            _swapCounterLabel.text = "Swaps Disabled";
+            return;
+        }
+
+        if (remainingSwaps <= 0)
+        {
+            _swapCounterLabel.text = "No Swaps Remaining";
+        }
+        else if (remainingSwaps == 1)
+        {
+            _swapCounterLabel.text = "1 Swap Remaining";
+        }
+        else
+        {
+            _swapCounterLabel.text = $"{remainingSwaps} Swaps Remaining";
+        }
     }
 
     private void ShowSteamPopup(string text)

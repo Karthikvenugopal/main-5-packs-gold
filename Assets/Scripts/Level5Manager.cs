@@ -145,6 +145,7 @@ public class Level5Manager : MonoBehaviour, ISequentialHazardManager
         StartCoroutine(RecountTokensAfterBuild());
         
         gameManager?.OnLevelReady();
+        UpdateSwapCounterUI();
     }
 
     private IEnumerator RecountTokensAfterBuild()
@@ -184,6 +185,7 @@ public class Level5Manager : MonoBehaviour, ISequentialHazardManager
             else
             {
                 Debug.Log("Level5Manager: Maximum swap limit reached!");
+                UpdateSwapCounterUI();
             }
         }
     }
@@ -234,6 +236,18 @@ public class Level5Manager : MonoBehaviour, ISequentialHazardManager
 
         _swapCount++;
         Debug.Log($"Level5Manager: Player positions swapped! ({_swapCount}/{MaxSwaps} swaps used)");
+        UpdateSwapCounterUI();
+    }
+
+    private void UpdateSwapCounterUI()
+    {
+        if (gameManager == null)
+        {
+            return;
+        }
+
+        int remainingSwaps = Mathf.Max(0, MaxSwaps - _swapCount);
+        gameManager.UpdateSwapCounterDisplay(remainingSwaps, MaxSwaps);
     }
 
     private void CacheHazardOutlineData()
