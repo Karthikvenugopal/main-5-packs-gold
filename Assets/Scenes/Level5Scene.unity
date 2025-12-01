@@ -443,6 +443,12 @@ MonoBehaviour:
   iceHitEffectPrefab: {fileID: 0}
   steamAreaPrefab: {fileID: 1782639606961843302, guid: f7e6fcaa46eed45e99fa7c34af995fd1, type: 3}
   steamWallPrefab: {fileID: 4020497483579227255, guid: 10dc098c0270d42fa9712fe241c30404, type: 3}
+  fireTokenPrefab: {fileID: 3719016400462265484, guid: 6b803ea3f8f44c6891fbd29ba054856e, type: 3}
+  waterTokenPrefab: {fileID: 3899964583291950876, guid: 5b7c3e7713a2418fa207fda6cba2a5a1, type: 3}
+  showSequenceOutlines: 1
+  fireOutlineColor: {r: 0.95, g: 0.45, b: 0.15, a: 0.9}
+  iceOutlineColor: {r: 0.4, g: 0.75, b: 1, a: 0.9}
+  outlineWidth: 0.05
   gameManager: {fileID: 1746984134}
   tokenPlacementManager: {fileID: 2110000000000000002}
 --- !u!4 &920500693

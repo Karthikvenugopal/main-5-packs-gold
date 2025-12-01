@@ -1922,7 +1922,16 @@ public class GameManager : MonoBehaviour
     // This function is modified to FIX the bug where token icons were not appearing.
     // The line "AddComponent<LayoutElement>()" was accidentally removed in the previous
     // version and has been RESTORED. This is required for the ContentSizeFitter.
-        private void RecountTokensInScene()
+    
+    /// <summary>
+    /// Public method to recount tokens in the scene. Useful for levels that spawn tokens programmatically.
+    /// </summary>
+    public void RecountTokensInScene()
+    {
+        RecountTokensInSceneInternal();
+    }
+    
+        private void RecountTokensInSceneInternal()
         {
             int fireCount = 0;
             int waterCount = 0;
