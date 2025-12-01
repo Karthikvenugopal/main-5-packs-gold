@@ -656,6 +656,7 @@ MonoBehaviour:
   topUiBarHeight: 160
   topUiBarWidth: 1320
   topUiBarColor: {r: 0.11764706, g: 0.05882353, b: 0.05882353, a: 1}
+  disableTopUiBar: 1
   heartLossSfx: {fileID: 0}
   heartLossSfxVolume: 0.9
   fireTokensCollected: 0
