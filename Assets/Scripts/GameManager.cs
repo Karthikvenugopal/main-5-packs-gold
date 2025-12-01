@@ -71,6 +71,8 @@ public class GameManager : MonoBehaviour
     [SerializeField] private float level3TargetTimeSeconds = 120f; // Level 3: 2 minutes
     [Tooltip("Target time for Level 4. Set to 0 to use targetTimeSeconds.")]
     [SerializeField] private float level4TargetTimeSeconds = 150f; // Level 4: 2:30 minutes
+    [Tooltip("Target time for Level 5. Set to 0 to use targetTimeSeconds.")]
+    [SerializeField] private float level5TargetTimeSeconds = 0f; // Level 5: uses default
     [Header("Level Intro Instructions")]
     [SerializeField] private bool showInstructionPanel = true;
     [SerializeField] private string instructionPanelSceneName = "Level1Scene";
@@ -112,6 +114,15 @@ public class GameManager : MonoBehaviour
         "Template ready. Drop in your maze layout and hazards."
     };
     [SerializeField] private string level4InstructionContinuePrompt = "Press Space to start";
+    [SerializeField] private string level5InstructionSceneName = "Level5Scene";
+    [SerializeField] private string[] level5InstructionLines = new[]
+    {
+        "<b>Level 5</b>",
+        "",
+        "Use SPACE button to swap positions",
+        "Can only Swap 4 times: Choose Wisely!"
+    };
+    [SerializeField] private string level5InstructionContinuePrompt = "Press Space to start";
     
     [Header("UI Sprites")]
     [Tooltip("Sprite for Ember's full heart (Red)")]
@@ -680,7 +691,6 @@ public class GameManager : MonoBehaviour
 
     private bool TryGetInstructionContentForScene(out string[] lines, out string prompt)
     {
-        // ... (This function is UNCHANGED) ...
         lines = null;
         prompt = instructionContinuePrompt;
 
@@ -718,6 +728,14 @@ public class GameManager : MonoBehaviour
                 ? instructionContinuePrompt
                 : level4InstructionContinuePrompt;
         }
+        else if (!string.IsNullOrEmpty(level5InstructionSceneName) &&
+                 currentScene == level5InstructionSceneName)
+        {
+            lines = level5InstructionLines;
+            prompt = string.IsNullOrEmpty(level5InstructionContinuePrompt)
+                ? instructionContinuePrompt
+                : level5InstructionContinuePrompt;
+        }
         else if (string.IsNullOrEmpty(instructionPanelSceneName))
         {
             lines = instructionLines;
@@ -728,7 +746,6 @@ public class GameManager : MonoBehaviour
 
     private void CreateInstructionPanelIfNeeded()
     {
-        // ... (This function is UNCHANGED) ...
         if (_hudCanvas == null || _instructionPanel != null) return;
 
         if (!TryGetInstructionContentForScene(out var lines, out var prompt)) return;
@@ -1922,7 +1939,16 @@ public class GameManager : MonoBehaviour
     // This function is modified to FIX the bug where token icons were not appearing.
     // The line "AddComponent<LayoutElement>()" was accidentally removed in the previous
     // version and has been RESTORED. This is required for the ContentSizeFitter.
-        private void RecountTokensInScene()
+    
+    /// <summary>
+    /// Public method to recount tokens in the scene. Useful for levels that spawn tokens programmatically.
+    /// </summary>
+    public void RecountTokensInScene()
+    {
+        RecountTokensInSceneInternal();
+    }
+    
+        private void RecountTokensInSceneInternal()
         {
             int fireCount = 0;
             int waterCount = 0;
@@ -2459,12 +2485,13 @@ public class GameManager : MonoBehaviour
     private bool IsScoredLevel()
     {
         string currentScene = SceneManager.GetActiveScene().name;
-        // Check if we're in any of the main level scenes (Level1 through Level4)
+        // Check if we're in any of the main level scenes (Level1 through Level5)
         // Tutorial uses GameManagerTutorial, so it's automatically excluded
         return (!string.IsNullOrEmpty(instructionPanelSceneName) && currentScene == instructionPanelSceneName) ||
                (!string.IsNullOrEmpty(level2InstructionSceneName) && currentScene == level2InstructionSceneName) ||
                (!string.IsNullOrEmpty(level3InstructionSceneName) && currentScene == level3InstructionSceneName) ||
-               (!string.IsNullOrEmpty(level4InstructionSceneName) && currentScene == level4InstructionSceneName);
+               (!string.IsNullOrEmpty(level4InstructionSceneName) && currentScene == level4InstructionSceneName) ||
+               (!string.IsNullOrEmpty(level5InstructionSceneName) && currentScene == level5InstructionSceneName);
     }
 
     private float GetTargetTimeForCurrentLevel()
@@ -2485,6 +2512,11 @@ public class GameManager : MonoBehaviour
         if (!string.IsNullOrEmpty(level4InstructionSceneName) && currentScene == level4InstructionSceneName)
         {
             return level4TargetTimeSeconds > 0f ? level4TargetTimeSeconds : targetTimeSeconds;
+        }
+
+        if (!string.IsNullOrEmpty(level5InstructionSceneName) && currentScene == level5InstructionSceneName)
+        {
+            return level5TargetTimeSeconds > 0f ? level5TargetTimeSeconds : targetTimeSeconds;
         }
         
         // Default to Level 1 target time (or general target time)
