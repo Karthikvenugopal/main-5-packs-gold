@@ -288,7 +288,7 @@ Camera:
     x: 0
     y: 0
     width: 1
-    height: 0.8515
+    height: 1
   near clip plane: 0.3
   far clip plane: 1000
   field of view: 60
@@ -441,13 +441,16 @@ MonoBehaviour:
   cannonHitEffectPrefab: {fileID: 0}
   fireHitEffectPrefab: {fileID: 0}
   iceHitEffectPrefab: {fileID: 0}
-  fireCannonPositionOffset: {x: -0.5, y: 0}
-  gameManager: {fileID: 1746984134}
-  tokenPlacementManager: {fileID: 2110000000000000002}
+  steamAreaPrefab: {fileID: 1782639606961843302, guid: f7e6fcaa46eed45e99fa7c34af995fd1, type: 3}
+  steamWallPrefab: {fileID: 4020497483579227255, guid: 10dc098c0270d42fa9712fe241c30404, type: 3}
+  fireTokenPrefab: {fileID: 3719016400462265484, guid: 6b803ea3f8f44c6891fbd29ba054856e, type: 3}
+  waterTokenPrefab: {fileID: 3899964583291950876, guid: 5b7c3e7713a2418fa207fda6cba2a5a1, type: 3}
   showSequenceOutlines: 1
   fireOutlineColor: {r: 0.95, g: 0.45, b: 0.15, a: 0.9}
   iceOutlineColor: {r: 0.4, g: 0.75, b: 1, a: 0.9}
   outlineWidth: 0.05
+  gameManager: {fileID: 1746984134}
+  tokenPlacementManager: {fileID: 2110000000000000002}
 --- !u!4 &920500693
 Transform:
   m_ObjectHideFlags: 0
@@ -542,6 +545,7 @@ MonoBehaviour:
   playerPrefab: {fileID: 7307446650723487989, guid: 44964639595521e40aa2d28dda0ba7bd, type: 3}
   gameManager: {fileID: 1746984134}
   gameManagerTutorial: {fileID: 0}
+  playerVerticalOffset: 0
 --- !u!4 &1746984133
 Transform:
   m_ObjectHideFlags: 0
@@ -571,6 +575,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::GameManager
   isTutorialMode: 0
   messageBackground: {r: 0, g: 0, b: 0, a: 0}
+  upperUiFont: {fileID: 0}
   levelIntroMessage: 
   levelStartMessage: 
   levelVictoryMessage: Victory! Both heroes reached safety. Press R to play again.
@@ -599,7 +604,9 @@ MonoBehaviour:
   targetTimeSeconds: 60
   level2TargetTimeSeconds: 180
   level3TargetTimeSeconds: 120
-  showInstructionPanel: 0
+  level4TargetTimeSeconds: 150
+  level5TargetTimeSeconds: 0
+  showInstructionPanel: 1
   instructionPanelSceneName: Level1Scene
   instructionLines:
   - <b>Heads up</b>
@@ -623,6 +630,19 @@ MonoBehaviour:
   - 
   - Keep collecting tokens and avoid hazards!
   level3InstructionContinuePrompt: Press Space to start
+  level4InstructionSceneName: Level4Scene
+  level4InstructionLines:
+  - <b>Level 4</b>
+  - 
+  - Template ready. Drop in your maze layout and hazards.
+  level4InstructionContinuePrompt: Press Space to start
+  level5InstructionSceneName: Level5Scene
+  level5InstructionLines:
+  - <b>Level 5</b>
+  - 
+  - Use SPACE button to swap positions
+  - 'Can only Swap 4 times: Choose Wisely!'
+  level5InstructionContinuePrompt: Press Space to start
   emberHeartFullSprite: {fileID: 6341348101557482619, guid: 3b91ad87000d64526b2b182ed1ef4834, type: 3}
   emberHeartEmptySprite: {fileID: -4643077359141595314, guid: 3333514574fc144eb95cc807c8348464, type: 3}
   aquaHeartFullSprite: {fileID: -2880978766386009668, guid: 28fb0f56d13b04528a3ef03f381a909e, type: 3}
@@ -634,7 +654,9 @@ MonoBehaviour:
   heartIconSize: {x: 40, y: 40}
   tokenIconSize: {x: 40, y: 40}
   topUiBarHeight: 160
-  topUiBarColor: {r: 0.11764706, g: 0.05882353, b: 0.05882353, a: 1}
+  topUiBarWidth: 1320
+  topUiBarColor: {r: 0, g: 0, b: 0, a: 0}
+  disableTopUiBar: 0
   heartLossSfx: {fileID: 0}
   heartLossSfxVolume: 0.9
   fireTokensCollected: 0
