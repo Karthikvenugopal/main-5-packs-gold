@@ -158,6 +158,8 @@ public class GameManager : MonoBehaviour
     [SerializeField] private float topUiBarWidth = 1320f;
     [Tooltip("The background color of the top UI bar")]
     [SerializeField] private Color topUiBarColor = new Color(0f, 0f, 0f, 0f);
+    [Tooltip("Set true to disable the top UI bar (used for special scenes like Level 5)")]
+    [SerializeField] private bool disableTopUiBar = false;
     // --- MODIFICATION END ---
 
     [Header("Audio")]
@@ -278,10 +280,13 @@ public class GameManager : MonoBehaviour
             useVictoryPanel = true;
         }
         EnsureHudCanvas();
-        CreateTokensUI();
-        CreateHeartsUI();
-        CreateSteamTimerUI();
-        CreateSteamPopupUI();
+        if (!disableTopUiBar)
+        {
+            CreateTokensUI();
+            CreateHeartsUI();
+            CreateSteamTimerUI();
+            CreateSteamPopupUI();
+        }
         CreateVictoryPanel();
 
         if (resetGlobalTokenTotalsOnLoad)
@@ -653,8 +658,14 @@ public class GameManager : MonoBehaviour
 
         GameObject background = new GameObject(backgroundName); 
         
-        // --- MODIFICATION: Parent to the Top UI Bar ---
-        background.transform.SetParent(_topUiBar, false);
+        Transform statusParent = _topUiBar != null ? _topUiBar : (_hudCanvas != null ? _hudCanvas.transform : null);
+        if (statusParent == null)
+        {
+            Debug.LogWarning("CreateStatusUI: Cannot find a parent transform for the status background.", this);
+            return;
+        }
+
+        background.transform.SetParent(statusParent, false);
 
         RectTransform bgRect = background.AddComponent<RectTransform>();
         
@@ -862,6 +873,15 @@ public class GameManager : MonoBehaviour
         canvasGO.AddComponent<GraphicRaycaster>();
 
         EnsureEventSystemExists();
+
+        if (disableTopUiBar)
+        {
+            _topUiBar = null;
+            _topUiContentRoot = null;
+            _topUiBarIsStretched = false;
+            _topUiHorizontalPadding = 0f;
+            return;
+        }
         
         // --- NEW: Create the Top UI Bar ---
         GameObject topBarGO = new GameObject("TopUI_Bar_Background");
@@ -1973,6 +1993,11 @@ public class GameManager : MonoBehaviour
 
         _totalFireTokens = fireCount;
         _totalWaterTokens = waterCount;
+
+        if (disableTopUiBar)
+        {
+            return;
+        }
         
         // 1. Find the master container, *then* the sub-containers
         Transform searchRoot = _topUiContentRoot != null ? _topUiContentRoot : (_topUiBar != null ? _topUiBar : _hudCanvas.transform);

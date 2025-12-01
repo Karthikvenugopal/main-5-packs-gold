@@ -288,7 +288,7 @@ Camera:
     x: 0
     y: 0
     width: 1
-    height: 0.8515
+    height: 1
   near clip plane: 0.3
   far clip plane: 1000
   field of view: 60
@@ -655,7 +655,8 @@ MonoBehaviour:
   tokenIconSize: {x: 40, y: 40}
   topUiBarHeight: 160
   topUiBarWidth: 1320
-  topUiBarColor: {r: 0.11764706, g: 0.05882353, b: 0.05882353, a: 1}
+  topUiBarColor: {r: 0, g: 0, b: 0, a: 0}
+  disableTopUiBar: 0
   heartLossSfx: {fileID: 0}
   heartLossSfxVolume: 0.9
   fireTokensCollected: 0
