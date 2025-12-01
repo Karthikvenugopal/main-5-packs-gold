@@ -150,9 +150,27 @@ function ensureTokenCompletionSheet_(ss, opts) {
   ]]);
   sh.getRange('G:G').setNumberFormat('0');
   sh.getRange('D:D').setNumberFormat('0%');
-  safeGetCharts_(sh).forEach(function(chart) {
-    sh.removeChart(chart);
-  });
+
+  // Only manage charts when explicitly requested (e.g., from the menu action).
+  if (opts && opts.buildCharts) {
+    if (opts.reset) {
+      safeGetCharts_(sh).forEach(function(chart) {
+        sh.removeChart(chart);
+      });
+    }
+    if (safeGetCharts_(sh).length === 0) {
+      const chart = sh.newChart()
+        .asColumnChart()
+        .addRange(sh.getRange('A:B'))
+        .setPosition(1, 3, 0, 0)
+        .setOption('title', 'Token Completion Rate')
+        .setOption('legend', { position: 'none' })
+        .setOption('hAxis', { title: 'Level' })
+        .setOption('vAxis', { title: 'Rate' })
+        .build();
+      sh.insertChart(chart);
+    }
+  }
   return sh;
 }
 
@@ -168,7 +186,7 @@ function safeGetCharts_(sh) {
 
 function buildTokenCompletionCharts() {
   const ss = SpreadsheetApp.getActive();
-  ensureTokenCompletionSheet_(ss, { reset: true });
+  ensureTokenCompletionSheet_(ss, { reset: true, buildCharts: true });
 }
 
 function buildCompletionFunnel() {
@@ -492,6 +510,9 @@ function processEvent_(ss, data) {
       }
     }
     try { ensureRetryDensitySheet_(ss, { reset: false }); } catch (e) { Logger.log(e); }
+    try { ensureCompletionFunnelSheet_(ss, { reset: false }); } catch (e) { Logger.log(e); }
+    try { ensureAvgTimeSuccessSheet_(ss, { reset: false }); } catch (e) { Logger.log(e); }
+    try { ensureAvgTimeFailureSheet_(ss, { reset: false }); } catch (e) { Logger.log(e); }
     return ContentService.createTextOutput(JSON.stringify({ ok: true, type: 'result', recorded: 'failure', reason: evt }))
       .setMimeType(ContentService.MimeType.JSON);
   }
@@ -542,6 +563,9 @@ function processEvent_(ss, data) {
     timeSpent
   ]);
   try { ensureRetryDensitySheet_(ss, { reset: false }); } catch (e) { Logger.log(e); }
+  try { ensureCompletionFunnelSheet_(ss, { reset: false }); } catch (e) { Logger.log(e); }
+  try { ensureAvgTimeSuccessSheet_(ss, { reset: false }); } catch (e) { Logger.log(e); }
+  try { ensureAvgTimeFailureSheet_(ss, { reset: false }); } catch (e) { Logger.log(e); }
 
   return ContentService.createTextOutput(JSON.stringify({ ok: true, type: 'result' }))
     .setMimeType(ContentService.MimeType.JSON);
