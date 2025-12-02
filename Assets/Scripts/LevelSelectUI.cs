@@ -33,8 +33,8 @@ public class LevelSelectUI : MonoBehaviour
     public void LoadLevel1() => LoadScene(level1Scene);
     public void LoadLevel2() => LoadScene(level2Scene);
     public void LoadLevel3() => LoadScene(level3Scene);
-    // public void LoadLevel5() => LoadScene(level5Scene); // Temporarily commented out
     public void LoadLevel4() => LoadScene(level4Scene);
+    public void LoadLevel5() => LoadScene(level5Scene); // Temporarily commented out
 
     private void Awake()
     {
