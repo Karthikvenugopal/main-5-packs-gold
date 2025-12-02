@@ -51,6 +51,13 @@ public class RetryHud : MonoBehaviour
                name == "tutorial" || name == "tutorialscene";
     }
 
+    private static bool IsLevel1Scene(string name)
+    {
+        if (string.IsNullOrEmpty(name)) return false;
+        name = name.ToLowerInvariant();
+        return name == "level1scene" || name == "level1";
+    }
+
     private Canvas _canvas;
     private Button _optionsButton;
     private GameObject _modalPanel;
@@ -76,7 +83,8 @@ public class RetryHud : MonoBehaviour
         rect.anchorMax = new Vector2(1f, 0f);
         rect.pivot = new Vector2(1f, 0f);
         rect.anchoredPosition = new Vector2(-30f, 30f);
-        rect.sizeDelta = new Vector2(110f, 40f);
+        bool isLevel1Button = IsLevel1Scene(SceneManager.GetActiveScene().name);
+        rect.sizeDelta = isLevel1Button ? new Vector2(150f, 55f) : new Vector2(110f, 40f);
 
         var img = btnGO.AddComponent<Image>();
         img.color = ButtonColor;

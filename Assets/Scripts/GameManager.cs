@@ -31,6 +31,9 @@ public class GameManager : MonoBehaviour
     [SerializeField] private Color messageBackground = new Color(0f, 0f, 0f, 0.55f);
     [Header("UI Fonts")]
     [SerializeField] private TMP_FontAsset upperUiFont;
+    private const string UpperUiFontResourcePath = "Fonts/UncialAntiqua-Regular SDF";
+    [SerializeField] private TMP_FontAsset instructionFont;
+    private const string InstructionFontResourcePath = "Fonts/TaiHeritagePro-Regular SDF";
     [Header("UI Messages")]
     [SerializeField] private string levelIntroMessage = "";
     [SerializeField] private string levelStartMessage = "";
@@ -111,7 +114,9 @@ public class GameManager : MonoBehaviour
     {
         "<b>Level 4</b>",
         "",
-        "Template ready. Drop in your maze layout and hazards."
+        "Beware of the green wisp!",
+        "Touch the purple spiral together to activate Steam Mode.",
+        "Act fast—Steam Mode is timed!"
     };
     [SerializeField] private string level4InstructionContinuePrompt = "Press Space to start";
     [SerializeField] private string level5InstructionSceneName = "Level5Scene";
@@ -240,6 +245,7 @@ public class GameManager : MonoBehaviour
     private TextMeshProUGUI _statusLabel;
     private Image _statusBackgroundImage;
     private TMP_FontAsset _cachedUpperUiFont;
+    private TMP_FontAsset _cachedInstructionFont;
     private bool _levelReady;
     private bool _gameActive;
     private bool _gameFinished;
@@ -619,13 +625,50 @@ public class GameManager : MonoBehaviour
         if (upperUiFont != null)
         {
             _cachedUpperUiFont = upperUiFont;
+            return _cachedUpperUiFont;
         }
-        else if (TMP_Settings.defaultFontAsset != null)
+
+        _cachedUpperUiFont = LoadUpperUiFontFromResources();
+
+        if (_cachedUpperUiFont == null && TMP_Settings.defaultFontAsset != null)
         {
             _cachedUpperUiFont = TMP_Settings.defaultFontAsset;
         }
 
         return _cachedUpperUiFont;
+    }
+
+    private TMP_FontAsset LoadUpperUiFontFromResources()
+    {
+        if (string.IsNullOrEmpty(UpperUiFontResourcePath))
+        {
+            return null;
+        }
+
+        return Resources.Load<TMP_FontAsset>(UpperUiFontResourcePath);
+    }
+
+    private TMP_FontAsset GetInstructionFont()
+    {
+        if (_cachedInstructionFont != null)
+        {
+            return _cachedInstructionFont;
+        }
+
+        if (instructionFont != null)
+        {
+            _cachedInstructionFont = instructionFont;
+            return _cachedInstructionFont;
+        }
+
+        _cachedInstructionFont = Resources.Load<TMP_FontAsset>(InstructionFontResourcePath);
+
+        if (_cachedInstructionFont == null && TMP_Settings.defaultFontAsset != null)
+        {
+            _cachedInstructionFont = TMP_Settings.defaultFontAsset;
+        }
+
+        return _cachedInstructionFont;
     }
 
     private void ApplyUpperUiFont(TextMeshProUGUI label)
@@ -636,6 +679,20 @@ public class GameManager : MonoBehaviour
         }
 
         var fontAsset = GetUpperUiFont();
+        if (fontAsset != null)
+        {
+            label.font = fontAsset;
+        }
+    }
+
+    private void ApplyInstructionFont(TextMeshProUGUI label)
+    {
+        if (label == null)
+        {
+            return;
+        }
+
+        var fontAsset = GetInstructionFont();
         if (fontAsset != null)
         {
             label.font = fontAsset;
@@ -783,9 +840,10 @@ public class GameManager : MonoBehaviour
         instructionsRect.sizeDelta = new Vector2(1900f, 50f);
 
         TextMeshProUGUI instructionsLabel = instructionsGO.AddComponent<TextMeshProUGUI>();
-        ApplyUpperUiFont(instructionsLabel);
+        ApplyInstructionFont(instructionsLabel);
         instructionsLabel.alignment = TextAlignmentOptions.Center;
         instructionsLabel.fontSize = 60f;
+        instructionsLabel.fontStyle = FontStyles.Bold;
         instructionsLabel.text = lines != null && lines.Length > 0
             ? string.Join("\n", lines)
             : string.Empty;
@@ -802,9 +860,10 @@ public class GameManager : MonoBehaviour
         promptRect.sizeDelta = new Vector2(700f, 80f);
 
         TextMeshProUGUI promptLabel = promptGO.AddComponent<TextMeshProUGUI>();
-        ApplyUpperUiFont(promptLabel);
+        ApplyInstructionFont(promptLabel);
         promptLabel.alignment = TextAlignmentOptions.Center;
         promptLabel.fontSize = 36f;
+        promptLabel.fontStyle = FontStyles.Bold;
         promptLabel.text = string.IsNullOrEmpty(prompt)
             ? "Press Space to start"
             : prompt;

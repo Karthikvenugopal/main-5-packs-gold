@@ -703,7 +703,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::GameManager
   isTutorialMode: 0
   messageBackground: {r: 0, g: 0, b: 0, a: 0}
-  upperUiFont: {fileID: 0}
+  upperUiFont: {fileID: 11400000, guid: 161475e7879c4f21ba9b32676fc849ae, type: 2}
+  instructionFont: {fileID: 0}
   levelIntroMessage: 
   levelStartMessage: 
   levelVictoryMessage: Victory! Both heroes reached safety. Press R to play again.
@@ -734,8 +735,8 @@ MonoBehaviour:
   level3TargetTimeSeconds: 120
   level4TargetTimeSeconds: 150
   level5TargetTimeSeconds: 0
-  showInstructionPanel: 0
-  instructionPanelSceneName: Level1Scene
+  showInstructionPanel: 1
+  instructionPanelSceneName: 
   instructionLines:
   - <b>Heads up</b>
   - Melt ice.
@@ -762,7 +763,9 @@ MonoBehaviour:
   level4InstructionLines:
   - <b>Level 4</b>
   - 
-  - Template ready. Drop in your maze layout and hazards.
+  - Beware of the green wisp!
+  - Touch the purple spiral together to activate Steam Mode.
+  - Act fast, Steam Mode is timed!
   level4InstructionContinuePrompt: Press Space to start
   level5InstructionSceneName: Level5Scene
   level5InstructionLines:
@@ -784,6 +787,7 @@ MonoBehaviour:
   topUiBarHeight: 160
   topUiBarWidth: 0
   topUiBarColor: {r: 0.12941177, g: 0.101960786, b: 0.16078432, a: 1}
+  disableTopUiBar: 0
   heartLossSfx: {fileID: 0}
   heartLossSfxVolume: 0.9
   fireTokensCollected: 0
