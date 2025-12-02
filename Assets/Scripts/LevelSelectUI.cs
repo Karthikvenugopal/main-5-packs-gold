@@ -21,9 +21,9 @@ public class LevelSelectUI : MonoBehaviour
     [SerializeField] private Color buttonTextColor = Color.white;
     [SerializeField] private int buttonFontSize = 32;
     [SerializeField] private FontStyles buttonFontStyle = FontStyles.Bold;
-    [SerializeField] private Color buttonImageColor = new Color(0.8156863f, 0.1254902f, 0.5647059f, 1f);
+    [SerializeField] private Color buttonImageColor = Color.white;
     [SerializeField] private Color normalColor = Color.white;
-    [SerializeField] private Color highlightedColor = new Color(0.9528302f, 0.85927933f, 0.5258544f, 1f);
+    [SerializeField] private Color highlightedColor = new Color(0.8392157f, 0.7607843f, 1f, 1f);
     [SerializeField] private Color pressedColor = new Color(0.78431374f, 0.78431374f, 0.78431374f, 1f);
     [SerializeField] private Color selectedColor = new Color(0.9607843f, 0.9607843f, 0.9607843f, 1f);
     [SerializeField] private Color disabledColor = new Color(0.78431374f, 0.78431374f, 0.78431374f, 0.5019608f);
