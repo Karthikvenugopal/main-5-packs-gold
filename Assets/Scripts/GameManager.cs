@@ -50,6 +50,18 @@ public class GameManager : MonoBehaviour
     [SerializeField] private bool useVictoryPanel = true;
     [SerializeField] private string victoryTitleText = "Level Complete";
     [SerializeField] private string victoryBodyText = "Choose where to go next.";
+    // --- MODIFICATION START ---
+    [SerializeField] private string[] victorySlogans = new[]
+    {
+        "No Cap, That Was Epic!",
+        "Main Character Energy!",
+        "Slayed It!",
+        "Built Different!",
+        "GOATed Behavior!",
+        "Vibe Check: Passed!",
+        "Sheeeeeesh! You Did That!"
+    };
+    // --- MODIFICATION END ---
     [SerializeField] private string defeatTitleText = "Out of Hearts";
     [SerializeField] private string defeatBodyText = "You ran out of hearts. Try again?";
     [SerializeField] private string nextLevelButtonText = "Next Level";
@@ -125,7 +137,7 @@ public class GameManager : MonoBehaviour
         "<b>Level 5</b>",
         "",
         "Use SPACE button to swap positions",
-        "Can only Swap 4 times: Choose Wisely!"
+        "Can only swap 3 times: choose wisely!"
     };
     [SerializeField] private string level5InstructionContinuePrompt = "Press Space to start";
     
@@ -165,6 +177,43 @@ public class GameManager : MonoBehaviour
     [SerializeField] private Color topUiBarColor = new Color(0f, 0f, 0f, 0f);
     [Tooltip("Set true to disable the top UI bar (used for special scenes like Level 5)")]
     [SerializeField] private bool disableTopUiBar = false;
+    
+    [Header("Swap Counter UI")]
+    [Tooltip("Optional container to allow manually positioning the Level 5 swap counter.")]
+    [SerializeField] private RectTransform swapCounterContainerOverride;
+    [Tooltip("Optional label used for the swap counter text when placing it manually.")]
+    [SerializeField] private TextMeshProUGUI swapCounterLabelOverride;
+
+    [Header("Theme Settings")]
+    [SerializeField] private TMP_FontAsset themeFont;
+    [SerializeField] private Sprite themeButtonSprite;
+    [SerializeField] private Color themeButtonNormalColor = Color.white;
+    [SerializeField] private Color themeButtonHighlightedColor = new Color(0.953f, 0.859f, 0.526f, 1f);
+    [SerializeField] private Color themeButtonPressedColor = new Color(0.784f, 0.784f, 0.784f, 1f);
+    [SerializeField] private Color themeButtonSelectedColor = new Color(0.961f, 0.961f, 0.961f, 1f);
+    [SerializeField] private Color themeButtonTextColor = new Color(0.2f, 0.2f, 0.2f, 1f); // Dark text for light buttons
+
+    // Public Accessors for Theme
+    public Sprite ThemeButtonSprite => themeButtonSprite;
+    public Color ThemeButtonNormalColor => themeButtonNormalColor;
+    public Color ThemeButtonHighlightedColor => themeButtonHighlightedColor;
+    public Color ThemeButtonPressedColor => themeButtonPressedColor;
+    public Color ThemeButtonSelectedColor => themeButtonSelectedColor;
+    public Color ThemeButtonTextColor => themeButtonTextColor;
+    
+#if UNITY_EDITOR
+    private void OnValidate()
+    {
+        if (themeFont == null)
+        {
+            themeFont = UnityEditor.AssetDatabase.LoadAssetAtPath<TMP_FontAsset>("Assets/TextMesh Pro/Fonts/UncialAntiqua-Regular SDF.asset");
+        }
+        if (themeButtonSprite == null)
+        {
+            themeButtonSprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Images/button.png");
+        }
+    }
+#endif
     // --- MODIFICATION END ---
 
     [Header("Audio")]
@@ -195,6 +244,8 @@ public class GameManager : MonoBehaviour
     private GameObject _steamPopupContainer;
     private TextMeshProUGUI _steamPopupLabel;
     private Coroutine _steamPopupCoroutine;
+    private TextMeshProUGUI _swapCounterLabel;
+    private SwapCounterManualAnchor _swapCounterManualAnchor;
     
     // --- MODIFICATION START ---
     // We add a reference for the top UI bar's RectTransform.
@@ -293,6 +344,7 @@ public class GameManager : MonoBehaviour
             CreateSteamTimerUI();
             CreateSteamPopupUI();
         }
+        CreateSwapCounterUI();
         CreateVictoryPanel();
 
         if (resetGlobalTokenTotalsOnLoad)
@@ -615,8 +667,14 @@ public class GameManager : MonoBehaviour
         Debug.Log(message);
     }
 
-    private TMP_FontAsset GetUpperUiFont()
+    public TMP_FontAsset GetUpperUiFont()
     {
+        // Prioritize the Theme Font if set
+        if (themeFont != null)
+        {
+            return themeFont;
+        }
+
         if (_cachedUpperUiFont != null)
         {
             return _cachedUpperUiFont;
@@ -697,6 +755,24 @@ public class GameManager : MonoBehaviour
         {
             label.font = fontAsset;
         }
+    }
+
+    private bool IsCurrentSceneLevel5()
+    {
+        string currentScene = SceneManager.GetActiveScene().name;
+        if (string.IsNullOrEmpty(currentScene))
+        {
+            return false;
+        }
+
+        if (!string.IsNullOrEmpty(level5InstructionSceneName) &&
+            string.Equals(currentScene, level5InstructionSceneName, StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        return string.Equals(currentScene, "Level5Scene", StringComparison.OrdinalIgnoreCase) ||
+               string.Equals(currentScene, "Level5", StringComparison.OrdinalIgnoreCase);
     }
 
     // --- MODIFICATION START ---
@@ -840,7 +916,7 @@ public class GameManager : MonoBehaviour
         instructionsRect.sizeDelta = new Vector2(1900f, 50f);
 
         TextMeshProUGUI instructionsLabel = instructionsGO.AddComponent<TextMeshProUGUI>();
-        ApplyInstructionFont(instructionsLabel);
+        // Reverted to default font for readability
         instructionsLabel.alignment = TextAlignmentOptions.Center;
         instructionsLabel.fontSize = 60f;
         instructionsLabel.fontStyle = FontStyles.Bold;
@@ -860,7 +936,7 @@ public class GameManager : MonoBehaviour
         promptRect.sizeDelta = new Vector2(700f, 80f);
 
         TextMeshProUGUI promptLabel = promptGO.AddComponent<TextMeshProUGUI>();
-        ApplyInstructionFont(promptLabel);
+        // Reverted to default font for readability
         promptLabel.alignment = TextAlignmentOptions.Center;
         promptLabel.fontSize = 36f;
         promptLabel.fontStyle = FontStyles.Bold;
@@ -1303,7 +1379,8 @@ public class GameManager : MonoBehaviour
         rect.anchorMin = new Vector2(0.5f, 0.5f);
         rect.anchorMax = new Vector2(0.5f, 0.5f);
         rect.pivot = new Vector2(0.5f, 0.5f);
-        rect.sizeDelta = new Vector2(420f, 80f);
+        // Slimmer timer so it doesn't overlap tokens on Level 5.
+        rect.sizeDelta = new Vector2(260f, 80f);
         rect.anchoredPosition = Vector2.zero;
 
         Image background = timerContainer.AddComponent<Image>();
@@ -1382,6 +1459,190 @@ public class GameManager : MonoBehaviour
         _steamPopupLabel.fontStyle = FontStyles.Bold;
         _steamPopupLabel.color = SteamPopupBaseColor;
         _steamPopupLabel.raycastTarget = false;
+    }
+
+    private void CreateSwapCounterUI()
+    {
+        _swapCounterLabel = null;
+
+        bool isLevel5 = IsCurrentSceneLevel5();
+        if (!isLevel5)
+        {
+            if (swapCounterContainerOverride != null)
+            {
+                swapCounterContainerOverride.gameObject.SetActive(false);
+            }
+            return;
+        }
+
+        TextMeshProUGUI manualLabel = swapCounterLabelOverride;
+        RectTransform manualContainer = swapCounterContainerOverride;
+        if (isLevel5 && (manualLabel == null || manualContainer == null))
+        {
+            SwapCounterManualAnchor anchor = ResolveSwapCounterManualAnchor();
+            if (anchor != null)
+            {
+                if (manualContainer == null)
+                {
+                    manualContainer = anchor.Container;
+                    swapCounterContainerOverride = manualContainer;
+                }
+
+                if (manualLabel == null)
+                {
+                    manualLabel = anchor.Label;
+                    swapCounterLabelOverride = manualLabel;
+                }
+            }
+        }
+
+        if (manualLabel == null && manualContainer != null)
+        {
+            manualLabel = manualContainer.GetComponentInChildren<TextMeshProUGUI>(true);
+            if (manualLabel != null)
+            {
+                swapCounterLabelOverride = manualLabel;
+            }
+        }
+
+        if (manualLabel != null)
+        {
+            _swapCounterLabel = manualLabel;
+            ApplyUpperUiFont(_swapCounterLabel);
+            _swapCounterLabel.text = string.Empty;
+            _swapCounterLabel.raycastTarget = false;
+
+            if (_hudCanvas != null && manualContainer != null)
+            {
+                Transform targetParent = _hudCanvas.transform;
+                manualContainer.SetParent(targetParent, false);
+                manualContainer.SetAsLastSibling();
+            }
+
+            if (manualContainer != null)
+            {
+                manualContainer.gameObject.SetActive(true);
+            }
+            else
+            {
+                _swapCounterLabel.gameObject.SetActive(true);
+            }
+
+            return;
+        }
+
+        if (_hudCanvas == null)
+        {
+            return;
+        }
+
+        Transform parent = _topUiContentRoot != null
+            ? _topUiContentRoot
+            : (_topUiBar != null ? _topUiBar : _hudCanvas.transform);
+        if (parent == null)
+        {
+            return;
+        }
+
+        GameObject swapContainer = new GameObject("SwapCounterContainer");
+        swapContainer.transform.SetParent(parent, false);
+
+        RectTransform rect = swapContainer.AddComponent<RectTransform>();
+        bool parentIsCanvas = parent == _hudCanvas.transform;
+        if (parentIsCanvas)
+        {
+            rect.anchorMin = new Vector2(0.5f, 1f);
+            rect.anchorMax = new Vector2(0.5f, 1f);
+            rect.pivot = new Vector2(0.5f, 1f);
+            rect.anchoredPosition = new Vector2(0f, -20f);
+        }
+        else
+        {
+            rect.anchorMin = new Vector2(0.5f, 0.5f);
+            rect.anchorMax = new Vector2(0.5f, 0.5f);
+            rect.pivot = new Vector2(0.5f, 0.5f);
+            rect.anchoredPosition = Vector2.zero;
+        }
+
+        rect.sizeDelta = new Vector2(360f, 110f);
+
+        Image bg = swapContainer.AddComponent<Image>();
+        bg.color = new Color(0f, 0f, 0f, 0.35f);
+        bg.raycastTarget = false;
+
+        GameObject labelGO = new GameObject("SwapCounterLabel");
+        labelGO.transform.SetParent(swapContainer.transform, false);
+
+        RectTransform labelRect = labelGO.AddComponent<RectTransform>();
+        labelRect.anchorMin = Vector2.zero;
+        labelRect.anchorMax = Vector2.one;
+        labelRect.offsetMin = new Vector2(15f, 15f);
+        labelRect.offsetMax = new Vector2(-15f, -15f);
+
+        _swapCounterLabel = labelGO.AddComponent<TextMeshProUGUI>();
+        ApplyUpperUiFont(_swapCounterLabel);
+        _swapCounterLabel.alignment = TextAlignmentOptions.Center;
+        _swapCounterLabel.fontSize = 44f;
+        _swapCounterLabel.color = Color.white;
+        _swapCounterLabel.text = string.Empty;
+        _swapCounterLabel.raycastTarget = false;
+    }
+
+    private SwapCounterManualAnchor ResolveSwapCounterManualAnchor()
+    {
+        if (_swapCounterManualAnchor != null)
+        {
+            return _swapCounterManualAnchor;
+        }
+
+        SwapCounterManualAnchor[] anchors = Resources.FindObjectsOfTypeAll<SwapCounterManualAnchor>();
+        foreach (var anchor in anchors)
+        {
+            if (anchor == null)
+            {
+                continue;
+            }
+
+            if (!anchor.gameObject.scene.IsValid())
+            {
+                continue; // Skip prefabs or assets not in the active scene
+            }
+
+            _swapCounterManualAnchor = anchor;
+            break;
+        }
+
+        return _swapCounterManualAnchor;
+    }
+
+    public void UpdateSwapCounterDisplay(int remainingSwaps, int maxSwaps)
+    {
+        if (_swapCounterLabel == null)
+        {
+            return;
+        }
+
+        maxSwaps = Mathf.Max(0, maxSwaps);
+        remainingSwaps = Mathf.Clamp(remainingSwaps, 0, maxSwaps);
+
+        if (maxSwaps <= 0)
+        {
+            _swapCounterLabel.text = "Swaps Disabled";
+            return;
+        }
+
+        if (remainingSwaps <= 0)
+        {
+            _swapCounterLabel.text = "No Swaps Remaining";
+        }
+        else if (remainingSwaps == 1)
+        {
+            _swapCounterLabel.text = "1 Swap Remaining";
+        }
+        else
+        {
+            _swapCounterLabel.text = $"{remainingSwaps} Swaps Remaining";
+        }
     }
 
     private void ShowSteamPopup(string text)
@@ -1474,6 +1735,8 @@ public class GameManager : MonoBehaviour
         _victoryTitleLabel.fontSize = 56f;
         _victoryTitleLabel.fontStyle = FontStyles.Bold;
         _victoryTitleLabel.text = victoryTitleText;
+        // Apply Theme Font
+        if (themeFont != null) _victoryTitleLabel.font = themeFont;
 
         // Create Trophy Image (between title and body/score text)
         GameObject trophyContainer = new GameObject("TrophyContainer");
@@ -1522,6 +1785,8 @@ public class GameManager : MonoBehaviour
         _victoryBodyLabel.fontSize = 40f;
         _victoryBodyLabel.enableWordWrapping = true;
         _victoryBodyLabel.text = victoryBodyText;
+        // Apply Theme Font
+        if (themeFont != null) _victoryBodyLabel.font = themeFont;
 
         GameObject summaryGroup = new GameObject("TokenSummary");
         summaryGroup.transform.SetParent(content.transform, false);
@@ -1552,6 +1817,8 @@ public class GameManager : MonoBehaviour
         _fireVictoryLabel.alignment = TextAlignmentOptions.Center;
         _fireVictoryLabel.fontSize = 34f;
         _fireVictoryLabel.text = string.Empty;
+        // Apply Theme Font
+        if (themeFont != null) _fireVictoryLabel.font = themeFont;
 
         _waterSummaryRoot = new GameObject("WaterSummary");
         _waterSummaryRoot.transform.SetParent(summaryGroup.transform, false);
@@ -1565,6 +1832,8 @@ public class GameManager : MonoBehaviour
         _waterVictoryLabel.alignment = TextAlignmentOptions.Center;
         _waterVictoryLabel.fontSize = 34f;
         _waterVictoryLabel.text = string.Empty;
+        // Apply Theme Font
+        if (themeFont != null) _waterVictoryLabel.font = themeFont;
 
         GameObject buttonRow = new GameObject("Buttons");
         buttonRow.transform.SetParent(content.transform, false);
@@ -1644,10 +1913,33 @@ public class GameManager : MonoBehaviour
 
         TextMeshProUGUI label = labelGO.AddComponent<TextMeshProUGUI>();
         label.alignment = TextAlignmentOptions.Center;
-        label.fontSize = 28f;
+        label.fontSize = 32f; // Adjusted for theme
+        label.color = themeButtonTextColor;
         label.text = labelText;
-        label.color = Color.white;
-        label.raycastTarget = false;
+        
+        if (themeFont != null)
+        {
+            label.font = themeFont;
+        }
+
+        // Apply Theme Sprite and Colors
+        if (themeButtonSprite != null)
+        {
+            bg.sprite = themeButtonSprite;
+            bg.type = Image.Type.Sliced;
+            bg.pixelsPerUnitMultiplier = 1f;
+        }
+        
+        // Reset color to white so the sprite color shows through, or use the theme normal color if no sprite
+        bg.color = Color.white; 
+
+        ColorBlock colors = button.colors;
+        colors.normalColor = themeButtonNormalColor;
+        colors.highlightedColor = themeButtonHighlightedColor;
+        colors.pressedColor = themeButtonPressedColor;
+        colors.selectedColor = themeButtonSelectedColor;
+        colors.colorMultiplier = 1f;
+        button.colors = colors;
 
         return button;
     }
@@ -1672,7 +1964,16 @@ public class GameManager : MonoBehaviour
 
         if (_victoryTitleLabel != null)
         {
-            _victoryTitleLabel.text = isVictory ? victoryTitleText : defeatTitleText;
+            // --- MODIFICATION START ---
+            if (isVictory && victorySlogans != null && victorySlogans.Length > 0)
+            {
+                _victoryTitleLabel.text = victorySlogans[UnityEngine.Random.Range(0, victorySlogans.Length)];
+            }
+            else
+            {
+                _victoryTitleLabel.text = isVictory ? victoryTitleText : defeatTitleText;
+            }
+            // --- MODIFICATION END ---
         }
 
         // Show/hide trophy based on victory state

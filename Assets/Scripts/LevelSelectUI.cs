@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.Events;
@@ -18,15 +19,15 @@ public class LevelSelectUI : MonoBehaviour
 
     [Header("Style (matches Main Menu)")]
     [SerializeField] private TMP_FontAsset buttonFont;
-    [SerializeField] private Color buttonTextColor = Color.white;
+    [SerializeField] private Color buttonTextColor = new Color(0.2f, 0.2f, 0.2f, 1f);
     [SerializeField] private int buttonFontSize = 32;
     [SerializeField] private FontStyles buttonFontStyle = FontStyles.Bold;
     [SerializeField] private Color buttonImageColor = Color.white;
     [SerializeField] private Color normalColor = Color.white;
-    [SerializeField] private Color highlightedColor = new Color(0.8392157f, 0.7607843f, 1f, 1f);
-    [SerializeField] private Color pressedColor = new Color(0.78431374f, 0.78431374f, 0.78431374f, 1f);
-    [SerializeField] private Color selectedColor = new Color(0.9607843f, 0.9607843f, 0.9607843f, 1f);
-    [SerializeField] private Color disabledColor = new Color(0.78431374f, 0.78431374f, 0.78431374f, 0.5019608f);
+    [SerializeField] private Color highlightedColor = new Color(0.953f, 0.859f, 0.526f, 1f);
+    [SerializeField] private Color pressedColor = new Color(0.784f, 0.784f, 0.784f, 1f);
+    [SerializeField] private Color selectedColor = new Color(0.961f, 0.961f, 0.961f, 1f);
+    [SerializeField] private Color disabledColor = new Color(0.784f, 0.784f, 0.784f, 0.5f);
     [SerializeField] private float colorMultiplier = 1f;
     [SerializeField] private float fadeDuration = 0.1f;
 
@@ -54,7 +55,7 @@ public class LevelSelectUI : MonoBehaviour
 
     private void CaptureButtonsFromChildren()
     {
-        if (levelButtons != null && levelButtons.Length > 0) return;
+        // Always refresh to pick up new buttons (e.g., Level5) without relying on serialized order.
         levelButtons = GetComponentsInChildren<Button>(true);
     }
 
@@ -88,6 +89,10 @@ public class LevelSelectUI : MonoBehaviour
                 {
                     text.font = buttonFont;
                 }
+                else if (GameManager.Instance != null)
+                {
+                    text.font = GameManager.Instance.GetUpperUiFont();
+                }
 
                 text.color = buttonTextColor;
                 text.fontSize = buttonFontSize;
@@ -100,10 +105,12 @@ public class LevelSelectUI : MonoBehaviour
     {
         if (levelButtons == null) return;
 
-        AssignButtonHandler(0, LoadLevel1);
-        AssignButtonHandler(1, LoadLevel2);
-        AssignButtonHandler(2, LoadLevel3);
-        AssignButtonHandler(3, LoadLevel4);
+        // Prefer name-based wiring to avoid mis-ordered button arrays in the scene.
+        AssignButtonByName("Level1Button", LoadLevel1);
+        AssignButtonByName("Level2Button", LoadLevel2);
+        AssignButtonByName("Level3Button", LoadLevel3);
+        AssignButtonByName("Level4Button", LoadLevel4);
+        AssignButtonByName("Level5Button", LoadLevel5);
     }
 
     private void AssignButtonHandler(int index, UnityAction handler)
@@ -114,6 +121,19 @@ public class LevelSelectUI : MonoBehaviour
 
         button.onClick.RemoveAllListeners();
         button.onClick.AddListener(handler);
+    }
+
+    private void AssignButtonByName(string buttonName, UnityAction handler)
+    {
+        if (string.IsNullOrEmpty(buttonName) || levelButtons == null) return;
+        foreach (var button in levelButtons)
+        {
+            if (button == null) continue;
+            if (!button.name.Equals(buttonName, StringComparison.OrdinalIgnoreCase)) continue;
+            button.onClick.RemoveAllListeners();
+            button.onClick.AddListener(handler);
+            break;
+        }
     }
 
     private void LoadScene(string sceneName)

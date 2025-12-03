@@ -137,8 +137,29 @@ public class MazeBuilder_Level4 : MonoBehaviour, IPairedHazardManager
         BuildMaze(Layout);
         InitializePairedHazards();
         CenterMaze(Layout);
+        SpawnTutorialTrigger();
         tokenPlacementManager?.SpawnTokens();
         gameManager?.OnLevelReady();
+    }
+
+    private void SpawnTutorialTrigger()
+    {
+        // Position (15, 3) is just before the first Steam Area
+        Vector2 position = new Vector2(15 * cellSize, -3 * cellSize);
+        
+        GameObject triggerZone = new GameObject("TutorialTrigger_Steam");
+        triggerZone.transform.position = position;
+        triggerZone.transform.SetParent(transform);
+
+        BoxCollider2D trigger = triggerZone.AddComponent<BoxCollider2D>();
+        trigger.isTrigger = true;
+        trigger.size = new Vector2(cellSize * 0.9f, cellSize * 0.9f);
+        trigger.offset = Vector2.zero;
+
+        DialogueTriggerZone dialogueTrigger = triggerZone.AddComponent<DialogueTriggerZone>();
+        dialogueTrigger.SetDialogueText("Stay close together in the mist to activate Steam Mode and pass through the Steam Walls!");
+        dialogueTrigger.SetOffsetFromPlayer(new Vector2(0f, 1.5f)); // Show above player
+        dialogueTrigger.SetFontSize(3.5f);
     }
 
     private void BuildMaze(string[] layout)
@@ -412,6 +433,26 @@ public class MazeBuilder_Level4 : MonoBehaviour, IPairedHazardManager
         if (selectedHitEffect == null)
         {
             selectedHitEffect = cannonHitEffectPrefab;
+        }
+
+        // Force colors to match Level 2/3 theme (independent of shared code/prefab defaults)
+        if (variant == CannonVariant.Fire)
+        {
+            hazard.OverrideTheme(
+                new Color(0.35f, 0.18f, 0.12f), // Body
+                new Color(0.78f, 0.32f, 0.18f), // Barrel
+                new Color(0.86f, 0.2f, 0.2f),   // Projectile
+                new Color(1f, 0.6f, 0.1f, 0.85f) // Impact
+            );
+        }
+        else
+        {
+            hazard.OverrideTheme(
+                new Color(0.18f, 0.28f, 0.45f), // Body
+                new Color(0.4f, 0.7f, 0.95f),   // Barrel
+                new Color(0.55f, 0.85f, 1f),    // Projectile
+                new Color(0.6f, 0.9f, 1f, 0.85f) // Impact
+            );
         }
 
         hazard.Initialize(gameManager, cellSize, variant, selectedProjectile, selectedHitEffect);
