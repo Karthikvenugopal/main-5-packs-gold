@@ -641,7 +641,7 @@ MonoBehaviour:
   - <b>Level 5</b>
   - 
   - Use SPACE button to swap positions
-  - 'Can only Swap 4 times: Choose Wisely!'
+  - 'Can only swap 3 times: choose wisely!'
   level5InstructionContinuePrompt: Press Space to start
   emberHeartFullSprite: {fileID: 6341348101557482619, guid: 3b91ad87000d64526b2b182ed1ef4834, type: 3}
   emberHeartEmptySprite: {fileID: -4643077359141595314, guid: 3333514574fc144eb95cc807c8348464, type: 3}
