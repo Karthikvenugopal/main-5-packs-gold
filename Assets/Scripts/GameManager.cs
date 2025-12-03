@@ -47,6 +47,18 @@ public class GameManager : MonoBehaviour
     [SerializeField] private bool useVictoryPanel = true;
     [SerializeField] private string victoryTitleText = "Level Complete";
     [SerializeField] private string victoryBodyText = "Choose where to go next.";
+    // --- MODIFICATION START ---
+    [SerializeField] private string[] victorySlogans = new[]
+    {
+        "No Cap, That Was Epic!",
+        "Main Character Energy!",
+        "Slayed It!",
+        "Built Different!",
+        "GOAted Behavior!",
+        "Vibe Check: Passed!",
+        "Sheeeeeesh! You Did That!"
+    };
+    // --- MODIFICATION END ---
     [SerializeField] private string defeatTitleText = "Out of Hearts";
     [SerializeField] private string defeatBodyText = "You ran out of hearts. Try again?";
     [SerializeField] private string nextLevelButtonText = "Next Level";
@@ -1613,7 +1625,16 @@ public class GameManager : MonoBehaviour
 
         if (_victoryTitleLabel != null)
         {
-            _victoryTitleLabel.text = isVictory ? victoryTitleText : defeatTitleText;
+            // --- MODIFICATION START ---
+            if (isVictory && victorySlogans != null && victorySlogans.Length > 0)
+            {
+                _victoryTitleLabel.text = victorySlogans[UnityEngine.Random.Range(0, victorySlogans.Length)];
+            }
+            else
+            {
+                _victoryTitleLabel.text = isVictory ? victoryTitleText : defeatTitleText;
+            }
+            // --- MODIFICATION END ---
         }
 
         // Show/hide trophy based on victory state

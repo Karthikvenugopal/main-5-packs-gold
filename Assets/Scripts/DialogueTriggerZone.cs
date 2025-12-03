@@ -107,6 +107,12 @@ public class DialogueTriggerZone : MonoBehaviour
         textMesh.fontStyle = FontStyles.Bold;
         textMesh.enableWordWrapping = true;
         textMesh.rectTransform.sizeDelta = new Vector2(8f, 0f); // Auto-height
+        
+        // Ensure text is drawn above background (Order 10) and walls (Order 1)
+        if (textMesh.TryGetComponent(out MeshRenderer meshRenderer))
+        {
+            meshRenderer.sortingOrder = 11;
+        }
 
         // Force text to update bounds
         textMesh.ForceMeshUpdate();
