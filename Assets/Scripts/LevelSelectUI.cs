@@ -19,15 +19,15 @@ public class LevelSelectUI : MonoBehaviour
 
     [Header("Style (matches Main Menu)")]
     [SerializeField] private TMP_FontAsset buttonFont;
-    [SerializeField] private Color buttonTextColor = Color.white;
+    [SerializeField] private Color buttonTextColor = new Color(0.2f, 0.2f, 0.2f, 1f);
     [SerializeField] private int buttonFontSize = 32;
     [SerializeField] private FontStyles buttonFontStyle = FontStyles.Bold;
     [SerializeField] private Color buttonImageColor = Color.white;
     [SerializeField] private Color normalColor = Color.white;
-    [SerializeField] private Color highlightedColor = new Color(0.8392157f, 0.7607843f, 1f, 1f);
-    [SerializeField] private Color pressedColor = new Color(0.78431374f, 0.78431374f, 0.78431374f, 1f);
-    [SerializeField] private Color selectedColor = new Color(0.9607843f, 0.9607843f, 0.9607843f, 1f);
-    [SerializeField] private Color disabledColor = new Color(0.78431374f, 0.78431374f, 0.78431374f, 0.5019608f);
+    [SerializeField] private Color highlightedColor = new Color(0.953f, 0.859f, 0.526f, 1f);
+    [SerializeField] private Color pressedColor = new Color(0.784f, 0.784f, 0.784f, 1f);
+    [SerializeField] private Color selectedColor = new Color(0.961f, 0.961f, 0.961f, 1f);
+    [SerializeField] private Color disabledColor = new Color(0.784f, 0.784f, 0.784f, 0.5f);
     [SerializeField] private float colorMultiplier = 1f;
     [SerializeField] private float fadeDuration = 0.1f;
 
@@ -88,6 +88,10 @@ public class LevelSelectUI : MonoBehaviour
                 if (buttonFont != null)
                 {
                     text.font = buttonFont;
+                }
+                else if (GameManager.Instance != null)
+                {
+                    text.font = GameManager.Instance.GetUpperUiFont();
                 }
 
                 text.color = buttonTextColor;

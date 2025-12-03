@@ -54,7 +54,7 @@ public class GameManager : MonoBehaviour
         "Main Character Energy!",
         "Slayed It!",
         "Built Different!",
-        "GOAted Behavior!",
+        "GOATed Behavior!",
         "Vibe Check: Passed!",
         "Sheeeeeesh! You Did That!"
     };
@@ -172,6 +172,37 @@ public class GameManager : MonoBehaviour
     [SerializeField] private Color topUiBarColor = new Color(0f, 0f, 0f, 0f);
     [Tooltip("Set true to disable the top UI bar (used for special scenes like Level 5)")]
     [SerializeField] private bool disableTopUiBar = false;
+
+    [Header("Theme Settings")]
+    [SerializeField] private TMP_FontAsset themeFont;
+    [SerializeField] private Sprite themeButtonSprite;
+    [SerializeField] private Color themeButtonNormalColor = Color.white;
+    [SerializeField] private Color themeButtonHighlightedColor = new Color(0.953f, 0.859f, 0.526f, 1f);
+    [SerializeField] private Color themeButtonPressedColor = new Color(0.784f, 0.784f, 0.784f, 1f);
+    [SerializeField] private Color themeButtonSelectedColor = new Color(0.961f, 0.961f, 0.961f, 1f);
+    [SerializeField] private Color themeButtonTextColor = new Color(0.2f, 0.2f, 0.2f, 1f); // Dark text for light buttons
+
+    // Public Accessors for Theme
+    public Sprite ThemeButtonSprite => themeButtonSprite;
+    public Color ThemeButtonNormalColor => themeButtonNormalColor;
+    public Color ThemeButtonHighlightedColor => themeButtonHighlightedColor;
+    public Color ThemeButtonPressedColor => themeButtonPressedColor;
+    public Color ThemeButtonSelectedColor => themeButtonSelectedColor;
+    public Color ThemeButtonTextColor => themeButtonTextColor;
+    
+#if UNITY_EDITOR
+    private void OnValidate()
+    {
+        if (themeFont == null)
+        {
+            themeFont = UnityEditor.AssetDatabase.LoadAssetAtPath<TMP_FontAsset>("Assets/TextMesh Pro/Fonts/UncialAntiqua-Regular SDF.asset");
+        }
+        if (themeButtonSprite == null)
+        {
+            themeButtonSprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Images/button.png");
+        }
+    }
+#endif
     // --- MODIFICATION END ---
 
     [Header("Audio")]
@@ -621,8 +652,14 @@ public class GameManager : MonoBehaviour
         Debug.Log(message);
     }
 
-    private TMP_FontAsset GetUpperUiFont()
+    public TMP_FontAsset GetUpperUiFont()
     {
+        // Prioritize the Theme Font if set
+        if (themeFont != null)
+        {
+            return themeFont;
+        }
+
         if (_cachedUpperUiFont != null)
         {
             return _cachedUpperUiFont;
@@ -1428,6 +1465,8 @@ public class GameManager : MonoBehaviour
         _victoryTitleLabel.fontSize = 56f;
         _victoryTitleLabel.fontStyle = FontStyles.Bold;
         _victoryTitleLabel.text = victoryTitleText;
+        // Apply Theme Font
+        if (themeFont != null) _victoryTitleLabel.font = themeFont;
 
         // Create Trophy Image (between title and body/score text)
         GameObject trophyContainer = new GameObject("TrophyContainer");
@@ -1476,6 +1515,8 @@ public class GameManager : MonoBehaviour
         _victoryBodyLabel.fontSize = 40f;
         _victoryBodyLabel.enableWordWrapping = true;
         _victoryBodyLabel.text = victoryBodyText;
+        // Apply Theme Font
+        if (themeFont != null) _victoryBodyLabel.font = themeFont;
 
         GameObject summaryGroup = new GameObject("TokenSummary");
         summaryGroup.transform.SetParent(content.transform, false);
@@ -1506,6 +1547,8 @@ public class GameManager : MonoBehaviour
         _fireVictoryLabel.alignment = TextAlignmentOptions.Center;
         _fireVictoryLabel.fontSize = 34f;
         _fireVictoryLabel.text = string.Empty;
+        // Apply Theme Font
+        if (themeFont != null) _fireVictoryLabel.font = themeFont;
 
         _waterSummaryRoot = new GameObject("WaterSummary");
         _waterSummaryRoot.transform.SetParent(summaryGroup.transform, false);
@@ -1519,6 +1562,8 @@ public class GameManager : MonoBehaviour
         _waterVictoryLabel.alignment = TextAlignmentOptions.Center;
         _waterVictoryLabel.fontSize = 34f;
         _waterVictoryLabel.text = string.Empty;
+        // Apply Theme Font
+        if (themeFont != null) _waterVictoryLabel.font = themeFont;
 
         GameObject buttonRow = new GameObject("Buttons");
         buttonRow.transform.SetParent(content.transform, false);
@@ -1598,10 +1643,33 @@ public class GameManager : MonoBehaviour
 
         TextMeshProUGUI label = labelGO.AddComponent<TextMeshProUGUI>();
         label.alignment = TextAlignmentOptions.Center;
-        label.fontSize = 28f;
+        label.fontSize = 32f; // Adjusted for theme
+        label.color = themeButtonTextColor;
         label.text = labelText;
-        label.color = Color.white;
-        label.raycastTarget = false;
+        
+        if (themeFont != null)
+        {
+            label.font = themeFont;
+        }
+
+        // Apply Theme Sprite and Colors
+        if (themeButtonSprite != null)
+        {
+            bg.sprite = themeButtonSprite;
+            bg.type = Image.Type.Sliced;
+            bg.pixelsPerUnitMultiplier = 1f;
+        }
+        
+        // Reset color to white so the sprite color shows through, or use the theme normal color if no sprite
+        bg.color = Color.white; 
+
+        ColorBlock colors = button.colors;
+        colors.normalColor = themeButtonNormalColor;
+        colors.highlightedColor = themeButtonHighlightedColor;
+        colors.pressedColor = themeButtonPressedColor;
+        colors.selectedColor = themeButtonSelectedColor;
+        colors.colorMultiplier = 1f;
+        button.colors = colors;
 
         return button;
     }

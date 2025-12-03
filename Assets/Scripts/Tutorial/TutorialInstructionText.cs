@@ -320,16 +320,20 @@ public class TutorialInstructionText : MonoBehaviour
             Debug.Log($"[TutorialInstructionText] Created TextMeshPro component on {gameObject.name}");
         }
 
-        // Ensure font is assigned (get default from TMP Settings if not set)
-        // Note: TextMeshPro should auto-assign default font, but we'll ensure it's set
+        // Ensure font is assigned (get from GameManager or TMP Settings)
         if (_textMesh.font == null)
         {
-            if (TMP_Settings.defaultFontAsset != null)
+            if (GameManager.Instance != null)
+            {
+                _textMesh.font = GameManager.Instance.GetUpperUiFont();
+            }
+            
+            if (_textMesh.font == null && TMP_Settings.defaultFontAsset != null)
             {
                 _textMesh.font = TMP_Settings.defaultFontAsset;
                 Debug.Log($"[TutorialInstructionText] Assigned default font to {gameObject.name}");
             }
-            else
+            else if (_textMesh.font == null)
             {
                 Debug.LogError($"[TutorialInstructionText] No default font asset found in TMP Settings for {gameObject.name}");
             }
