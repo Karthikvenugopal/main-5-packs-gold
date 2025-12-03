@@ -172,6 +172,12 @@ public class GameManager : MonoBehaviour
     [SerializeField] private Color topUiBarColor = new Color(0f, 0f, 0f, 0f);
     [Tooltip("Set true to disable the top UI bar (used for special scenes like Level 5)")]
     [SerializeField] private bool disableTopUiBar = false;
+    
+    [Header("Swap Counter UI")]
+    [Tooltip("Optional container to allow manually positioning the Level 5 swap counter.")]
+    [SerializeField] private RectTransform swapCounterContainerOverride;
+    [Tooltip("Optional label used for the swap counter text when placing it manually.")]
+    [SerializeField] private TextMeshProUGUI swapCounterLabelOverride;
 
     [Header("Theme Settings")]
     [SerializeField] private TMP_FontAsset themeFont;
@@ -234,6 +240,7 @@ public class GameManager : MonoBehaviour
     private TextMeshProUGUI _steamPopupLabel;
     private Coroutine _steamPopupCoroutine;
     private TextMeshProUGUI _swapCounterLabel;
+    private SwapCounterManualAnchor _swapCounterManualAnchor;
     
     // --- MODIFICATION START ---
     // We add a reference for the top UI bar's RectTransform.
@@ -1399,7 +1406,73 @@ public class GameManager : MonoBehaviour
     {
         _swapCounterLabel = null;
 
-        if (!IsCurrentSceneLevel5() || _hudCanvas == null)
+        bool isLevel5 = IsCurrentSceneLevel5();
+        if (!isLevel5)
+        {
+            if (swapCounterContainerOverride != null)
+            {
+                swapCounterContainerOverride.gameObject.SetActive(false);
+            }
+            return;
+        }
+
+        TextMeshProUGUI manualLabel = swapCounterLabelOverride;
+        RectTransform manualContainer = swapCounterContainerOverride;
+        if (isLevel5 && (manualLabel == null || manualContainer == null))
+        {
+            SwapCounterManualAnchor anchor = ResolveSwapCounterManualAnchor();
+            if (anchor != null)
+            {
+                if (manualContainer == null)
+                {
+                    manualContainer = anchor.Container;
+                    swapCounterContainerOverride = manualContainer;
+                }
+
+                if (manualLabel == null)
+                {
+                    manualLabel = anchor.Label;
+                    swapCounterLabelOverride = manualLabel;
+                }
+            }
+        }
+
+        if (manualLabel == null && manualContainer != null)
+        {
+            manualLabel = manualContainer.GetComponentInChildren<TextMeshProUGUI>(true);
+            if (manualLabel != null)
+            {
+                swapCounterLabelOverride = manualLabel;
+            }
+        }
+
+        if (manualLabel != null)
+        {
+            _swapCounterLabel = manualLabel;
+            ApplyUpperUiFont(_swapCounterLabel);
+            _swapCounterLabel.text = string.Empty;
+            _swapCounterLabel.raycastTarget = false;
+
+            if (_hudCanvas != null && manualContainer != null)
+            {
+                Transform targetParent = _hudCanvas.transform;
+                manualContainer.SetParent(targetParent, false);
+                manualContainer.SetAsLastSibling();
+            }
+
+            if (manualContainer != null)
+            {
+                manualContainer.gameObject.SetActive(true);
+            }
+            else
+            {
+                _swapCounterLabel.gameObject.SetActive(true);
+            }
+
+            return;
+        }
+
+        if (_hudCanvas == null)
         {
             return;
         }
@@ -1454,6 +1527,33 @@ public class GameManager : MonoBehaviour
         _swapCounterLabel.color = Color.white;
         _swapCounterLabel.text = string.Empty;
         _swapCounterLabel.raycastTarget = false;
+    }
+
+    private SwapCounterManualAnchor ResolveSwapCounterManualAnchor()
+    {
+        if (_swapCounterManualAnchor != null)
+        {
+            return _swapCounterManualAnchor;
+        }
+
+        SwapCounterManualAnchor[] anchors = Resources.FindObjectsOfTypeAll<SwapCounterManualAnchor>();
+        foreach (var anchor in anchors)
+        {
+            if (anchor == null)
+            {
+                continue;
+            }
+
+            if (!anchor.gameObject.scene.IsValid())
+            {
+                continue; // Skip prefabs or assets not in the active scene
+            }
+
+            _swapCounterManualAnchor = anchor;
+            break;
+        }
+
+        return _swapCounterManualAnchor;
     }
 
     public void UpdateSwapCounterDisplay(int remainingSwaps, int maxSwaps)
