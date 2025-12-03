@@ -120,7 +120,7 @@ public class GameManager : MonoBehaviour
         "<b>Level 5</b>",
         "",
         "Use SPACE button to swap positions",
-        "Can only Swap 4 times: Choose Wisely!"
+        "Can only swap 3 times: choose wisely!"
     };
     [SerializeField] private string level5InstructionContinuePrompt = "Press Space to start";
     
@@ -1244,7 +1244,8 @@ public class GameManager : MonoBehaviour
         rect.anchorMin = new Vector2(0.5f, 0.5f);
         rect.anchorMax = new Vector2(0.5f, 0.5f);
         rect.pivot = new Vector2(0.5f, 0.5f);
-        rect.sizeDelta = new Vector2(420f, 80f);
+        // Slimmer timer so it doesn't overlap tokens on Level 5.
+        rect.sizeDelta = new Vector2(260f, 80f);
         rect.anchoredPosition = Vector2.zero;
 
         Image background = timerContainer.AddComponent<Image>();

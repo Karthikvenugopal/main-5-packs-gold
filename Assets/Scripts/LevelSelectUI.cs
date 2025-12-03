@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.Events;
@@ -54,7 +55,7 @@ public class LevelSelectUI : MonoBehaviour
 
     private void CaptureButtonsFromChildren()
     {
-        if (levelButtons != null && levelButtons.Length > 0) return;
+        // Always refresh to pick up new buttons (e.g., Level5) without relying on serialized order.
         levelButtons = GetComponentsInChildren<Button>(true);
     }
 
@@ -100,10 +101,12 @@ public class LevelSelectUI : MonoBehaviour
     {
         if (levelButtons == null) return;
 
-        AssignButtonHandler(0, LoadLevel1);
-        AssignButtonHandler(1, LoadLevel2);
-        AssignButtonHandler(2, LoadLevel3);
-        AssignButtonHandler(3, LoadLevel4);
+        // Prefer name-based wiring to avoid mis-ordered button arrays in the scene.
+        AssignButtonByName("Level1Button", LoadLevel1);
+        AssignButtonByName("Level2Button", LoadLevel2);
+        AssignButtonByName("Level3Button", LoadLevel3);
+        AssignButtonByName("Level4Button", LoadLevel4);
+        AssignButtonByName("Level5Button", LoadLevel5);
     }
 
     private void AssignButtonHandler(int index, UnityAction handler)
@@ -114,6 +117,19 @@ public class LevelSelectUI : MonoBehaviour
 
         button.onClick.RemoveAllListeners();
         button.onClick.AddListener(handler);
+    }
+
+    private void AssignButtonByName(string buttonName, UnityAction handler)
+    {
+        if (string.IsNullOrEmpty(buttonName) || levelButtons == null) return;
+        foreach (var button in levelButtons)
+        {
+            if (button == null) continue;
+            if (!button.name.Equals(buttonName, StringComparison.OrdinalIgnoreCase)) continue;
+            button.onClick.RemoveAllListeners();
+            button.onClick.AddListener(handler);
+            break;
+        }
     }
 
     private void LoadScene(string sceneName)
