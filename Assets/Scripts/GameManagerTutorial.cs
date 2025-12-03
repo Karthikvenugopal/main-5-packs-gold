@@ -48,6 +48,18 @@ public class GameManagerTutorial : MonoBehaviour
     [SerializeField] private bool useVictoryPanel = true;
     [SerializeField] private string victoryTitleText = "Tutorial Complete";
     [SerializeField] private string victoryBodyText = "Ready for the real challenge?";
+    // --- MODIFICATION START ---
+    [SerializeField] private string[] victorySlogans = new[]
+    {
+        "No Cap, That Was Epic!",
+        "Main Character Energy!",
+        "Slayed It!",
+        "Built Different!",
+        "GOAted Behavior!",
+        "Vibe Check: Passed!",
+        "Sheeeeeesh! You Did That!"
+    };
+    // --- MODIFICATION END ---
     [SerializeField] private string defeatTitleText = "Out of Hearts";
     [SerializeField] private string defeatBodyText = "Don't worry! Try again.";
     [SerializeField] private string nextLevelButtonText = "Continue to Level 1";
@@ -719,7 +731,16 @@ public class GameManagerTutorial : MonoBehaviour
 
         if (_victoryTitleLabel != null)
         {
-            _victoryTitleLabel.text = isVictory ? victoryTitleText : defeatTitleText;
+            // --- MODIFICATION START ---
+            if (isVictory && victorySlogans != null && victorySlogans.Length > 0)
+            {
+                _victoryTitleLabel.text = victorySlogans[UnityEngine.Random.Range(0, victorySlogans.Length)];
+            }
+            else
+            {
+                _victoryTitleLabel.text = isVictory ? victoryTitleText : defeatTitleText;
+            }
+            // --- MODIFICATION END ---
         }
 
         if (_victoryBodyLabel != null)
