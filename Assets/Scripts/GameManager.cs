@@ -832,7 +832,7 @@ public class GameManager : MonoBehaviour
         instructionsRect.sizeDelta = new Vector2(1900f, 50f);
 
         TextMeshProUGUI instructionsLabel = instructionsGO.AddComponent<TextMeshProUGUI>();
-        ApplyUpperUiFont(instructionsLabel);
+        // Reverted to default font for readability
         instructionsLabel.alignment = TextAlignmentOptions.Center;
         instructionsLabel.fontSize = 60f;
         instructionsLabel.text = lines != null && lines.Length > 0
@@ -851,7 +851,7 @@ public class GameManager : MonoBehaviour
         promptRect.sizeDelta = new Vector2(700f, 80f);
 
         TextMeshProUGUI promptLabel = promptGO.AddComponent<TextMeshProUGUI>();
-        ApplyUpperUiFont(promptLabel);
+        // Reverted to default font for readability
         promptLabel.alignment = TextAlignmentOptions.Center;
         promptLabel.fontSize = 36f;
         promptLabel.text = string.IsNullOrEmpty(prompt)

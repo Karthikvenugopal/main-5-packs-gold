@@ -321,19 +321,16 @@ public class TutorialInstructionText : MonoBehaviour
         }
 
         // Ensure font is assigned (get from GameManager or TMP Settings)
+        // Ensure font is assigned (get from GameManager or TMP Settings)
         if (_textMesh.font == null)
         {
-            if (GameManager.Instance != null)
-            {
-                _textMesh.font = GameManager.Instance.GetUpperUiFont();
-            }
-            
-            if (_textMesh.font == null && TMP_Settings.defaultFontAsset != null)
+            // Reverted to default font for readability
+            if (TMP_Settings.defaultFontAsset != null)
             {
                 _textMesh.font = TMP_Settings.defaultFontAsset;
                 Debug.Log($"[TutorialInstructionText] Assigned default font to {gameObject.name}");
             }
-            else if (_textMesh.font == null)
+            else
             {
                 Debug.LogError($"[TutorialInstructionText] No default font asset found in TMP Settings for {gameObject.name}");
             }
