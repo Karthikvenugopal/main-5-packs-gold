@@ -226,7 +226,7 @@ MonoBehaviour:
   watergirlColor: {r: 0.81434673, g: 0.8573632, b: 0.9433962, a: 1}
   aquaAnimatorController: {fileID: 9100000, guid: 8bd899fc3bfc41aab4876e6cc3b4ee3c, type: 2}
   emberAnimatorController: {fileID: 9100000, guid: e295648235b1e4a1681f46c40a8b8196, type: 2}
-  emberColliderSize: {x: 0.8, y: 0.74}
+  emberColliderSize: {x: 0.8, y: 0.8}
   emberColliderOffset: {x: 0, y: 0}
   hazardDamageCooldown: 0.5
   hurtFlashCount: 3
