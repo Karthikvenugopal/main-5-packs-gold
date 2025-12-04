@@ -20,15 +20,15 @@ public class MazeBuilder_Level1 : MonoBehaviour
 
     private static readonly string[] Layout =
     {
-        "###################",
-        "#F........H......E#",
-        "###.######.########",
-        "###.######.########",
-        "###.##...#.########",
-        "###I##...#.########",
-        "###.##...#I########",
-        "#W.........########",
-        "###################"
+        "####################",
+        "#F....##..I..fw...E#",
+        "###.######w#####I###",
+        "###f.H.###...H.w.###",
+        "###.##...H.#####.###",
+        "###I##.f.#...f..H.##",
+        "###.##...#I#########",
+        "#W.i.......#########",
+        "####################"
     };
 
     private const float CameraVerticalPadding = 0.4f;
@@ -90,6 +90,16 @@ public class MazeBuilder_Level1 : MonoBehaviour
                     case 'E':
                         SpawnFloor(cellCenter);
                         SpawnExit(cellCenter);
+                        break;
+
+                    case 'w':
+                        SpawnFloor(cellCenter);
+                        CreateTokenAnchor(cellCenter, TokenSpriteConfigurator.TokenType.Water);
+                        break;
+
+                    case 'f':
+                        SpawnFloor(cellCenter);
+                        CreateTokenAnchor(cellCenter, TokenSpriteConfigurator.TokenType.Fire);
                         break;
 
                     default:
@@ -175,6 +185,22 @@ public class MazeBuilder_Level1 : MonoBehaviour
         GameObject marker = new GameObject(name);
         marker.transform.position = position;
         marker.transform.SetParent(transform);
+    }
+
+    private void CreateTokenAnchor(Vector2 position, TokenSpriteConfigurator.TokenType tokenType)
+    {
+        if (tokenPlacementManager == null)
+        {
+            Debug.LogWarning("TokenPlacementManager is not assigned. Cannot create token anchor.");
+            return;
+        }
+
+        GameObject anchorObject = new GameObject($"TokenAnchor_{tokenType}_{position.x}_{position.y}");
+        anchorObject.transform.position = position;
+        anchorObject.transform.SetParent(tokenPlacementManager.transform);
+
+        TokenAnchor anchor = anchorObject.AddComponent<TokenAnchor>();
+        anchor.SetTokenType(tokenType);
     }
 
     private IEnumerator SpawnDialogueTriggerDelayed()
