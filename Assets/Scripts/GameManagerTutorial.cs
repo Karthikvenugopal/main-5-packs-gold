@@ -142,6 +142,7 @@ public class GameManagerTutorial : MonoBehaviour
     private bool _gameActive;
     private bool _gameFinished;
     private Coroutine _loadNextSceneRoutine;
+    private TMP_FontAsset _cachedEndPanelFont;
 
     private void Awake()
     {
@@ -328,6 +329,36 @@ public class GameManagerTutorial : MonoBehaviour
             return themeFont;
         }
         return TMP_Settings.defaultFontAsset;
+    }
+
+    private TMP_FontAsset GetEndPanelFont()
+    {
+        if (_cachedEndPanelFont != null)
+        {
+            return _cachedEndPanelFont;
+        }
+
+        if (TMP_Settings.defaultFontAsset != null)
+        {
+            _cachedEndPanelFont = TMP_Settings.defaultFontAsset;
+        }
+        else if (themeFont != null)
+        {
+            _cachedEndPanelFont = themeFont;
+        }
+
+        return _cachedEndPanelFont;
+    }
+
+    private void ApplyEndPanelFont(TextMeshProUGUI label)
+    {
+        if (label == null) return;
+
+        TMP_FontAsset fontAsset = GetEndPanelFont();
+        if (fontAsset != null)
+        {
+            label.font = fontAsset;
+        }
     }
 
     private void CreateStatusUI()
@@ -577,7 +608,7 @@ public class GameManagerTutorial : MonoBehaviour
         _victoryPanel.transform.SetParent(_hudCanvas.transform, false);
 
         RectTransform rect = _victoryPanel.AddComponent<RectTransform>();
-        ConfigureVictoryPanelRect(rect, new Vector2(900f, 520f));
+        ConfigureVictoryPanelRect(rect, new Vector2(900f, 650f));
 
         Image background = _victoryPanel.AddComponent<Image>();
         background.color = new Color(0f, 0f, 0f, 0.78f);
@@ -596,6 +627,7 @@ public class GameManagerTutorial : MonoBehaviour
         _victoryTitleLabel.fontSize = 56f;
         _victoryTitleLabel.fontStyle = FontStyles.Bold;
         _victoryTitleLabel.text = victoryTitleText;
+        ApplyEndPanelFont(_victoryTitleLabel);
 
         GameObject bodyGO = new GameObject("Body");
         bodyGO.transform.SetParent(_victoryPanel.transform, false);
@@ -610,6 +642,7 @@ public class GameManagerTutorial : MonoBehaviour
         _victoryBodyLabel.alignment = TextAlignmentOptions.Center;
         _victoryBodyLabel.fontSize = 40f;
         _victoryBodyLabel.text = victoryBodyText;
+        ApplyEndPanelFont(_victoryBodyLabel);
 
         GameObject summaryGroup = new GameObject("TokenSummary");
         summaryGroup.transform.SetParent(_victoryPanel.transform, false);
@@ -640,6 +673,7 @@ public class GameManagerTutorial : MonoBehaviour
         _fireVictoryLabel.alignment = TextAlignmentOptions.Center;
         _fireVictoryLabel.fontSize = 34f;
         _fireVictoryLabel.text = string.Empty;
+        ApplyEndPanelFont(_fireVictoryLabel);
 
         _waterSummaryRoot = new GameObject("WaterSummary");
         _waterSummaryRoot.transform.SetParent(summaryGroup.transform, false);
@@ -654,6 +688,7 @@ public class GameManagerTutorial : MonoBehaviour
         _waterVictoryLabel.alignment = TextAlignmentOptions.Center;
         _waterVictoryLabel.fontSize = 34f;
         _waterVictoryLabel.text = string.Empty;
+        ApplyEndPanelFont(_waterVictoryLabel);
 
         GameObject buttonRow = new GameObject("Buttons");
         buttonRow.transform.SetParent(_victoryPanel.transform, false);
@@ -661,7 +696,7 @@ public class GameManagerTutorial : MonoBehaviour
         buttonRowRect.anchorMin = new Vector2(0.5f, 0f);
         buttonRowRect.anchorMax = new Vector2(0.5f, 0f);
         buttonRowRect.pivot = new Vector2(0.5f, 0f);
-        buttonRowRect.sizeDelta = new Vector2(760f, 90f);
+        buttonRowRect.sizeDelta = new Vector2(760f, 100f);
         buttonRowRect.anchoredPosition = new Vector2(0f, 32f);
 
         HorizontalLayoutGroup layoutGroup = buttonRow.AddComponent<HorizontalLayoutGroup>();
@@ -723,6 +758,11 @@ public class GameManagerTutorial : MonoBehaviour
         label.alignment = TextAlignmentOptions.Center;
         label.fontSize = 28f;
         label.text = labelText;
+        label.color = Color.white;
+        label.fontStyle = FontStyles.Bold;
+        ApplyEndPanelFont(label);
+        label.color = Color.white;
+        ApplyEndPanelFont(label);
         label.raycastTarget = false; // Prevent text from blocking button clicks
 
         return button;

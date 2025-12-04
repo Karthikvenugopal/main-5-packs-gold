@@ -32,6 +32,8 @@ public class MazeBuilder_Level1 : MonoBehaviour
     };
 
     private const float CameraVerticalPadding = 0.4f;
+    [SerializeField, Tooltip("Additional downward offset applied to the camera after centering the maze.")]
+    private float mazeCameraVerticalOffset = 0.45f;
 
     private const string FireboySpawnName = "FireboySpawn";
     private const string WatergirlSpawnName = "WatergirlSpawn";
@@ -344,6 +346,7 @@ public class MazeBuilder_Level1 : MonoBehaviour
             -10f
         );
         center.y += CameraVerticalPadding;
+        center.y -= Mathf.Max(0f, mazeCameraVerticalOffset);
 
         if (Camera.main != null)
         {

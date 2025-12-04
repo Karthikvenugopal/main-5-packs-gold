@@ -10,6 +10,7 @@ public enum PlayerRole
 
 [RequireComponent(typeof(Rigidbody2D))]
 [RequireComponent(typeof(Collider2D))]
+[RequireComponent(typeof(Animator))]
 public class CoopPlayerController : MonoBehaviour
 {
     [Header("Movement")]
@@ -20,6 +21,14 @@ public class CoopPlayerController : MonoBehaviour
     [Header("Visuals")]
     [SerializeField] private Color fireboyColor = new Color(0.93f, 0.39f, 0.18f);
     [SerializeField] private Color watergirlColor = new Color(0.2f, 0.45f, 0.95f);
+
+    [Header("Animations")]
+    [SerializeField] private RuntimeAnimatorController aquaAnimatorController;
+    [SerializeField] private RuntimeAnimatorController emberAnimatorController;
+
+    [Header("Ember Collider")]
+    [SerializeField] private Vector2 emberColliderSize = new Vector2(0.65f, 0.65f);
+    [SerializeField] private Vector2 emberColliderOffset = Vector2.zero;
 
     [Header("Hazard Damage")]
     [SerializeField] private float hazardDamageCooldown = 0.5f;
@@ -70,6 +79,11 @@ public class CoopPlayerController : MonoBehaviour
     private float _inputLockRemaining;
     private Coroutine _hurtScaleRoutine;
     private Vector3 _initialScale;
+    private Animator _animator;
+    private string _currentStateName;
+    private BoxCollider2D _boxCollider;
+    private Vector2 _defaultColliderSize;
+    private Vector2 _defaultColliderOffset;
 
     private readonly Dictionary<int, float> _lastHazardDamageTimes = new();
 
@@ -82,8 +96,20 @@ public class CoopPlayerController : MonoBehaviour
     private void Awake()
     {
         _rigidbody = GetComponent<Rigidbody2D>();
-        _collider = GetComponent<Collider2D>();
+        _collider = GetComponent<CircleCollider2D>() ?? GetComponent<Collider2D>();
         _spriteRenderer = GetComponent<SpriteRenderer>();
+        _animator = GetComponent<Animator>();
+        _boxCollider = GetComponent<BoxCollider2D>();
+        if (_boxCollider != null)
+        {
+            _defaultColliderSize = _boxCollider.size;
+            _defaultColliderOffset = _boxCollider.offset;
+        }
+
+        if (_animator == null)
+        {
+            _animator = gameObject.AddComponent<Animator>();
+        }
 
         _rigidbody.gravityScale = 0f;
         _rigidbody.freezeRotation = true;
@@ -111,6 +137,8 @@ public class CoopPlayerController : MonoBehaviour
         _movementEnabled = false;
 
         ApplyRoleVisuals();
+        ConfigureRoleAnimations(role);
+        ConfigureRoleCollider(role);
         ResetScaleImmediate();
         _gameManager?.RegisterPlayer(this);
     }
@@ -123,8 +151,47 @@ public class CoopPlayerController : MonoBehaviour
         _movementEnabled = false;
 
         ApplyRoleVisuals();
+        ConfigureRoleAnimations(role);
+        ConfigureRoleCollider(role);
         ResetScaleImmediate();
         _gameManagerTutorial?.RegisterPlayer(this);
+    }
+
+    private void ConfigureRoleAnimations(PlayerRole role)
+    {
+        ApplyRoleAnimatorController(role);
+        _currentStateName = null;
+        UpdateMovementAnimation(Vector2.zero);
+        ConfigureRoleCollider(role);
+    }
+
+    private void ApplyRoleAnimatorController(PlayerRole role)
+    {
+        if (_animator == null) return;
+        RuntimeAnimatorController controller = role == PlayerRole.Fireboy ? emberAnimatorController : aquaAnimatorController;
+        if (controller == null)
+        {
+            Debug.LogWarning($"[CoopPlayerController] {name} requires an AnimatorController for {role}.", this);
+            return;
+        }
+
+        _animator.runtimeAnimatorController = controller;
+    }
+
+    private void ConfigureRoleCollider(PlayerRole role)
+    {
+        if (_boxCollider == null) return;
+
+        if (role == PlayerRole.Fireboy)
+        {
+            _boxCollider.size = emberColliderSize;
+            _boxCollider.offset = emberColliderOffset;
+        }
+        else
+        {
+            _boxCollider.size = _defaultColliderSize;
+            _boxCollider.offset = _defaultColliderOffset;
+        }
     }
 
     private void Update()
@@ -174,6 +241,8 @@ public class CoopPlayerController : MonoBehaviour
 
     private void FixedUpdate()
     {
+        UpdateMovementAnimation(_moveInput);
+
         if (_bounceTimeRemaining > 0f && _bounceVelocity.sqrMagnitude > 0.0001f)
         {
             SimulateBounce(Time.fixedDeltaTime);
@@ -225,13 +294,42 @@ public class CoopPlayerController : MonoBehaviour
         }
     }
 
+    private void UpdateMovementAnimation(Vector2 direction)
+    {
+        if (_animator == null) return;
+
+        string targetState = MapDirectionToState(direction);
+        if (string.IsNullOrEmpty(targetState)) return;
+
+        if (_currentStateName == targetState) return;
+
+        _animator.Play(targetState);
+        _currentStateName = targetState;
+    }
+
+    private static string MapDirectionToState(Vector2 direction)
+    {
+        if (direction.sqrMagnitude < 0.0001f) return "Idle";
+
+        Vector2 abs = new Vector2(Mathf.Abs(direction.x), Mathf.Abs(direction.y));
+
+        if (abs.x >= abs.y)
+        {
+            return direction.x >= 0f ? "Right" : "Left";
+        }
+
+        return direction.y >= 0f ? "Up" : "Down";
+    }
+
     private Vector2 GetColliderSize()
     {
+        if (_collider == null) return Vector2.one * 0.9f;
+
         return _collider switch
         {
-            BoxCollider2D box => box.size,
-            CircleCollider2D circle => Vector2.one * circle.radius * 2f,
-            CapsuleCollider2D capsule => capsule.size,
+            BoxCollider2D box when box != null => box.size,
+            CircleCollider2D circle when circle != null => Vector2.one * circle.radius * 2f,
+            CapsuleCollider2D capsule when capsule != null => capsule.size,
             _ => Vector2.one * 0.9f
         };
     }

@@ -576,6 +576,7 @@ MonoBehaviour:
   isTutorialMode: 0
   messageBackground: {r: 0, g: 0, b: 0, a: 0}
   upperUiFont: {fileID: 0}
+  instructionFont: {fileID: 0}
   levelIntroMessage: 
   levelStartMessage: 
   levelVictoryMessage: Victory! Both heroes reached safety. Press R to play again.
@@ -670,7 +671,7 @@ MonoBehaviour:
   themeFont: {fileID: 11400000, guid: 5abeab07b85ff4624bbab4b405f329d8, type: 2}
   themeButtonSprite: {fileID: 2530564911472380330, guid: f471c4e2950c6405c9e399cd725275be, type: 3}
   themeButtonNormalColor: {r: 1, g: 1, b: 1, a: 1}
-  themeButtonHighlightedColor: {r: 0.953, g: 0.859, b: 0.526, a: 1}
+  themeButtonHighlightedColor: {r: 0.8392157, g: 0.7607843, b: 1, a: 1}
   themeButtonPressedColor: {r: 0.784, g: 0.784, b: 0.784, a: 1}
   themeButtonSelectedColor: {r: 0.961, g: 0.961, b: 0.961, a: 1}
   themeButtonTextColor: {r: 0.2, g: 0.2, b: 0.2, a: 1}

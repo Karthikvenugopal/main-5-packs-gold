@@ -140,6 +140,7 @@ GameObject:
   - component: {fileID: 254453107}
   - component: {fileID: 254453106}
   - component: {fileID: 254453105}
+  - component: {fileID: 254453108}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -221,6 +222,50 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &254453108
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 254453104}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a79441f348de89743a2939f4d699eac1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.UniversalAdditionalCameraData
+  m_RenderShadows: 1
+  m_RequiresDepthTextureOption: 2
+  m_RequiresOpaqueTextureOption: 2
+  m_CameraType: 0
+  m_Cameras: []
+  m_RendererIndex: -1
+  m_VolumeLayerMask:
+    serializedVersion: 2
+    m_Bits: 1
+  m_VolumeTrigger: {fileID: 0}
+  m_VolumeFrameworkUpdateModeOption: 2
+  m_RenderPostProcessing: 0
+  m_Antialiasing: 0
+  m_AntialiasingQuality: 2
+  m_StopNaN: 0
+  m_Dithering: 0
+  m_ClearDepth: 1
+  m_AllowXRRendering: 1
+  m_AllowHDROutput: 1
+  m_UseScreenCoordOverride: 0
+  m_ScreenSizeOverride: {x: 0, y: 0, z: 0, w: 0}
+  m_ScreenCoordScaleBias: {x: 0, y: 0, z: 0, w: 0}
+  m_RequiresDepthTexture: 0
+  m_RequiresColorTexture: 0
+  m_TaaSettings:
+    m_Quality: 3
+    m_FrameInfluence: 0.1
+    m_JitterScale: 1
+    m_MipBias: 0
+    m_VarianceClampScale: 0.9
+    m_ContrastAdaptiveSharpening: 0
+  m_Version: 2
 --- !u!4 &263348066 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 989088627073556129, guid: 55dbc409933f0ce45ae632a39313ee5b, type: 3}
@@ -1655,13 +1700,118 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::GameManager
   isTutorialMode: 1
   messageBackground: {r: 0, g: 0, b: 0, a: 0.55}
+  upperUiFont: {fileID: 0}
+  instructionFont: {fileID: 0}
   levelIntroMessage: 
   levelStartMessage: 
   levelVictoryMessage: Victory! Both heroes reached safety. Press R to play again.
   waitForPartnerMessage: '{0} made it. Wait for your partner!'
   exitReminderMessage: Both heroes must stand in the exit to finish.
+  startingHearts: 3
   nextSceneName: 
   nextSceneDelaySeconds: 2
+  mainMenuSceneName: MainMenu
+  useVictoryPanel: 1
+  victoryTitleText: Level Complete
+  victoryBodyText: Choose where to go next.
+  victorySlogans:
+  - No Cap, That Was Epic!
+  - Main Character Energy!
+  - Slayed It!
+  - Built Different!
+  - GOATed Behavior!
+  - 'Vibe Check: Passed!'
+  - Sheeeeeesh! You Did That!
+  defeatTitleText: Out of Hearts
+  defeatBodyText: You ran out of hearts. Try again?
+  nextLevelButtonText: Next Level
+  restartButtonText: Restart
+  mainMenuButtonText: Main Menu
+  levelDefeatMessage: Out of hearts! Choose an option.
+  trophySprite: {fileID: 0}
+  trophyIconSize: {x: 100, y: 100}
+  resetGlobalTokenTotalsOnLoad: 0
+  enableScoring: 1
+  basePoints: 1000
+  pointsPerToken: 100
+  timeBonusMultiplier: 50
+  targetTimeSeconds: 60
+  level2TargetTimeSeconds: 180
+  level3TargetTimeSeconds: 120
+  level4TargetTimeSeconds: 150
+  level5TargetTimeSeconds: 0
+  showInstructionPanel: 1
+  instructionPanelSceneName: Level1Scene
+  instructionLines:
+  - <b>Level 1</b>
+  - 
+  - Collect maximum number of tokens and exit
+  - 
+  - 'Caution: Touch each other? lose a heart.'
+  - 'Caution: Touch wrong obstacle? lose a heart.'
+  - Work together but never collide!
+  instructionContinuePrompt: Press Space to start
+  level2InstructionSceneName: Level2Scene
+  level2InstructionLines:
+  - <b>Level 2</b>
+  - 
+  - 'Tip: Opposites protect. Shield your partner from danger.'
+  level2InstructionContinuePrompt: Press Space to start
+  level3InstructionSceneName: Level3Scene
+  level3InstructionLines:
+  - <b>Level 3</b>
+  - 
+  - 'Dynamic obstacles: Stay Sharp'
+  - Destroying one obstacle can lead to the creation of a new one
+  - 
+  - Keep collecting tokens and avoid hazards!
+  level3InstructionContinuePrompt: Press Space to start
+  level4InstructionSceneName: Level4Scene
+  level4InstructionLines:
+  - <b>Level 4</b>
+  - 
+  - Beware of the green wisp!
+  - Touch the purple spiral together to activate Steam Mode.
+  - "Act fast\u2014Steam Mode is timed!"
+  level4InstructionContinuePrompt: Press Space to start
+  level5InstructionSceneName: Level5Scene
+  level5InstructionLines:
+  - <b>Level 5</b>
+  - 
+  - Use SPACE button to swap positions
+  - 'Can only Swap 4 times: Choose Wisely!'
+  level5InstructionContinuePrompt: Press Space to start
+  emberHeartFullSprite: {fileID: 0}
+  emberHeartEmptySprite: {fileID: 0}
+  aquaHeartFullSprite: {fileID: 0}
+  aquaHeartEmptySprite: {fileID: 0}
+  fireTokenCollectedSprite: {fileID: 0}
+  fireTokenEmptySprite: {fileID: 0}
+  waterTokenCollectedSprite: {fileID: 0}
+  waterTokenEmptySprite: {fileID: 0}
+  heartIconSize: {x: 50, y: 50}
+  tokenIconSize: {x: 45, y: 45}
+  topUiBarHeight: 160
+  topUiBarWidth: 1320
+  topUiBarColor: {r: 0, g: 0, b: 0, a: 0}
+  disableTopUiBar: 0
+  swapCounterContainerOverride: {fileID: 0}
+  swapCounterLabelOverride: {fileID: 0}
+  themeFont: {fileID: 11400000, guid: 5abeab07b85ff4624bbab4b405f329d8, type: 2}
+  themeButtonSprite: {fileID: 2530564911472380330, guid: f471c4e2950c6405c9e399cd725275be, type: 3}
+  themeButtonNormalColor: {r: 1, g: 1, b: 1, a: 1}
+  themeButtonHighlightedColor: {r: 0.953, g: 0.859, b: 0.526, a: 1}
+  themeButtonPressedColor: {r: 0.784, g: 0.784, b: 0.784, a: 1}
+  themeButtonSelectedColor: {r: 0.961, g: 0.961, b: 0.961, a: 1}
+  themeButtonTextColor: {r: 0.2, g: 0.2, b: 0.2, a: 1}
+  heartLossSfx: {fileID: 0}
+  heartLossSfxVolume: 0.9
+  fireTokensCollected: 0
+  waterTokensCollected: 0
+  enableTokenBreath: 1
+  tokenBreathCycleSeconds: 1.6
+  tokenBreathScaleRange: {x: 0.85, y: 1.1}
+  levelTimer: {fileID: 0}
 --- !u!114 &1710982977
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1676,6 +1826,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerSpawner
   playerPrefab: {fileID: 7307446650723487989, guid: 44964639595521e40aa2d28dda0ba7bd, type: 3}
   gameManager: {fileID: 1710982976}
+  gameManagerTutorial: {fileID: 0}
+  playerVerticalOffset: 0
 --- !u!4 &1710982978
 Transform:
   m_ObjectHideFlags: 0
@@ -1823,6 +1975,119 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 989088627073556129, guid: 55dbc409933f0ce45ae632a39313ee5b, type: 3}
   m_PrefabInstance: {fileID: 849519741}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &2007490243
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2007490246}
+  - component: {fileID: 2007490245}
+  - component: {fileID: 2007490244}
+  m_Layer: 0
+  m_Name: Enemy_005_16
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!95 &2007490244
+Animator:
+  serializedVersion: 7
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2007490243}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: 8be0b73e4c1cf4e62a9a922729058184, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_AnimatePhysics: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
+--- !u!212 &2007490245
+SpriteRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2007490243}
+  m_Enabled: 1
+  m_CastShadows: 0
+  m_ReceiveShadows: 0
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 0
+  m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 2100000, guid: a97c105638bdf8b4a8650670310a4cd3, type: 2}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 0
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 10
+  m_Sprite: {fileID: 3203899316301014964, guid: 86fd96254403b42d081ebdbea7bcc2b4, type: 3}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_FlipX: 0
+  m_FlipY: 0
+  m_DrawMode: 0
+  m_Size: {x: 1.25, y: 1}
+  m_AdaptiveModeThreshold: 0.5
+  m_SpriteTileMode: 0
+  m_WasSpriteAssigned: 1
+  m_MaskInteraction: 0
+  m_SpriteSortPoint: 0
+--- !u!4 &2007490246
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2007490243}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -3.34, y: 0.16, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -1838,3 +2103,4 @@ SceneRoots:
   - {fileID: 1122853631}
   - {fileID: 1710982978}
   - {fileID: 1467556989}
+  - {fileID: 2007490246}

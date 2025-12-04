@@ -212,7 +212,7 @@ public class LevelSelectUI : MonoBehaviour
         textRect.offsetMax = Vector2.zero;
 
         TextMeshProUGUI text = textGO.AddComponent<TextMeshProUGUI>();
-        text.text = "Back to Main Menu";
+        text.text = "Back";
         text.alignment = TextAlignmentOptions.Center;
         text.enableAutoSizing = true;
         text.fontSizeMin = 18f;

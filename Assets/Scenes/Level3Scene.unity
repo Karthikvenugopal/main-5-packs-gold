@@ -392,6 +392,10 @@ PrefabInstance:
       propertyPath: m_Layer
       value: 6
       objectReference: {fileID: 0}
+    - target: {fileID: 6349953291806104131, guid: 55dbc409933f0ce45ae632a39313ee5b, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -572,7 +576,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::GameManager
   isTutorialMode: 0
   messageBackground: {r: 0, g: 0, b: 0, a: 0.55}
-  upperUiFont: {fileID: 0}
+  upperUiFont: {fileID: 11400000, guid: 161475e7879c4f21ba9b32676fc849ae, type: 2}
+  instructionFont: {fileID: 0}
   levelIntroMessage: 
   levelStartMessage: 
   levelVictoryMessage: Victory! Both heroes reached safety. Press R to play again.
@@ -585,6 +590,14 @@ MonoBehaviour:
   useVictoryPanel: 1
   victoryTitleText: Level Complete!
   victoryBodyText: Choose where to go next.
+  victorySlogans:
+  - No Cap, That Was Epic!
+  - Main Character Energy!
+  - Slayed It!
+  - Built Different!
+  - GOATed Behavior!
+  - 'Vibe Check: Passed!'
+  - Sheeeeeesh! You Did That!
   defeatTitleText: Out of Hearts
   defeatBodyText: You ran out of hearts. Try again?
   nextLevelButtonText: Next Level
@@ -602,6 +615,7 @@ MonoBehaviour:
   level2TargetTimeSeconds: 180
   level3TargetTimeSeconds: 120
   level4TargetTimeSeconds: 150
+  level5TargetTimeSeconds: 0
   showInstructionPanel: 1
   instructionPanelSceneName: Level1Scene
   instructionLines:
@@ -632,6 +646,13 @@ MonoBehaviour:
   - 
   - Template ready. Drop in your maze layout and hazards.
   level4InstructionContinuePrompt: Press Space to start
+  level5InstructionSceneName: Level5Scene
+  level5InstructionLines:
+  - <b>Level 5</b>
+  - 
+  - Use SPACE button to swap positions
+  - 'Can only Swap 4 times: Choose Wisely!'
+  level5InstructionContinuePrompt: Press Space to start
   emberHeartFullSprite: {fileID: 6341348101557482619, guid: 3b91ad87000d64526b2b182ed1ef4834, type: 3}
   emberHeartEmptySprite: {fileID: -4643077359141595314, guid: 3333514574fc144eb95cc807c8348464, type: 3}
   aquaHeartFullSprite: {fileID: -2880978766386009668, guid: 28fb0f56d13b04528a3ef03f381a909e, type: 3}
@@ -645,6 +666,16 @@ MonoBehaviour:
   topUiBarHeight: 160
   topUiBarWidth: 1320
   topUiBarColor: {r: 0, g: 0, b: 0, a: 0}
+  disableTopUiBar: 0
+  swapCounterContainerOverride: {fileID: 0}
+  swapCounterLabelOverride: {fileID: 0}
+  themeFont: {fileID: 11400000, guid: 5abeab07b85ff4624bbab4b405f329d8, type: 2}
+  themeButtonSprite: {fileID: 2530564911472380330, guid: f471c4e2950c6405c9e399cd725275be, type: 3}
+  themeButtonNormalColor: {r: 1, g: 1, b: 1, a: 1}
+  themeButtonHighlightedColor: {r: 0.8392157, g: 0.7607843, b: 1, a: 1}
+  themeButtonPressedColor: {r: 0.784, g: 0.784, b: 0.784, a: 1}
+  themeButtonSelectedColor: {r: 0.961, g: 0.961, b: 0.961, a: 1}
+  themeButtonTextColor: {r: 0.2, g: 0.2, b: 0.2, a: 1}
   heartLossSfx: {fileID: 0}
   heartLossSfxVolume: 0.9
   fireTokensCollected: 0

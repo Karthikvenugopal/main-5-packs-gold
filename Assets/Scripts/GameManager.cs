@@ -31,6 +31,9 @@ public class GameManager : MonoBehaviour
     [SerializeField] private Color messageBackground = new Color(0f, 0f, 0f, 0.55f);
     [Header("UI Fonts")]
     [SerializeField] private TMP_FontAsset upperUiFont;
+    private const string UpperUiFontResourcePath = "Fonts/UncialAntiqua-Regular SDF";
+    [SerializeField] private TMP_FontAsset instructionFont;
+    private const string InstructionFontResourcePath = "Fonts/TaiHeritagePro-Regular SDF";
     [Header("UI Messages")]
     [SerializeField] private string levelIntroMessage = "";
     [SerializeField] private string levelStartMessage = "";
@@ -123,7 +126,9 @@ public class GameManager : MonoBehaviour
     {
         "<b>Level 4</b>",
         "",
-        "Template ready. Drop in your maze layout and hazards."
+        "Beware of the green wisp!",
+        "Touch the purple spiral together to activate Steam Mode.",
+        "Act fast—Steam Mode is timed!"
     };
     [SerializeField] private string level4InstructionContinuePrompt = "Press Space to start";
     [SerializeField] private string level5InstructionSceneName = "Level5Scene";
@@ -291,6 +296,8 @@ public class GameManager : MonoBehaviour
     private TextMeshProUGUI _statusLabel;
     private Image _statusBackgroundImage;
     private TMP_FontAsset _cachedUpperUiFont;
+    private TMP_FontAsset _cachedInstructionFont;
+    private TMP_FontAsset _cachedEndPanelFont;
     private bool _levelReady;
     private bool _gameActive;
     private bool _gameFinished;
@@ -677,13 +684,88 @@ public class GameManager : MonoBehaviour
         if (upperUiFont != null)
         {
             _cachedUpperUiFont = upperUiFont;
+            return _cachedUpperUiFont;
         }
-        else if (TMP_Settings.defaultFontAsset != null)
+
+        _cachedUpperUiFont = LoadUpperUiFontFromResources();
+
+        if (_cachedUpperUiFont == null && TMP_Settings.defaultFontAsset != null)
         {
             _cachedUpperUiFont = TMP_Settings.defaultFontAsset;
         }
 
         return _cachedUpperUiFont;
+    }
+
+    private TMP_FontAsset LoadUpperUiFontFromResources()
+    {
+        if (string.IsNullOrEmpty(UpperUiFontResourcePath))
+        {
+            return null;
+        }
+
+        return Resources.Load<TMP_FontAsset>(UpperUiFontResourcePath);
+    }
+
+    private TMP_FontAsset GetInstructionFont()
+    {
+        if (_cachedInstructionFont != null)
+        {
+            return _cachedInstructionFont;
+        }
+
+        if (instructionFont != null)
+        {
+            _cachedInstructionFont = instructionFont;
+            return _cachedInstructionFont;
+        }
+
+        _cachedInstructionFont = Resources.Load<TMP_FontAsset>(InstructionFontResourcePath);
+
+        if (_cachedInstructionFont == null && TMP_Settings.defaultFontAsset != null)
+        {
+            _cachedInstructionFont = TMP_Settings.defaultFontAsset;
+        }
+
+        return _cachedInstructionFont;
+    }
+
+    private TMP_FontAsset GetEndPanelFont()
+    {
+        if (_cachedEndPanelFont != null)
+        {
+            return _cachedEndPanelFont;
+        }
+
+        if (TMP_Settings.defaultFontAsset != null)
+        {
+            _cachedEndPanelFont = TMP_Settings.defaultFontAsset;
+            return _cachedEndPanelFont;
+        }
+
+        if (upperUiFont != null)
+        {
+            _cachedEndPanelFont = upperUiFont;
+            return _cachedEndPanelFont;
+        }
+
+        if (themeFont != null)
+        {
+            _cachedEndPanelFont = themeFont;
+        }
+
+        return _cachedEndPanelFont;
+    }
+
+    private void ApplyEndPanelFont(TextMeshProUGUI label)
+    {
+        if (label == null) return;
+
+        TMP_FontAsset fontAsset = GetEndPanelFont();
+        if (fontAsset != null)
+        {
+            label.font = fontAsset;
+        }
     }
 
     private void ApplyUpperUiFont(TextMeshProUGUI label)
@@ -694,6 +776,20 @@ public class GameManager : MonoBehaviour
         }
 
         var fontAsset = GetUpperUiFont();
+        if (fontAsset != null)
+        {
+            label.font = fontAsset;
+        }
+    }
+
+    private void ApplyInstructionFont(TextMeshProUGUI label)
+    {
+        if (label == null)
+        {
+            return;
+        }
+
+        var fontAsset = GetInstructionFont();
         if (fontAsset != null)
         {
             label.font = fontAsset;
@@ -862,6 +958,7 @@ public class GameManager : MonoBehaviour
         // Reverted to default font for readability
         instructionsLabel.alignment = TextAlignmentOptions.Center;
         instructionsLabel.fontSize = 60f;
+        instructionsLabel.fontStyle = FontStyles.Bold;
         instructionsLabel.text = lines != null && lines.Length > 0
             ? string.Join("\n", lines)
             : string.Empty;
@@ -881,6 +978,7 @@ public class GameManager : MonoBehaviour
         // Reverted to default font for readability
         promptLabel.alignment = TextAlignmentOptions.Center;
         promptLabel.fontSize = 36f;
+        promptLabel.fontStyle = FontStyles.Bold;
         promptLabel.text = string.IsNullOrEmpty(prompt)
             ? "Press Space to start"
             : prompt;
@@ -1639,7 +1737,7 @@ public class GameManager : MonoBehaviour
         rect.anchorMin = new Vector2(0.5f, 0.5f);
         rect.anchorMax = new Vector2(0.5f, 0.5f);
         rect.pivot = new Vector2(0.5f, 0.5f);
-        rect.sizeDelta = new Vector2(640f, 550f); // Increased height to accommodate larger font
+        rect.sizeDelta = new Vector2(900f, 650f); // Larger panel for breathing room
         rect.anchoredPosition = Vector2.zero;
 
         Image background = _victoryPanel.AddComponent<Image>();
@@ -1676,8 +1774,7 @@ public class GameManager : MonoBehaviour
         _victoryTitleLabel.fontSize = 56f;
         _victoryTitleLabel.fontStyle = FontStyles.Bold;
         _victoryTitleLabel.text = victoryTitleText;
-        // Apply Theme Font
-        if (themeFont != null) _victoryTitleLabel.font = themeFont;
+        ApplyEndPanelFont(_victoryTitleLabel);
 
         // Create Trophy Image (between title and body/score text)
         GameObject trophyContainer = new GameObject("TrophyContainer");
@@ -1726,8 +1823,7 @@ public class GameManager : MonoBehaviour
         _victoryBodyLabel.fontSize = 40f;
         _victoryBodyLabel.enableWordWrapping = true;
         _victoryBodyLabel.text = victoryBodyText;
-        // Apply Theme Font
-        if (themeFont != null) _victoryBodyLabel.font = themeFont;
+        ApplyEndPanelFont(_victoryBodyLabel);
 
         GameObject summaryGroup = new GameObject("TokenSummary");
         summaryGroup.transform.SetParent(content.transform, false);
@@ -1758,8 +1854,7 @@ public class GameManager : MonoBehaviour
         _fireVictoryLabel.alignment = TextAlignmentOptions.Center;
         _fireVictoryLabel.fontSize = 34f;
         _fireVictoryLabel.text = string.Empty;
-        // Apply Theme Font
-        if (themeFont != null) _fireVictoryLabel.font = themeFont;
+        ApplyEndPanelFont(_fireVictoryLabel);
 
         _waterSummaryRoot = new GameObject("WaterSummary");
         _waterSummaryRoot.transform.SetParent(summaryGroup.transform, false);
@@ -1773,17 +1868,16 @@ public class GameManager : MonoBehaviour
         _waterVictoryLabel.alignment = TextAlignmentOptions.Center;
         _waterVictoryLabel.fontSize = 34f;
         _waterVictoryLabel.text = string.Empty;
-        // Apply Theme Font
-        if (themeFont != null) _waterVictoryLabel.font = themeFont;
+        ApplyEndPanelFont(_waterVictoryLabel);
 
         GameObject buttonRow = new GameObject("Buttons");
         buttonRow.transform.SetParent(content.transform, false);
         RectTransform buttonRowRect = buttonRow.AddComponent<RectTransform>();
         buttonRowRect.anchorMin = new Vector2(0f, 0.5f);
         buttonRowRect.anchorMax = new Vector2(1f, 0.5f);
-        buttonRowRect.sizeDelta = new Vector2(0f, 70f); // Reduced height
+        buttonRowRect.sizeDelta = new Vector2(0f, 100f); // Increased height for buttons
         LayoutElement buttonRowLayout = buttonRow.AddComponent<LayoutElement>();
-        buttonRowLayout.preferredHeight = 75f; // Reduced height to fit better
+        buttonRowLayout.preferredHeight = 100f;
 
         HorizontalLayoutGroup layoutGroup = buttonRow.AddComponent<HorizontalLayoutGroup>();
         layoutGroup.childAlignment = TextAnchor.MiddleCenter;
@@ -1855,13 +1949,10 @@ public class GameManager : MonoBehaviour
         TextMeshProUGUI label = labelGO.AddComponent<TextMeshProUGUI>();
         label.alignment = TextAlignmentOptions.Center;
         label.fontSize = 32f; // Adjusted for theme
-        label.color = themeButtonTextColor;
+        label.color = Color.white;
         label.text = labelText;
-        
-        if (themeFont != null)
-        {
-            label.font = themeFont;
-        }
+        label.fontStyle = FontStyles.Bold;
+        ApplyEndPanelFont(label);
 
         // Apply Theme Sprite and Colors
         if (themeButtonSprite != null)

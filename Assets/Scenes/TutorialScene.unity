@@ -373,20 +373,33 @@ MonoBehaviour:
   heartIconSize: {x: 50, y: 50}
   topUiBarHeight: 160
   topUiBarColor: {r: 0, g: 0, b: 0, a: 0}
+  themeFont: {fileID: 11400000, guid: 5abeab07b85ff4624bbab4b405f329d8, type: 2}
+  themeButtonSprite: {fileID: 2530564911472380330, guid: f471c4e2950c6405c9e399cd725275be, type: 3}
+  themeButtonNormalColor: {r: 1, g: 1, b: 1, a: 1}
+  themeButtonHighlightedColor: {r: 0.953, g: 0.859, b: 0.526, a: 1}
+  themeButtonPressedColor: {r: 0.784, g: 0.784, b: 0.784, a: 1}
+  themeButtonSelectedColor: {r: 0.961, g: 0.961, b: 0.961, a: 1}
+  themeButtonTextColor: {r: 0.2, g: 0.2, b: 0.2, a: 1}
   nextSceneName: Level1Scene
   nextSceneDelaySeconds: 2
   mainMenuSceneName: MainMenu
   useVictoryPanel: 1
   victoryTitleText: Tutorial Complete
   victoryBodyText: Ready for the real challenge?
+  victorySlogans:
+  - No Cap, That Was Epic!
+  - Main Character Energy!
+  - Slayed It!
+  - Built Different!
+  - GOAted Behavior!
+  - 'Vibe Check: Passed!'
+  - Sheeeeeesh! You Did That!
   defeatTitleText: Out of Hearts
   defeatBodyText: Don't worry! Try again.
   nextLevelButtonText: Go to Level 1
   restartButtonText: Restart Tutorial
   mainMenuButtonText: Main Menu
   levelDefeatMessage: Out of hearts! Try again?
-  trophySprite: {fileID: -2138534889620764463, guid: 225d178dfa87ec24c8ce310bd475332d, type: 3}
-  trophyIconSize: {x: 120, y: 120}
   fireTokensCollected: 0
   waterTokensCollected: 0
   levelTimer: {fileID: 0}
@@ -604,6 +617,7 @@ MonoBehaviour:
   playerPrefab: {fileID: 7307446650723487989, guid: 44964639595521e40aa2d28dda0ba7bd, type: 3}
   gameManager: {fileID: 0}
   gameManagerTutorial: {fileID: 341637565}
+  playerVerticalOffset: 0
 --- !u!4 &1273104296
 Transform:
   m_ObjectHideFlags: 0
@@ -630,6 +644,7 @@ GameObject:
   - component: {fileID: 1768859204}
   - component: {fileID: 1768859203}
   - component: {fileID: 1768859202}
+  - component: {fileID: 1768859205}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -711,6 +726,50 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1768859205
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1768859201}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a79441f348de89743a2939f4d699eac1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.UniversalAdditionalCameraData
+  m_RenderShadows: 1
+  m_RequiresDepthTextureOption: 2
+  m_RequiresOpaqueTextureOption: 2
+  m_CameraType: 0
+  m_Cameras: []
+  m_RendererIndex: -1
+  m_VolumeLayerMask:
+    serializedVersion: 2
+    m_Bits: 1
+  m_VolumeTrigger: {fileID: 0}
+  m_VolumeFrameworkUpdateModeOption: 2
+  m_RenderPostProcessing: 0
+  m_Antialiasing: 0
+  m_AntialiasingQuality: 2
+  m_StopNaN: 0
+  m_Dithering: 0
+  m_ClearDepth: 1
+  m_AllowXRRendering: 1
+  m_AllowHDROutput: 1
+  m_UseScreenCoordOverride: 0
+  m_ScreenSizeOverride: {x: 0, y: 0, z: 0, w: 0}
+  m_ScreenCoordScaleBias: {x: 0, y: 0, z: 0, w: 0}
+  m_RequiresDepthTexture: 0
+  m_RequiresColorTexture: 0
+  m_TaaSettings:
+    m_Quality: 3
+    m_FrameInfluence: 0.1
+    m_JitterScale: 1
+    m_MipBias: 0
+    m_VarianceClampScale: 0.9
+    m_ContrastAdaptiveSharpening: 0
+  m_Version: 2
 --- !u!1 &1786745995
 GameObject:
   m_ObjectHideFlags: 0
