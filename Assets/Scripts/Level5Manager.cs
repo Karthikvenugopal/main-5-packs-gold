@@ -626,8 +626,8 @@ public class Level5Manager : MonoBehaviour, ISequentialHazardManager
         GameObject marker = new(name);
         marker.transform.SetParent(transform);
         marker.transform.position = new Vector3(
-            position.x + 0.5f * cellSize,
-            position.y - 0.5f * cellSize,
+            position.x,
+            position.y,
             0f
         );
     }
