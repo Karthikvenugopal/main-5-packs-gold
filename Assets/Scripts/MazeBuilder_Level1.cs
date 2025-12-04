@@ -198,7 +198,7 @@ public class MazeBuilder_Level1 : MonoBehaviour
         dialogueTrigger.SetFontSize(3.0f);
 
         // Set fixed dialogue position near the maze center (approximate coordinates)
-        Vector2 fixedDialoguePosition = new Vector2(6.5f * cellSize, -3.0f * cellSize);
+        Vector2 fixedDialoguePosition = new Vector2(6.75f * cellSize, -3.0f * cellSize);
         dialogueTrigger.SetFixedPosition(fixedDialoguePosition);
         // Immediately trigger the dialogue so it appears even if players moved away from the trigger zone
         dialogueTrigger.TriggerFixedDialogue();
