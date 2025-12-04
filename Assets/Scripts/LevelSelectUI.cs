@@ -19,6 +19,7 @@ public class LevelSelectUI : MonoBehaviour
 
     [Header("Style (matches Main Menu)")]
     [SerializeField] private TMP_FontAsset buttonFont;
+    [SerializeField] private Sprite buttonSprite; // Added to match GameManager theme
     [SerializeField] private Color buttonTextColor = new Color(0.2f, 0.2f, 0.2f, 1f);
     [SerializeField] private int buttonFontSize = 32;
     [SerializeField] private FontStyles buttonFontStyle = FontStyles.Bold;
@@ -42,11 +43,21 @@ public class LevelSelectUI : MonoBehaviour
         CaptureButtonsFromChildren();
         ApplyButtonStyle();
         WireButtonCallbacks();
+        CreateBackButton();
     }
 
 #if UNITY_EDITOR
     private void OnValidate()
     {
+        if (buttonFont == null)
+        {
+            buttonFont = UnityEditor.AssetDatabase.LoadAssetAtPath<TMP_FontAsset>("Assets/TextMesh Pro/Fonts/UncialAntiqua-Regular SDF.asset");
+        }
+        if (buttonSprite == null)
+        {
+            buttonSprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Images/button.png");
+        }
+
         CaptureButtonsFromChildren();
         ApplyButtonStyle();
         WireButtonCallbacks();
@@ -65,39 +76,54 @@ public class LevelSelectUI : MonoBehaviour
 
         foreach (var button in levelButtons)
         {
-            if (button == null) continue;
+            ApplyStyleToButton(button);
+        }
+    }
 
-            var colors = button.colors;
-            colors.normalColor = normalColor;
-            colors.highlightedColor = highlightedColor;
-            colors.pressedColor = pressedColor;
-            colors.selectedColor = selectedColor;
-            colors.disabledColor = disabledColor;
-            colors.colorMultiplier = colorMultiplier;
-            colors.fadeDuration = fadeDuration;
-            button.colors = colors;
+    private void ApplyStyleToButton(Button button)
+    {
+        if (button == null) return;
 
-            if (button.targetGraphic is Image image)
+        var colors = button.colors;
+        colors.normalColor = normalColor;
+        colors.highlightedColor = highlightedColor;
+        colors.pressedColor = pressedColor;
+        colors.selectedColor = selectedColor;
+        colors.disabledColor = disabledColor;
+        colors.colorMultiplier = colorMultiplier;
+        colors.fadeDuration = fadeDuration;
+        button.colors = colors;
+
+        if (button.targetGraphic is Image image)
+        {
+            if (buttonSprite != null)
+            {
+                image.sprite = buttonSprite;
+                image.type = Image.Type.Sliced;
+                image.pixelsPerUnitMultiplier = 1f;
+                image.color = Color.white; // Reset color to white to show sprite
+            }
+            else
             {
                 image.color = buttonImageColor;
             }
+        }
 
-            var text = button.GetComponentInChildren<TMP_Text>(true);
-            if (text != null)
+        var text = button.GetComponentInChildren<TMP_Text>(true);
+        if (text != null)
+        {
+            if (buttonFont != null)
             {
-                if (buttonFont != null)
-                {
-                    text.font = buttonFont;
-                }
-                else if (GameManager.Instance != null)
-                {
-                    text.font = GameManager.Instance.GetUpperUiFont();
-                }
-
-                text.color = buttonTextColor;
-                text.fontSize = buttonFontSize;
-                text.fontStyle = buttonFontStyle;
+                text.font = buttonFont;
             }
+            else if (GameManager.Instance != null)
+            {
+                text.font = GameManager.Instance.GetUpperUiFont();
+            }
+
+            text.color = buttonTextColor;
+            text.fontSize = buttonFontSize;
+            text.fontStyle = buttonFontStyle;
         }
     }
 
@@ -135,6 +161,116 @@ public class LevelSelectUI : MonoBehaviour
             break;
         }
     }
+
+    private void CreateBackButton()
+    {
+        string btnName = "BackToMainMenuButton";
+        // Check globally if button exists to avoid duplicates if we reparented it out of this transform
+        if (GameObject.Find(btnName) != null) return;
+
+        GameObject buttonGO = new GameObject(btnName);
+        
+        // Find the root Canvas to ensure the button is on the screen and not clipped/hidden by parent rects
+        Canvas canvas = GetComponentInParent<Canvas>();
+        if (canvas == null)
+        {
+            canvas = UnityEngine.Object.FindObjectOfType<Canvas>();
+        }
+
+        if (canvas != null)
+        {
+            buttonGO.transform.SetParent(canvas.transform, false);
+            buttonGO.transform.SetAsLastSibling(); // Ensure it renders on top of everything
+        }
+        else
+        {
+            buttonGO.transform.SetParent(transform, false);
+            Debug.LogWarning("LevelSelectUI: Could not find a Canvas. Back button might not be visible.");
+        }
+
+        // Add Image component first so Button can find it as target graphic
+        Image image = buttonGO.AddComponent<Image>();
+        
+        Button button = buttonGO.AddComponent<Button>();
+        
+        // RectTransform setup - Bottom Right
+        RectTransform rect = buttonGO.GetComponent<RectTransform>();
+        rect.anchorMin = new Vector2(1f, 0f);
+        rect.anchorMax = new Vector2(1f, 0f);
+        rect.pivot = new Vector2(1f, 0f);
+        rect.sizeDelta = new Vector2(280f, 80f);
+        // Position with safe padding from the corner
+        rect.anchoredPosition = new Vector2(-50f, 50f); 
+
+        // Add Text
+        GameObject textGO = new GameObject("Text");
+        textGO.transform.SetParent(buttonGO.transform, false);
+        RectTransform textRect = textGO.AddComponent<RectTransform>();
+        textRect.anchorMin = Vector2.zero;
+        textRect.anchorMax = Vector2.one;
+        textRect.offsetMin = Vector2.zero;
+        textRect.offsetMax = Vector2.zero;
+
+        TextMeshProUGUI text = textGO.AddComponent<TextMeshProUGUI>();
+        text.text = "Back to Main Menu";
+        text.alignment = TextAlignmentOptions.Center;
+        text.enableAutoSizing = true;
+        text.fontSizeMin = 18f;
+        text.fontSizeMax = buttonFontSize;
+
+        // Apply Theme from GameManager to match Options button
+        if (GameManager.Instance != null)
+        {
+            ApplyGameManagerTheme(button, text, image);
+        }
+        else
+        {
+            // Fallback to local style if GM is missing
+            ApplyStyleToButton(button);
+        }
+
+        // Add Listener
+        button.onClick.AddListener(LoadMainMenu);
+        
+        Debug.Log($"Back button created on Canvas: {(canvas != null ? canvas.name : "null")}");
+    }
+
+    private void ApplyGameManagerTheme(Button button, TextMeshProUGUI text, Image image)
+    {
+        if (GameManager.Instance == null) return;
+
+        // Font
+        var font = GameManager.Instance.GetUpperUiFont();
+        if (font != null) text.font = font;
+
+        // Text Color
+        text.color = GameManager.Instance.ThemeButtonTextColor;
+
+        // Sprite
+        if (GameManager.Instance.ThemeButtonSprite != null)
+        {
+            image.sprite = GameManager.Instance.ThemeButtonSprite;
+            image.type = Image.Type.Sliced;
+            image.pixelsPerUnitMultiplier = 1f;
+            image.color = Color.white;
+        }
+        else
+        {
+            image.color = buttonImageColor;
+        }
+
+        // Colors
+        var colors = button.colors;
+        colors.normalColor = GameManager.Instance.ThemeButtonNormalColor;
+        colors.highlightedColor = GameManager.Instance.ThemeButtonHighlightedColor;
+        colors.pressedColor = GameManager.Instance.ThemeButtonPressedColor;
+        colors.selectedColor = GameManager.Instance.ThemeButtonSelectedColor;
+        colors.colorMultiplier = 1f;
+        colors.fadeDuration = 0.1f;
+        button.colors = colors;
+    }
+
+    public void LoadMainMenu() => LoadScene("MainMenu");
 
     private void LoadScene(string sceneName)
     {

@@ -106,30 +106,7 @@ public class RetryHud : MonoBehaviour
         tmp.fontSizeMax = 40f;
         
         // Theme Application
-        if (GameManager.Instance != null)
-        {
-            tmp.font = GameManager.Instance.GetUpperUiFont();
-            tmp.color = GameManager.Instance.ThemeButtonTextColor;
-            
-            if (GameManager.Instance.ThemeButtonSprite != null)
-            {
-                img.sprite = GameManager.Instance.ThemeButtonSprite;
-                img.type = Image.Type.Sliced;
-                img.pixelsPerUnitMultiplier = 1f;
-            }
-            img.color = Color.white; // Reset to white to show sprite colors
-
-            var colors = _optionsButton.colors;
-            colors.normalColor = GameManager.Instance.ThemeButtonNormalColor;
-            colors.highlightedColor = GameManager.Instance.ThemeButtonHighlightedColor;
-            colors.pressedColor = GameManager.Instance.ThemeButtonPressedColor;
-            colors.selectedColor = GameManager.Instance.ThemeButtonSelectedColor;
-            _optionsButton.colors = colors;
-        }
-        else
-        {
-            tmp.color = Color.white;
-        }
+        ApplyThemeToButton(img, _optionsButton, tmp);
 
         tmp.raycastTarget = false;
         tmp.text = "Options";
@@ -167,9 +144,10 @@ public class RetryHud : MonoBehaviour
         titleText.fontSize = 64f; // Increased title font
         titleText.color = Color.white;
         
-        if (GameManager.Instance != null)
+        var font = GetThemeFont();
+        if (font != null)
         {
-            titleText.font = GameManager.Instance.GetUpperUiFont();
+            titleText.font = font;
         }
 
         _continueButton = CreateModalButton("Continue", ContinueGame);
@@ -212,33 +190,96 @@ public class RetryHud : MonoBehaviour
         labelText.enableWordWrapping = false; // Prevent wrapping
         
         // Theme Application for Modal Buttons
-        if (GameManager.Instance != null)
-        {
-            labelText.font = GameManager.Instance.GetUpperUiFont();
-            labelText.color = GameManager.Instance.ThemeButtonTextColor;
-
-            if (GameManager.Instance.ThemeButtonSprite != null)
-            {
-                img.sprite = GameManager.Instance.ThemeButtonSprite;
-                img.type = Image.Type.Sliced;
-                img.pixelsPerUnitMultiplier = 1f;
-            }
-            img.color = Color.white;
-
-            var colors = button.colors;
-            colors.normalColor = GameManager.Instance.ThemeButtonNormalColor;
-            colors.highlightedColor = GameManager.Instance.ThemeButtonHighlightedColor;
-            colors.pressedColor = GameManager.Instance.ThemeButtonPressedColor;
-            colors.selectedColor = GameManager.Instance.ThemeButtonSelectedColor;
-            button.colors = colors;
-        }
-        else
-        {
-            labelText.color = Color.white;
-        }
+        ApplyThemeToButton(img, button, labelText);
+        
         labelText.raycastTarget = false;
 
         return button;
+    }
+
+    private void ApplyThemeToButton(Image img, Button button, TextMeshProUGUI labelText)
+    {
+        var font = GetThemeFont();
+        if (font != null) labelText.font = font;
+
+        var textColor = GetThemeButtonTextColor();
+        if (textColor.HasValue) labelText.color = textColor.Value;
+        else labelText.color = Color.white;
+
+        var sprite = GetThemeButtonSprite();
+        if (sprite != null)
+        {
+            img.sprite = sprite;
+            img.type = Image.Type.Sliced;
+            img.pixelsPerUnitMultiplier = 1f;
+            img.color = Color.white;
+        }
+
+        var normal = GetThemeButtonNormalColor();
+        var highlighted = GetThemeButtonHighlightedColor();
+        var pressed = GetThemeButtonPressedColor();
+        var selected = GetThemeButtonSelectedColor();
+
+        if (normal.HasValue)
+        {
+            var colors = button.colors;
+            colors.normalColor = normal.Value;
+            if (highlighted.HasValue) colors.highlightedColor = highlighted.Value;
+            if (pressed.HasValue) colors.pressedColor = pressed.Value;
+            if (selected.HasValue) colors.selectedColor = selected.Value;
+            button.colors = colors;
+        }
+    }
+
+    // --- Helper Methods to abstract Theme Provider ---
+
+    private TMP_FontAsset GetThemeFont()
+    {
+        if (GameManager.Instance != null) return GameManager.Instance.GetUpperUiFont();
+        if (GameManagerTutorial.Instance != null) return GameManagerTutorial.Instance.GetUpperUiFont();
+        return null;
+    }
+
+    private Sprite GetThemeButtonSprite()
+    {
+        if (GameManager.Instance != null) return GameManager.Instance.ThemeButtonSprite;
+        if (GameManagerTutorial.Instance != null) return GameManagerTutorial.Instance.ThemeButtonSprite;
+        return null;
+    }
+
+    private Color? GetThemeButtonTextColor()
+    {
+        if (GameManager.Instance != null) return GameManager.Instance.ThemeButtonTextColor;
+        if (GameManagerTutorial.Instance != null) return GameManagerTutorial.Instance.ThemeButtonTextColor;
+        return null;
+    }
+
+    private Color? GetThemeButtonNormalColor()
+    {
+        if (GameManager.Instance != null) return GameManager.Instance.ThemeButtonNormalColor;
+        if (GameManagerTutorial.Instance != null) return GameManagerTutorial.Instance.ThemeButtonNormalColor;
+        return null;
+    }
+
+    private Color? GetThemeButtonHighlightedColor()
+    {
+        if (GameManager.Instance != null) return GameManager.Instance.ThemeButtonHighlightedColor;
+        if (GameManagerTutorial.Instance != null) return GameManagerTutorial.Instance.ThemeButtonHighlightedColor;
+        return null;
+    }
+
+    private Color? GetThemeButtonPressedColor()
+    {
+        if (GameManager.Instance != null) return GameManager.Instance.ThemeButtonPressedColor;
+        if (GameManagerTutorial.Instance != null) return GameManagerTutorial.Instance.ThemeButtonPressedColor;
+        return null;
+    }
+
+    private Color? GetThemeButtonSelectedColor()
+    {
+        if (GameManager.Instance != null) return GameManager.Instance.ThemeButtonSelectedColor;
+        if (GameManagerTutorial.Instance != null) return GameManagerTutorial.Instance.ThemeButtonSelectedColor;
+        return null;
     }
 
     private void ToggleOptionsPanel()
