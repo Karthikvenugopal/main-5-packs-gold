@@ -96,7 +96,7 @@ public class CoopPlayerController : MonoBehaviour
     private void Awake()
     {
         _rigidbody = GetComponent<Rigidbody2D>();
-        _collider = GetComponent<Collider2D>();
+        _collider = GetComponent<CircleCollider2D>() ?? GetComponent<Collider2D>();
         _spriteRenderer = GetComponent<SpriteRenderer>();
         _animator = GetComponent<Animator>();
         _boxCollider = GetComponent<BoxCollider2D>();
@@ -323,11 +323,13 @@ public class CoopPlayerController : MonoBehaviour
 
     private Vector2 GetColliderSize()
     {
+        if (_collider == null) return Vector2.one * 0.9f;
+
         return _collider switch
         {
-            BoxCollider2D box => box.size,
-            CircleCollider2D circle => Vector2.one * circle.radius * 2f,
-            CapsuleCollider2D capsule => capsule.size,
+            BoxCollider2D box when box != null => box.size,
+            CircleCollider2D circle when circle != null => Vector2.one * circle.radius * 2f,
+            CapsuleCollider2D capsule when capsule != null => capsule.size,
             _ => Vector2.one * 0.9f
         };
     }
