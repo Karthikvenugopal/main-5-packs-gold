@@ -577,7 +577,7 @@ public class GameManagerTutorial : MonoBehaviour
         _victoryPanel.transform.SetParent(_hudCanvas.transform, false);
 
         RectTransform rect = _victoryPanel.AddComponent<RectTransform>();
-        ConfigureVictoryPanelRect(rect, new Vector2(900f, 520f));
+        ConfigureVictoryPanelRect(rect, new Vector2(900f, 650f));
 
         Image background = _victoryPanel.AddComponent<Image>();
         background.color = new Color(0f, 0f, 0f, 0.78f);
