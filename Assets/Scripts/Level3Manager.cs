@@ -2,7 +2,6 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using TMPro;
 
 public class Level3Manager : MonoBehaviour, ISequentialHazardManager
 {
@@ -848,61 +847,34 @@ public class Level3Manager : MonoBehaviour, ISequentialHazardManager
 
     private GameObject SpawnExit(Vector2 position)
     {
-        Vector3 center = new Vector3(position.x, position.y, 0f);
+        Vector3 center = new Vector3(position.x + 0.5f * cellSize, position.y, 0f);
 
         if (_exitPlaced)
         {
             return null;
         }
 
-        GameObject exit = exitPrefab != null
-            ? Instantiate(exitPrefab, center, Quaternion.identity, transform)
-            : CreateFallbackExit(center);
-
-        if (exit.TryGetComponent(out ExitZone exitZone))
+        GameObject exit;
+        if (exitPrefab != null)
         {
+            exit = Instantiate(exitPrefab, center, Quaternion.identity, transform);
+            if (!exit.TryGetComponent(out ExitZone exitZone))
+            {
+                exitZone = exit.AddComponent<ExitZone>();
+            }
             exitZone.Initialize(gameManager);
         }
         else
         {
-            exitZone = exit.AddComponent<ExitZone>();
-            exitZone.Initialize(gameManager);
+            exit = ExitPortalFactory.CreateExitPortal(
+                transform,
+                center,
+                cellSize,
+                zone => zone.Initialize(gameManager)
+            );
         }
 
         _exitPlaced = true;
-        return exit;
-    }
-
-    private GameObject CreateFallbackExit(Vector3 center)
-    {
-        GameObject exit = new GameObject("Exit");
-        exit.transform.SetParent(transform);
-        exit.transform.position = center;
-
-        BoxCollider2D trigger = exit.AddComponent<BoxCollider2D>();
-        trigger.isTrigger = true;
-        trigger.size = new Vector2(cellSize * 1.8f, cellSize * 1.4f);
-        trigger.offset = Vector2.zero;
-
-        SpriteRenderer renderer = exit.AddComponent<SpriteRenderer>();
-        renderer.color = new Color(0.9f, 0.8f, 0.2f, 0.85f);
-        renderer.sortingOrder = 4;
-
-        GameObject label = new GameObject("Label");
-        label.transform.SetParent(exit.transform);
-        label.transform.localPosition = new Vector3(0f, 0.85f * cellSize, -0.1f);
-
-        TextMeshPro tmp = label.AddComponent<TextMeshPro>();
-        tmp.text = "EXIT";
-        tmp.color = new Color(238f / 255f, 221f / 255f, 130f / 255f, 150f / 255f);
-        tmp.fontSize = 6;
-        tmp.alignment = TextAlignmentOptions.Center;
-        tmp.fontStyle = FontStyles.Bold;
-        tmp.enableWordWrapping = false;
-
-        ExitZone exitZone = exit.AddComponent<ExitZone>();
-        exitZone.Initialize(gameManager);
-
         return exit;
     }
 

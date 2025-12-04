@@ -3,7 +3,6 @@ using UnityEngine.SceneManagement;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using TMPro;
 
 /// <summary>
 /// Lightweight level controller that simply builds the maze layout defined below.
@@ -475,51 +474,29 @@ public class Level5Manager : MonoBehaviour, ISequentialHazardManager
         _exitPlaced = true;
 
         Vector3 world = new(
-            position.x + 0.5f * cellSize,
+            position.x + cellSize,
             position.y - 0.5f * cellSize,
             0f
         );
 
-        GameObject exit = exitPrefab != null
-            ? Instantiate(exitPrefab, world, Quaternion.identity, transform)
-            : CreateFallbackExit(world);
-
-        if (!exit.TryGetComponent(out ExitZone exitZone))
+        if (exitPrefab != null)
         {
-            exitZone = exit.AddComponent<ExitZone>();
+            GameObject exit = Instantiate(exitPrefab, world, Quaternion.identity, transform);
+            if (!exit.TryGetComponent(out ExitZone exitZone))
+            {
+                exitZone = exit.AddComponent<ExitZone>();
+            }
+
+            exitZone.Initialize(gameManager);
+            return;
         }
 
-        exitZone.Initialize(gameManager);
-    }
-
-    private GameObject CreateFallbackExit(Vector3 position)
-    {
-        GameObject exit = new("Exit");
-        exit.transform.SetParent(transform);
-        exit.transform.position = position;
-
-        BoxCollider2D trigger = exit.AddComponent<BoxCollider2D>();
-        trigger.isTrigger = true;
-        trigger.size = new Vector2(cellSize * 1.8f, cellSize * 1.4f);
-        trigger.offset = Vector2.zero;
-
-        SpriteRenderer renderer = exit.AddComponent<SpriteRenderer>();
-        renderer.color = new Color(0.9f, 0.8f, 0.2f, 0.85f);
-        renderer.sortingOrder = 4;
-
-        GameObject text = new GameObject("Label");
-        text.transform.SetParent(exit.transform);
-        text.transform.localPosition = new Vector3(0f, 0.85f * cellSize, -0.1f);
-
-        TextMeshPro tmp = text.AddComponent<TextMeshPro>();
-        tmp.text = "EXIT";
-        tmp.color = new Color(238f / 255f, 221f / 255f, 130f / 255f, 150f / 255f);
-        tmp.fontSize = 6;
-        tmp.alignment = TextAlignmentOptions.Center;
-        tmp.fontStyle = FontStyles.Bold;
-        tmp.enableWordWrapping = false;
-
-        return exit;
+        ExitPortalFactory.CreateExitPortal(
+            transform,
+            world,
+            cellSize,
+            zone => zone.Initialize(gameManager)
+        );
     }
 
     private void SpawnCannon(Vector2 position, CannonVariant variant)
