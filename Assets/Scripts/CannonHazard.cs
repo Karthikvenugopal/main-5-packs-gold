@@ -254,4 +254,27 @@ public class CannonHazard : MonoBehaviour
 
         return _fallbackSprite;
     }
+
+    public void OverrideTheme(Color body, Color barrel, Color projectile, Color impact)
+    {
+        if (_variant == CannonVariant.Fire)
+        {
+            fireBodyColor = body;
+            fireBarrelColor = barrel;
+            fireProjectileColor = projectile;
+            fireImpactColor = impact;
+        }
+        else
+        {
+            iceBodyColor = body;
+            iceBarrelColor = barrel;
+            iceProjectileColor = projectile;
+            iceImpactColor = impact;
+        }
+
+        _projectileColor = projectile;
+        _impactColor = impact;
+
+        ApplyVariantStyling();
+    }
 }

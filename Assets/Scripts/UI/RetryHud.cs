@@ -76,7 +76,7 @@ public class RetryHud : MonoBehaviour
         rect.anchorMax = new Vector2(1f, 0f);
         rect.pivot = new Vector2(1f, 0f);
         rect.anchoredPosition = new Vector2(-30f, 30f);
-        rect.sizeDelta = new Vector2(110f, 40f);
+        rect.sizeDelta = new Vector2(180f, 60f); // Significantly increased size
 
         var img = btnGO.AddComponent<Image>();
         img.color = ButtonColor;
@@ -93,11 +93,14 @@ public class RetryHud : MonoBehaviour
 
         var tmp = labelGO.AddComponent<TextMeshProUGUI>();
         tmp.alignment = TextAlignmentOptions.Center;
-        tmp.fontSize = 26f;
+        tmp.fontSize = 36f; // Significantly increased font size
         tmp.enableAutoSizing = true;
-        tmp.fontSizeMin = 20f;
-        tmp.fontSizeMax = 28f;
-        tmp.color = Color.white;
+        tmp.fontSizeMin = 28f;
+        tmp.fontSizeMax = 40f;
+        
+        // Theme Application
+        ApplyThemeToButton(img, _optionsButton, tmp);
+
         tmp.raycastTarget = false;
         tmp.text = "Options";
 
@@ -112,15 +115,15 @@ public class RetryHud : MonoBehaviour
         rect.anchorMin = new Vector2(0.5f, 0.5f);
         rect.anchorMax = new Vector2(0.5f, 0.5f);
         rect.pivot = new Vector2(0.5f, 0.5f);
-        rect.sizeDelta = new Vector2(520f, 320f);
+        rect.sizeDelta = new Vector2(800f, 600f); // Significantly increased panel size
         rect.anchoredPosition = Vector2.zero;
 
         var bg = _modalPanel.AddComponent<Image>();
         bg.color = PanelColor;
 
         var layout = _modalPanel.AddComponent<VerticalLayoutGroup>();
-        layout.padding = new RectOffset(30, 30, 30, 30);
-        layout.spacing = 18f;
+        layout.padding = new RectOffset(60, 60, 60, 60); // Significantly increased padding
+        layout.spacing = 50f; // Significantly increased spacing
         layout.childAlignment = TextAnchor.MiddleCenter;
         layout.childControlHeight = true;
         layout.childForceExpandHeight = true;
@@ -131,8 +134,14 @@ public class RetryHud : MonoBehaviour
         var titleText = titleGO.AddComponent<TextMeshProUGUI>();
         titleText.text = "Options";
         titleText.alignment = TextAlignmentOptions.Center;
-        titleText.fontSize = 44f;
+        titleText.fontSize = 64f; // Increased title font
         titleText.color = Color.white;
+        
+        var font = GetThemeFont();
+        if (font != null)
+        {
+            titleText.font = font;
+        }
 
         _continueButton = CreateModalButton("Continue", ContinueGame);
         _restartButton = CreateModalButton("Restart Level", RestartScene);
@@ -155,18 +164,115 @@ public class RetryHud : MonoBehaviour
         button.onClick.AddListener(handler);
 
         var layout = btnGO.AddComponent<LayoutElement>();
-        layout.preferredHeight = 80f;
+        layout.preferredHeight = 120f; // Significantly increased button height
 
         var labelGO = new GameObject("Label");
         labelGO.transform.SetParent(btnGO.transform, false);
+        
+        // Fix: Ensure label stretches to fill the button
+        var labelRect = labelGO.AddComponent<RectTransform>();
+        labelRect.anchorMin = Vector2.zero;
+        labelRect.anchorMax = Vector2.one;
+        labelRect.offsetMin = Vector2.zero;
+        labelRect.offsetMax = Vector2.zero;
+
         var labelText = labelGO.AddComponent<TextMeshProUGUI>();
         labelText.text = label;
         labelText.alignment = TextAlignmentOptions.Center;
-        labelText.fontSize = 32f;
-        labelText.color = Color.white;
+        labelText.fontSize = 48f; // Significantly increased font size
+        labelText.enableWordWrapping = false; // Prevent wrapping
+        
+        // Theme Application for Modal Buttons
+        ApplyThemeToButton(img, button, labelText);
+        
         labelText.raycastTarget = false;
 
         return button;
+    }
+
+    private void ApplyThemeToButton(Image img, Button button, TextMeshProUGUI labelText)
+    {
+        var font = GetThemeFont();
+        if (font != null) labelText.font = font;
+
+        var textColor = GetThemeButtonTextColor();
+        if (textColor.HasValue) labelText.color = textColor.Value;
+        else labelText.color = Color.white;
+
+        var sprite = GetThemeButtonSprite();
+        if (sprite != null)
+        {
+            img.sprite = sprite;
+            img.type = Image.Type.Sliced;
+            img.pixelsPerUnitMultiplier = 1f;
+            img.color = Color.white;
+        }
+
+        var normal = GetThemeButtonNormalColor();
+        var highlighted = GetThemeButtonHighlightedColor();
+        var pressed = GetThemeButtonPressedColor();
+        var selected = GetThemeButtonSelectedColor();
+
+        if (normal.HasValue)
+        {
+            var colors = button.colors;
+            colors.normalColor = normal.Value;
+            if (highlighted.HasValue) colors.highlightedColor = highlighted.Value;
+            if (pressed.HasValue) colors.pressedColor = pressed.Value;
+            if (selected.HasValue) colors.selectedColor = selected.Value;
+            button.colors = colors;
+        }
+    }
+
+    // --- Helper Methods to abstract Theme Provider ---
+
+    private TMP_FontAsset GetThemeFont()
+    {
+        if (GameManager.Instance != null) return GameManager.Instance.GetUpperUiFont();
+        if (GameManagerTutorial.Instance != null) return GameManagerTutorial.Instance.GetUpperUiFont();
+        return null;
+    }
+
+    private Sprite GetThemeButtonSprite()
+    {
+        if (GameManager.Instance != null) return GameManager.Instance.ThemeButtonSprite;
+        if (GameManagerTutorial.Instance != null) return GameManagerTutorial.Instance.ThemeButtonSprite;
+        return null;
+    }
+
+    private Color? GetThemeButtonTextColor()
+    {
+        if (GameManager.Instance != null) return GameManager.Instance.ThemeButtonTextColor;
+        if (GameManagerTutorial.Instance != null) return GameManagerTutorial.Instance.ThemeButtonTextColor;
+        return null;
+    }
+
+    private Color? GetThemeButtonNormalColor()
+    {
+        if (GameManager.Instance != null) return GameManager.Instance.ThemeButtonNormalColor;
+        if (GameManagerTutorial.Instance != null) return GameManagerTutorial.Instance.ThemeButtonNormalColor;
+        return null;
+    }
+
+    private Color? GetThemeButtonHighlightedColor()
+    {
+        if (GameManager.Instance != null) return GameManager.Instance.ThemeButtonHighlightedColor;
+        if (GameManagerTutorial.Instance != null) return GameManagerTutorial.Instance.ThemeButtonHighlightedColor;
+        return null;
+    }
+
+    private Color? GetThemeButtonPressedColor()
+    {
+        if (GameManager.Instance != null) return GameManager.Instance.ThemeButtonPressedColor;
+        if (GameManagerTutorial.Instance != null) return GameManagerTutorial.Instance.ThemeButtonPressedColor;
+        return null;
+    }
+
+    private Color? GetThemeButtonSelectedColor()
+    {
+        if (GameManager.Instance != null) return GameManager.Instance.ThemeButtonSelectedColor;
+        if (GameManagerTutorial.Instance != null) return GameManagerTutorial.Instance.ThemeButtonSelectedColor;
+        return null;
     }
 
     private void ToggleOptionsPanel()

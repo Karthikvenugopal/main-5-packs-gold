@@ -13,6 +13,7 @@ using UnityEngine.UI;
 /// </summary>
 public class GameManagerTutorial : MonoBehaviour
 {
+    public static GameManagerTutorial Instance { get; private set; }
     // Event fired when any player enters the exit
     public static event System.Action<CoopPlayerController> OnPlayerEnteredExitEvent;
     [SerializeField] private Color messageBackground = new Color(0f, 0f, 0f, 0.55f);
@@ -40,6 +41,37 @@ public class GameManagerTutorial : MonoBehaviour
     [SerializeField] private float topUiBarHeight = 160f;
     [Tooltip("The background color of the top UI bar")]
     [SerializeField] private Color topUiBarColor = new Color(0.1f, 0.1f, 0.1f, 0.8f);
+
+    [Header("Theme Settings")]
+    [SerializeField] private TMP_FontAsset themeFont;
+    [SerializeField] private Sprite themeButtonSprite;
+    [SerializeField] private Color themeButtonNormalColor = Color.white;
+    [SerializeField] private Color themeButtonHighlightedColor = new Color(0.953f, 0.859f, 0.526f, 1f);
+    [SerializeField] private Color themeButtonPressedColor = new Color(0.784f, 0.784f, 0.784f, 1f);
+    [SerializeField] private Color themeButtonSelectedColor = new Color(0.961f, 0.961f, 0.961f, 1f);
+    [SerializeField] private Color themeButtonTextColor = new Color(0.2f, 0.2f, 0.2f, 1f); // Dark text for light buttons
+
+    // Public Accessors for Theme
+    public Sprite ThemeButtonSprite => themeButtonSprite;
+    public Color ThemeButtonNormalColor => themeButtonNormalColor;
+    public Color ThemeButtonHighlightedColor => themeButtonHighlightedColor;
+    public Color ThemeButtonPressedColor => themeButtonPressedColor;
+    public Color ThemeButtonSelectedColor => themeButtonSelectedColor;
+    public Color ThemeButtonTextColor => themeButtonTextColor;
+
+#if UNITY_EDITOR
+    private void OnValidate()
+    {
+        if (themeFont == null)
+        {
+            themeFont = UnityEditor.AssetDatabase.LoadAssetAtPath<TMP_FontAsset>("Assets/TextMesh Pro/Fonts/UncialAntiqua-Regular SDF.asset");
+        }
+        if (themeButtonSprite == null)
+        {
+            themeButtonSprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Images/button.png");
+        }
+    }
+#endif
     [Header("Progression")]
     [SerializeField] private string nextSceneName = "Level1Scene";
     [SerializeField] private float nextSceneDelaySeconds = 2f;
@@ -48,6 +80,18 @@ public class GameManagerTutorial : MonoBehaviour
     [SerializeField] private bool useVictoryPanel = true;
     [SerializeField] private string victoryTitleText = "Tutorial Complete";
     [SerializeField] private string victoryBodyText = "Ready for the real challenge?";
+    // --- MODIFICATION START ---
+    [SerializeField] private string[] victorySlogans = new[]
+    {
+        "No Cap, That Was Epic!",
+        "Main Character Energy!",
+        "Slayed It!",
+        "Built Different!",
+        "GOAted Behavior!",
+        "Vibe Check: Passed!",
+        "Sheeeeeesh! You Did That!"
+    };
+    // --- MODIFICATION END ---
     [SerializeField] private string defeatTitleText = "Out of Hearts";
     [SerializeField] private string defeatBodyText = "Don't worry! Try again.";
     [SerializeField] private string nextLevelButtonText = "Continue to Level 1";
@@ -101,6 +145,7 @@ public class GameManagerTutorial : MonoBehaviour
 
     private void Awake()
     {
+        Instance = this;
         NormalizeDisplayStrings();
         if (!useVictoryPanel)
         {
@@ -273,6 +318,16 @@ public class GameManagerTutorial : MonoBehaviour
         }
 
         Debug.Log(message);
+    }
+
+    public TMP_FontAsset GetUpperUiFont()
+    {
+        // Prioritize the Theme Font if set
+        if (themeFont != null)
+        {
+            return themeFont;
+        }
+        return TMP_Settings.defaultFontAsset;
     }
 
     private void CreateStatusUI()
@@ -719,7 +774,16 @@ public class GameManagerTutorial : MonoBehaviour
 
         if (_victoryTitleLabel != null)
         {
-            _victoryTitleLabel.text = isVictory ? victoryTitleText : defeatTitleText;
+            // --- MODIFICATION START ---
+            if (isVictory && victorySlogans != null && victorySlogans.Length > 0)
+            {
+                _victoryTitleLabel.text = victorySlogans[UnityEngine.Random.Range(0, victorySlogans.Length)];
+            }
+            else
+            {
+                _victoryTitleLabel.text = isVictory ? victoryTitleText : defeatTitleText;
+            }
+            // --- MODIFICATION END ---
         }
 
         if (_victoryBodyLabel != null)
