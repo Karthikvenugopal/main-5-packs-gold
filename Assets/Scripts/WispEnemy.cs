@@ -2,6 +2,7 @@ using UnityEngine;
 
 [RequireComponent(typeof(CircleCollider2D))]
 [RequireComponent(typeof(Rigidbody2D))]
+[RequireComponent(typeof(Animator))]
 public class WispEnemy : MonoBehaviour
 {
     [Header("Idle Movement")]
@@ -50,6 +51,8 @@ public class WispEnemy : MonoBehaviour
     private int _wallLayerIndex = -1;
     private Rigidbody2D _rb;
     private CircleCollider2D _collider;
+    private Animator _animator;
+    private string _currentAnimationState;
     private GameManager _gameManager;
     private Transform _currentTarget;
     private bool _isPatrolling = false;
@@ -63,6 +66,7 @@ public class WispEnemy : MonoBehaviour
     {
         _rb = GetComponent<Rigidbody2D>();
         _collider = GetComponent<CircleCollider2D>();
+        _animator = GetComponent<Animator>();
         
         if (_rb != null)
         {
@@ -142,6 +146,8 @@ public class WispEnemy : MonoBehaviour
         {
              _idleAnchor = transform.position;
         }
+
+        SetAnimatorState("Idle");
     }
 
     private void Update()
@@ -149,6 +155,7 @@ public class WispEnemy : MonoBehaviour
         if (!_isPatrolling)
         {
             PerformIdleHover();
+            SetAnimatorState("Idle");
         }
     }
     
@@ -165,6 +172,35 @@ public class WispEnemy : MonoBehaviour
         float timeValue = Time.time * hoverSpeed + _timeOffset;
         float pulseScale = 1f + Mathf.Sin(timeValue) * pulseMagnitude;
         transform.localScale = _runtimeBaseScale * pulseScale;
+    }
+
+    /// <summary>
+    /// Drives the Animator to the correct directional state once an axis-aligned move vector is known.
+    /// </summary>
+    private void UpdateDirectionAnimation(Vector2 movement)
+    {
+        string targetState = MapMovementToState(movement);
+        if (string.IsNullOrEmpty(targetState)) return;
+        SetAnimatorState(targetState);
+    }
+
+    private void SetAnimatorState(string stateName)
+    {
+        if (_animator == null || string.IsNullOrEmpty(stateName) || _currentAnimationState == stateName) return;
+        _animator.Play(stateName);
+        _currentAnimationState = stateName;
+    }
+
+    private static string MapMovementToState(Vector2 movement)
+    {
+        if (movement.sqrMagnitude < 0.0001f) return null;
+        Vector2 absMovement = new Vector2(Mathf.Abs(movement.x), Mathf.Abs(movement.y));
+        if (absMovement.x >= absMovement.y)
+        {
+            return movement.x >= 0f ? "Right" : "Left";
+        }
+
+        return movement.y >= 0f ? "Up" : "Down";
     }
     
     // --- MODIFIED PATROL METHOD: PURE AXIS MOVEMENT (NO RAYCAST BLOCKING) ---
@@ -198,6 +234,8 @@ public class WispEnemy : MonoBehaviour
             moveVector.x = 0; 
         }
         // --- End Enforce Strict Axis Alignment ---
+
+        UpdateDirectionAnimation(moveVector);
 
         if (moveVector == Vector2.zero) return;
         
