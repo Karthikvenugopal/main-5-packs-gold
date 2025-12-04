@@ -61,7 +61,7 @@ public class Level3Manager : MonoBehaviour, ISequentialHazardManager
     private static readonly Vector2Int FireSpawnCell = FindSpawnCellInLayout('F');
     private static readonly Vector2Int WaterSpawnCell = FindSpawnCellInLayout('W');
 
-    private static readonly Vector2Int CenterExitCell = new Vector2Int(18, 10);
+    private static readonly Vector2Int CenterExitCell = new Vector2Int(17, 10);
     private static readonly Vector2Int[] CardinalDirections =
     {
         Vector2Int.right,

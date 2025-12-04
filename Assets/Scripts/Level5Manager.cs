@@ -474,8 +474,8 @@ public class Level5Manager : MonoBehaviour, ISequentialHazardManager
         _exitPlaced = true;
 
         Vector3 world = new(
-            position.x + cellSize,
-            position.y - 0.5f * cellSize,
+            position.x + 0.5f * cellSize,
+            position.y,
             0f
         );
 

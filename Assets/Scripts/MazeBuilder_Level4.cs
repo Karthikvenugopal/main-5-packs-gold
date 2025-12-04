@@ -460,8 +460,8 @@ public class MazeBuilder_Level4 : MonoBehaviour, IPairedHazardManager
     private void SpawnExit(Vector2 position)
     {
         Vector3 worldCenter = new Vector3(
-            position.x + cellSize,
-            position.y - 0.5f * cellSize,
+            position.x + 0.5f * cellSize,
+            position.y,
             0f
         );
 
