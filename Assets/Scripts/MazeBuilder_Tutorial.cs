@@ -146,8 +146,8 @@ public class MazeBuilder_Tutorial : MonoBehaviour
     private void SpawnExit(Vector2 position)
     {
         Vector3 worldCenter = new Vector3(
-            position.x + cellSize,
-            position.y - 0.5f * cellSize,
+            position.x - 0.5f * cellSize,
+            position.y,
             0f
         );
 
