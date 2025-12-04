@@ -2,7 +2,6 @@
 
 using System.Collections.Generic;
 using UnityEngine;
-using TMPro;
 
 /// <summary>
 /// Template maze builder for Level 4.
@@ -460,39 +459,29 @@ public class MazeBuilder_Level4 : MonoBehaviour, IPairedHazardManager
 
     private void SpawnExit(Vector2 position)
     {
+        Vector3 worldCenter = new Vector3(
+            position.x + 0.5f * cellSize,
+            position.y,
+            0f
+        );
+
         if (exitPrefab != null)
         {
-            Instantiate(exitPrefab, position + new Vector2(0.5f * cellSize, -0.5f * cellSize), Quaternion.identity, transform);
+            GameObject exitInstance = Instantiate(exitPrefab, worldCenter, Quaternion.identity, transform);
+            if (!exitInstance.TryGetComponent(out ExitZone zone))
+            {
+                zone = exitInstance.AddComponent<ExitZone>();
+            }
+            zone.Initialize(gameManager);
             return;
         }
 
-        GameObject exit = new GameObject("Exit");
-        exit.transform.position = position + new Vector2(0.5f * cellSize, -0.5f * cellSize);
-        exit.transform.SetParent(transform);
-
-        BoxCollider2D trigger = exit.AddComponent<BoxCollider2D>();
-        trigger.isTrigger = true;
-        trigger.size = new Vector2(cellSize * 2.6f, cellSize * 1.8f);
-        trigger.offset = Vector2.zero;
-
-        ExitZone exitZone = exit.AddComponent<ExitZone>();
-        exitZone.Initialize(gameManager);
-
-        SpriteRenderer renderer = exit.AddComponent<SpriteRenderer>();
-        renderer.color = new Color(0.9f, 0.8f, 0.2f, 0.85f);
-        renderer.sortingOrder = 4; // Exit zone is layer 4
-
-        GameObject text = new GameObject("Label");
-        text.transform.SetParent(exit.transform);
-        text.transform.localPosition = new Vector3(0f, 1f * cellSize, -0.1f);
-
-        TextMeshPro tmp = text.AddComponent<TextMeshPro>();
-        tmp.text = "EXIT";
-        tmp.color = new Color(238f / 255f, 221f / 255f, 130f / 255f, 150f / 255f);
-        tmp.fontSize = 6;
-        tmp.alignment = TextAlignmentOptions.Center;
-        tmp.fontStyle = FontStyles.Bold;
-        tmp.enableWordWrapping = false;
+        ExitPortalFactory.CreateExitPortal(
+            transform,
+            worldCenter,
+            cellSize,
+            exitZone => exitZone.Initialize(gameManager)
+        );
     }
 
     // --- MODIFIED METHOD: Set sortingOrder to 3 ---
