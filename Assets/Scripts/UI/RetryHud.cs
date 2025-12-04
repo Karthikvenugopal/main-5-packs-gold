@@ -100,13 +100,15 @@ public class RetryHud : MonoBehaviour
 
         var tmp = labelGO.AddComponent<TextMeshProUGUI>();
         tmp.alignment = TextAlignmentOptions.Center;
-        tmp.fontSize = 36f; // Significantly increased font size
-        tmp.enableAutoSizing = true;
-        tmp.fontSizeMin = 28f;
-        tmp.fontSizeMax = 40f;
+        tmp.fontSize = 24f;
+        tmp.enableAutoSizing = false;
+        tmp.fontSizeMin = 20f;
+        tmp.fontSizeMax = 28f;
+        tmp.fontStyle = FontStyles.Bold;
         
         // Theme Application
         ApplyThemeToButton(img, _optionsButton, tmp);
+        tmp.color = Color.white;
 
         tmp.raycastTarget = false;
         tmp.text = "Options";

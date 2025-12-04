@@ -453,6 +453,7 @@ MonoBehaviour:
   fireWallPrefab: {fileID: 4468719429622143330, guid: 1ada63391b0245bd931c379b2c1c8d09, type: 3}
   gameManager: {fileID: 1746984134}
   tokenPlacementManager: {fileID: 2110000000000000002}
+  mazeCameraVerticalOffset: 0.45
 --- !u!114 &1746984134 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 777697172324581036, guid: 8c454dc0a577643e89ba9e1793c4e03f, type: 3}
@@ -544,6 +545,18 @@ PrefabInstance:
       propertyPath: waterTokenCollectedSprite
       value: 
       objectReference: {fileID: 3472107637496650615, guid: 22ce194b86d81416ba29f64f1b0e6c3c, type: 3}
+    - target: {fileID: 777697172324581036, guid: 8c454dc0a577643e89ba9e1793c4e03f, type: 3}
+      propertyPath: themeButtonHighlightedColor.b
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 777697172324581036, guid: 8c454dc0a577643e89ba9e1793c4e03f, type: 3}
+      propertyPath: themeButtonHighlightedColor.g
+      value: 0.7607843
+      objectReference: {fileID: 0}
+    - target: {fileID: 777697172324581036, guid: 8c454dc0a577643e89ba9e1793c4e03f, type: 3}
+      propertyPath: themeButtonHighlightedColor.r
+      value: 0.8392157
+      objectReference: {fileID: 0}
     - target: {fileID: 1320424588882643016, guid: 8c454dc0a577643e89ba9e1793c4e03f, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
