@@ -2794,6 +2794,12 @@ public class GameManager : MonoBehaviour
             return true;
         }
 
+        if (string.Equals(activeScene.name, "Level4Scene", StringComparison.OrdinalIgnoreCase))
+        {
+            sceneName = !string.IsNullOrEmpty(level5InstructionSceneName) ? level5InstructionSceneName : "Level5Scene";
+            return true;
+        }
+
         if (activeIndex >= 0 && totalScenes > 0)
         {
             for (int index = activeIndex + 1; index < totalScenes; index++)
@@ -2895,8 +2901,8 @@ public class GameManager : MonoBehaviour
 
     private bool IsFinalLevelScene(string sceneName)
     {
-        return !string.IsNullOrEmpty(level4InstructionSceneName) &&
-               sceneName == level4InstructionSceneName;
+        return !string.IsNullOrEmpty(level5InstructionSceneName) &&
+               sceneName == level5InstructionSceneName;
     }
 
     private bool IsScoredLevel()
