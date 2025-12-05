@@ -231,7 +231,7 @@ public class GameManager : MonoBehaviour
     private static int s_totalWaterTokensCollected;
     private static readonly Dictionary<string, int> s_levelScoreThresholds = new(StringComparer.OrdinalIgnoreCase)
     {
-        { "Level1Scene", 2200 },
+        { "Level1Scene", 2100 },
         { "Level2Scene", 5500 },
         { "Level3Scene", 1200 },
         { "Level4Scene", 1800 }

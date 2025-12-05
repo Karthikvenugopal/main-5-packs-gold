@@ -157,40 +157,6 @@ public class CoopPlayerController : MonoBehaviour
         _gameManagerTutorial?.RegisterPlayer(this);
     }
 
-    private bool _hasSpawnColliderOverride;
-    private Vector2 _spawnColliderSize;
-    private Vector2 _spawnColliderOffset;
-    private float _collisionBoxScaleOverride = -1f;
-
-    public void ApplySpawnDimensions(Vector3 baseScale, Vector2 colliderSize, Vector2 colliderOffset, float collisionScale)
-    {
-        _initialScale = baseScale;
-        transform.localScale = baseScale;
-
-        if (_boxCollider == null)
-        {
-            _boxCollider = GetComponent<BoxCollider2D>();
-        }
-
-        if (_boxCollider != null)
-        {
-            _hasSpawnColliderOverride = true;
-            _spawnColliderSize = colliderSize;
-            _spawnColliderOffset = colliderOffset;
-            _collisionBoxScaleOverride = collisionScale;
-            ApplyColliderOverride();
-        }
-    }
-
-    private void ApplyColliderOverride()
-    {
-        if (!_hasSpawnColliderOverride || _boxCollider == null) return;
-        _boxCollider.size = _spawnColliderSize;
-        _boxCollider.offset = _spawnColliderOffset;
-        _defaultColliderSize = _spawnColliderSize;
-        _defaultColliderOffset = _spawnColliderOffset;
-    }
-
     private void ConfigureRoleAnimations(PlayerRole role)
     {
         ApplyRoleAnimatorController(role);
@@ -215,12 +181,6 @@ public class CoopPlayerController : MonoBehaviour
     private void ConfigureRoleCollider(PlayerRole role)
     {
         if (_boxCollider == null) return;
-
-        if (_hasSpawnColliderOverride)
-        {
-            ApplyColliderOverride();
-            return;
-        }
 
         if (role == PlayerRole.Fireboy)
         {
@@ -295,8 +255,7 @@ public class CoopPlayerController : MonoBehaviour
         float distance = moveSpeed * Time.fixedDeltaTime;
         Vector2 targetPosition = _rigidbody.position + direction * distance;
 
-        float collisionScale = _collisionBoxScaleOverride > 0f ? _collisionBoxScaleOverride : collisionBoxScale;
-        Vector2 boxSize = GetColliderSize() * collisionScale;
+        Vector2 boxSize = GetColliderSize() * collisionBoxScale;
 
         RaycastHit2D hit = Physics2D.BoxCast(
             _rigidbody.position,
@@ -596,8 +555,7 @@ public class CoopPlayerController : MonoBehaviour
         Vector2 displacement = velocity * deltaTime;
         float distance = displacement.magnitude;
         Vector2 direction = distance > 0f ? displacement / distance : Vector2.zero;
-        float collisionScale = _collisionBoxScaleOverride > 0f ? _collisionBoxScaleOverride : collisionBoxScale;
-        Vector2 boxSize = GetColliderSize() * collisionScale;
+        Vector2 boxSize = GetColliderSize() * collisionBoxScale;
 
         if (distance > 0f && direction != Vector2.zero)
         {
