@@ -640,12 +640,14 @@ MonoBehaviour:
   - Destroying one obstacle can lead to the creation of a new one
   - 
   - Keep collecting tokens and avoid hazards!
+  - Pull 1200+ and enjoy extra hearts on the next round.
   level3InstructionContinuePrompt: Press Space to start
   level4InstructionSceneName: Level4Scene
   level4InstructionLines:
   - <b>Level 4</b>
   - 
   - Template ready. Drop in your maze layout and hazards.
+  - Beat 1800+ and boom, bonus hearts unlocked.
   level4InstructionContinuePrompt: Press Space to start
   level5InstructionSceneName: Level5Scene
   level5InstructionLines:

@@ -535,6 +535,7 @@ MonoBehaviour:
   - <b>Stay sharp</b>
   - Opposites protect.
   - Stand in front of danger for your partner.
+  - Hit 1300+ and we'll drop bonus hearts for you.
   level2InstructionContinuePrompt: Press Space to start
   level3InstructionSceneName: Level3Scene
   level3InstructionLines:
@@ -544,12 +545,14 @@ MonoBehaviour:
   - Destroying one obstacle can lead to the creation of a new one
   - 
   - Keep collecting tokens and avoid hazards!
+  - Pull 1200+ and enjoy extra hearts on the next round.
   level3InstructionContinuePrompt: Press Space to start
   level4InstructionSceneName: Level4Scene
   level4InstructionLines:
   - <b>Level 4</b>
   - 
   - Template ready. Drop in your maze layout and hazards.
+  - Beat 1800+ and boom, bonus hearts unlocked.
   level4InstructionContinuePrompt: Press Space to start
   level5InstructionSceneName: Level5Scene
   level5InstructionLines:

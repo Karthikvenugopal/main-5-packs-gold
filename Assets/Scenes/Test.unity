@@ -1766,6 +1766,7 @@ MonoBehaviour:
   - Destroying one obstacle can lead to the creation of a new one
   - 
   - Keep collecting tokens and avoid hazards!
+  - Pull 1200+ and enjoy extra hearts on the next round.
   level3InstructionContinuePrompt: Press Space to start
   level4InstructionSceneName: Level4Scene
   level4InstructionLines:
@@ -1774,6 +1775,7 @@ MonoBehaviour:
   - Beware of the green wisp!
   - Touch the purple spiral together to activate Steam Mode.
   - "Act fast\u2014Steam Mode is timed!"
+  - Beat 1800+ and boom, bonus hearts unlocked.
   level4InstructionContinuePrompt: Press Space to start
   level5InstructionSceneName: Level5Scene
   level5InstructionLines:
