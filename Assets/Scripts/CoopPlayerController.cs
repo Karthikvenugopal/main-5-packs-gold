@@ -16,7 +16,7 @@ public class CoopPlayerController : MonoBehaviour
     [Header("Movement")]
     [SerializeField] private float moveSpeed = 4.0f;
     [SerializeField] private LayerMask collisionMask;
-    [SerializeField] private float collisionBoxScale = 0.9f;
+    [SerializeField] private float collisionBoxScale = 0.75f;
 
     [Header("Visuals")]
     [SerializeField] private Color fireboyColor = new Color(0.93f, 0.39f, 0.18f);
@@ -29,10 +29,6 @@ public class CoopPlayerController : MonoBehaviour
     [Header("Ember Collider")]
     [SerializeField] private Vector2 emberColliderSize = new Vector2(0.65f, 0.65f);
     [SerializeField] private Vector2 emberColliderOffset = Vector2.zero;
-
-    [Header("Aqua Collider")]
-    [SerializeField] private Vector2 aquaColliderSize = new Vector2(0.65f, 0.65f);
-    [SerializeField] private Vector2 aquaColliderOffset = Vector2.zero;
 
     [Header("Hazard Damage")]
     [SerializeField] private float hazardDamageCooldown = 0.5f;
@@ -193,8 +189,8 @@ public class CoopPlayerController : MonoBehaviour
         }
         else
         {
-            _boxCollider.size = aquaColliderSize;
-            _boxCollider.offset = aquaColliderOffset;
+            _boxCollider.size = _defaultColliderSize;
+            _boxCollider.offset = _defaultColliderOffset;
         }
     }
 
