@@ -222,6 +222,9 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 0
   collisionBoxScale: 0.75
+  emberSteamAnimatorController: {fileID: 9101000, guid: 2fa6129e65f84a6ab8be981d33b3d9a7, type: 2}
+  aquaSteamAnimatorController: {fileID: 9101001, guid: 9d4b2d0d1238457f84cba1e7271bc12a, type: 2}
+  circleCastScale: 0.85
   fireboyColor: {r: 0.9528302, g: 0.8968899, b: 0.876424, a: 1}
   watergirlColor: {r: 0.81434673, g: 0.8573632, b: 0.9433962, a: 1}
   aquaAnimatorController: {fileID: 9100000, guid: 8bd899fc3bfc41aab4876e6cc3b4ee3c, type: 2}

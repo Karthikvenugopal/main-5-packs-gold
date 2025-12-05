@@ -79,34 +79,10 @@ public class PlayerSteamState : MonoBehaviour
 
         if (steamOn)
         {
-            Color steamColor;
-
-            if (_player.Role == PlayerRole.Fireboy)
-            {
-                // Fireboy 蒸汽色：#FF84E4
-                steamColor = new Color(
-                    1.0f,
-                    0.5176470588235295f,
-                    0.8941176470588236f,
-                    currentAlpha
-                );
-            }
-            else
-            {
-                // Watergirl 蒸汽色：#18D4FE
-                steamColor = new Color(
-                    0.09411764705882353f,
-                    0.8313725490196079f,
-                    0.996078431372549f,
-                    currentAlpha
-                );
-            }
-
-            _renderer.color = steamColor;
+            _renderer.color = new Color(1f, 1f, 1f, currentAlpha);
         }
         else
         {
-            // 恢复正常颜色
             Color normal = _player.Role == PlayerRole.Fireboy ? FireNormalColor : WaterNormalColor;
             normal.a = currentAlpha;
             _renderer.color = normal;

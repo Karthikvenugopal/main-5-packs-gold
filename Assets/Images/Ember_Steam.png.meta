@@ -94,7 +94,7 @@ TextureImporter:
   maxTextureSize: 2048
   textureSettings:
     serializedVersion: 2
-    filterMode: 1
+    filterMode: 0
     aniso: 1
     mipBias: 0
     wrapU: 1
@@ -108,7 +108,7 @@ TextureImporter:
   spriteMeshType: 1
   alignment: 0
   spritePivot: {x: 0.5, y: 0.5}
-  spritePixelsToUnits: 100
+  spritePixelsToUnits: 12
   spriteBorder: {x: 0, y: 0, z: 0, w: 0}
   spriteGenerateFallbackPhysicsShape: 1
   alphaUsage: 1
@@ -170,441 +170,441 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Enemy_002_0
+      name: Ember_Steam_0
       rect:
         serializedVersion: 2
-        x: 6
+        x: 7
+        y: 97
+        width: 10
+        height: 9
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: a74477064af36472f9b8229ee62e184b
+      internalID: 1046638819
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Ember_Steam_1
+      rect:
+        serializedVersion: 2
+        x: 31
         y: 96
-        width: 12
-        height: 11
+        width: 10
+        height: 8
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: ca6de729f1e44fd70800000000000000
-      internalID: 9075965046567130796
+      spriteID: 4dfccf83ecf3e4ea39ef3196b03b7d4c
+      internalID: -1885081514
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Enemy_002_1
+      name: Ember_Steam_2
       rect:
         serializedVersion: 2
-        x: 30
-        y: 95
-        width: 12
-        height: 10
+        x: 55
+        y: 97
+        width: 10
+        height: 9
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: f8fc4bd21da16c020800000000000000
-      internalID: 2361604540319715215
+      spriteID: 3f2d44164c87c4f9ab1d776af17aa8d3
+      internalID: 1463485686
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Enemy_002_2
+      name: Ember_Steam_3
       rect:
         serializedVersion: 2
-        x: 54
+        x: 79
         y: 96
-        width: 12
-        height: 11
+        width: 10
+        height: 8
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: 9bcfd42d2bce59ff0800000000000000
-      internalID: -29857569731380039
+      spriteID: 94528d92ea0ef44ed9933987ced1c060
+      internalID: 1038618166
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Enemy_002_3
+      name: Ember_Steam_4
       rect:
         serializedVersion: 2
-        x: 78
-        y: 95
-        width: 12
-        height: 10
+        x: 7
+        y: 73
+        width: 10
+        height: 9
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: 7fad2d117c3b78f80800000000000000
-      internalID: -8104311336851023113
+      spriteID: fd2fa78894d384006a81a05764f84fad
+      internalID: 754655394
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Enemy_002_4
+      name: Ember_Steam_5
       rect:
         serializedVersion: 2
-        x: 6
+        x: 31
         y: 72
-        width: 12
-        height: 11
+        width: 10
+        height: 8
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: 758585a55264ddd70800000000000000
-      internalID: 9069482350837520471
+      spriteID: 008ab05a5853c476da901ae0f7092b0d
+      internalID: -1085992061
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Enemy_002_5
+      name: Ember_Steam_6
       rect:
         serializedVersion: 2
-        x: 30
-        y: 71
-        width: 12
-        height: 10
+        x: 55
+        y: 73
+        width: 10
+        height: 9
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: 1b28b73f32e26cf80800000000000000
-      internalID: -8086725348953455951
+      spriteID: b078ef9e4fe4b49c2bc2c7fb2223fee6
+      internalID: 2070635403
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Enemy_002_6
+      name: Ember_Steam_7
       rect:
         serializedVersion: 2
-        x: 54
+        x: 79
         y: 72
-        width: 12
-        height: 11
+        width: 10
+        height: 8
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: 865179d5949774920800000000000000
-      internalID: 2974479434911257960
+      spriteID: c02ca6d925a9f4944ba6b0055b7cf669
+      internalID: -1487810449
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Enemy_002_7
+      name: Ember_Steam_8
       rect:
         serializedVersion: 2
-        x: 78
-        y: 71
-        width: 12
-        height: 10
+        x: 7
+        y: 49
+        width: 10
+        height: 9
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: 783d5beda8387c4b0800000000000000
-      internalID: -5420218994051918969
+      spriteID: 243cab1ae45d2401bb8c91558e683407
+      internalID: -41533989
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Enemy_002_8
+      name: Ember_Steam_9
+      rect:
+        serializedVersion: 2
+        x: 31
+        y: 48
+        width: 10
+        height: 8
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: d951f59d7c16b439b9ce2a04da70d4ec
+      internalID: -302544332
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Ember_Steam_10
+      rect:
+        serializedVersion: 2
+        x: 55
+        y: 49
+        width: 10
+        height: 9
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 4d148dfb53f324c1f82edf808a21a034
+      internalID: -1519997918
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Ember_Steam_11
+      rect:
+        serializedVersion: 2
+        x: 79
+        y: 48
+        width: 10
+        height: 8
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 10ecde0c3595e49ef9ea93182ef5787d
+      internalID: -614264985
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Ember_Steam_12
+      rect:
+        serializedVersion: 2
+        x: 7
+        y: 25
+        width: 10
+        height: 9
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 845f05ccf1786415ea224c1a1ece2ed0
+      internalID: -580948928
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Ember_Steam_13
+      rect:
+        serializedVersion: 2
+        x: 31
+        y: 24
+        width: 10
+        height: 8
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 06cad010541784c428e042fe128bd19a
+      internalID: -896210010
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Ember_Steam_14
+      rect:
+        serializedVersion: 2
+        x: 55
+        y: 25
+        width: 10
+        height: 9
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 15608c9389d59456a85daf68b313804a
+      internalID: 1533547892
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Ember_Steam_15
+      rect:
+        serializedVersion: 2
+        x: 79
+        y: 24
+        width: 10
+        height: 8
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 478ac2914623342f7b1f7e0ed09deacc
+      internalID: -858206650
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Ember_Steam_16
       rect:
         serializedVersion: 2
         x: 6
-        y: 48
+        y: 0
         width: 12
-        height: 11
+        height: 6
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: 71fae70a9903b9e10800000000000000
-      internalID: 2205409878908776215
+      spriteID: 9832b492081f044b5af1c64022b281be
+      internalID: -1130563738
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Enemy_002_9
+      name: Ember_Steam_17
       rect:
         serializedVersion: 2
         x: 30
-        y: 47
+        y: 0
         width: 12
-        height: 10
+        height: 6
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: b366d22e8883e6390800000000000000
-      internalID: -7823253342134639045
+      spriteID: f8b707716413943a283149bd4f60f6a9
+      internalID: -263887725
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Enemy_002_10
+      name: Ember_Steam_18
       rect:
         serializedVersion: 2
         x: 54
-        y: 48
+        y: 0
         width: 12
-        height: 11
+        height: 6
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: a25df464860ebc3b0800000000000000
-      internalID: -5491048582187330262
+      spriteID: 9c878d86276274dac9da1a248de8b261
+      internalID: -63385597
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Enemy_002_11
+      name: Ember_Steam_19
       rect:
         serializedVersion: 2
         x: 78
-        y: 47
-        width: 12
-        height: 10
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 04d1ffb293f96e0a0800000000000000
-      internalID: -6852614715097539264
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Enemy_002_12
-      rect:
-        serializedVersion: 2
-        x: 6
-        y: 24
-        width: 12
-        height: 11
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 97aa54c2df2508680800000000000000
-      internalID: -8754906428285277575
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Enemy_002_13
-      rect:
-        serializedVersion: 2
-        x: 30
-        y: 23
-        width: 12
-        height: 10
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: bb872d71e012f17f0800000000000000
-      internalID: -639756277650392901
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Enemy_002_14
-      rect:
-        serializedVersion: 2
-        x: 54
-        y: 24
-        width: 12
-        height: 11
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: d2b68b90c46e887a0800000000000000
-      internalID: -6374592058287953107
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Enemy_002_15
-      rect:
-        serializedVersion: 2
-        x: 78
-        y: 23
-        width: 12
-        height: 10
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 09be0fc279f8f6b50800000000000000
-      internalID: 6588642659323145104
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Enemy_002_16
-      rect:
-        serializedVersion: 2
-        x: 5
         y: 0
-        width: 14
-        height: 7
+        width: 12
+        height: 6
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: 7f7bae5662cbdaac0800000000000000
-      internalID: -3842208033972504585
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Enemy_002_17
-      rect:
-        serializedVersion: 2
-        x: 29
-        y: 0
-        width: 14
-        height: 7
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 6e284f3ed19068aa0800000000000000
-      internalID: -6159225416399420698
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Enemy_002_18
-      rect:
-        serializedVersion: 2
-        x: 53
-        y: 0
-        width: 14
-        height: 7
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 7556c6187261251c0800000000000000
-      internalID: -4516523117368285865
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Enemy_002_19
-      rect:
-        serializedVersion: 2
-        x: 77
-        y: 0
-        width: 14
-        height: 7
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 19baf0c3dd8b2d3c0800000000000000
-      internalID: -4336200230869423215
+      spriteID: 3ab2ebb431dfc4bf7836b019810ecbff
+      internalID: 1544620287
       vertices: []
       indices: 
       edges: []
@@ -613,7 +613,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 
+    spriteID: f92846ca556e247d3ad43639ba176903
     internalID: 0
     vertices: []
     indices: 
@@ -621,28 +621,30 @@ TextureImporter:
     weights: []
     secondaryTextures: []
     spriteCustomMetadata:
-      entries: []
+      entries:
+      - key: SpriteEditor.SliceSettings
+        value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":64.0,"y":64.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":0,"keepEmptyRects":false,"isAlternate":false}'
     nameFileIdTable:
-      Enemy_002_0: 9075965046567130796
-      Enemy_002_1: 2361604540319715215
-      Enemy_002_10: -5491048582187330262
-      Enemy_002_11: -6852614715097539264
-      Enemy_002_12: -8754906428285277575
-      Enemy_002_13: -639756277650392901
-      Enemy_002_14: -6374592058287953107
-      Enemy_002_15: 6588642659323145104
-      Enemy_002_16: -3842208033972504585
-      Enemy_002_17: -6159225416399420698
-      Enemy_002_18: -4516523117368285865
-      Enemy_002_19: -4336200230869423215
-      Enemy_002_2: -29857569731380039
-      Enemy_002_3: -8104311336851023113
-      Enemy_002_4: 9069482350837520471
-      Enemy_002_5: -8086725348953455951
-      Enemy_002_6: 2974479434911257960
-      Enemy_002_7: -5420218994051918969
-      Enemy_002_8: 2205409878908776215
-      Enemy_002_9: -7823253342134639045
+      Ember_Steam_0: 1046638819
+      Ember_Steam_1: -1885081514
+      Ember_Steam_10: -1519997918
+      Ember_Steam_11: -614264985
+      Ember_Steam_12: -580948928
+      Ember_Steam_13: -896210010
+      Ember_Steam_14: 1533547892
+      Ember_Steam_15: -858206650
+      Ember_Steam_16: -1130563738
+      Ember_Steam_17: -263887725
+      Ember_Steam_18: -63385597
+      Ember_Steam_19: 1544620287
+      Ember_Steam_2: 1463485686
+      Ember_Steam_3: 1038618166
+      Ember_Steam_4: 754655394
+      Ember_Steam_5: -1085992061
+      Ember_Steam_6: 2070635403
+      Ember_Steam_7: -1487810449
+      Ember_Steam_8: -41533989
+      Ember_Steam_9: -302544332
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

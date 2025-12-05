@@ -17,6 +17,11 @@ public class CoopPlayerController : MonoBehaviour
     [SerializeField] private float moveSpeed = 4.0f;
     [SerializeField] private LayerMask collisionMask;
     [SerializeField] private float collisionBoxScale = 0.75f;
+    [Header("Steam Animations")]
+    [SerializeField] private RuntimeAnimatorController emberSteamAnimatorController;
+    [SerializeField] private RuntimeAnimatorController aquaSteamAnimatorController;
+    [Tooltip("Scale applied to the circle collider when sampling collisions to keep movement away from corners.")]
+    [SerializeField, Range(0.5f, 1f)] private float circleCastScale = 0.85f;
 
     [Header("Visuals")]
     [SerializeField] private Color fireboyColor = new Color(0.93f, 0.39f, 0.18f);
@@ -84,6 +89,7 @@ public class CoopPlayerController : MonoBehaviour
     private BoxCollider2D _boxCollider;
     private Vector2 _defaultColliderSize;
     private Vector2 _defaultColliderOffset;
+    private bool _isUsingSteamAnimator;
     private CircleCollider2D _circleCollider;
 
     private readonly Dictionary<int, float> _lastHazardDamageTimes = new();
@@ -165,6 +171,8 @@ public class CoopPlayerController : MonoBehaviour
         _currentStateName = null;
         UpdateMovementAnimation(Vector2.zero);
         ConfigureRoleCollider(role);
+        _isUsingSteamAnimator = false;
+        RefreshSteamAnimator();
     }
 
     private void ApplyRoleAnimatorController(PlayerRole role)
@@ -178,6 +186,34 @@ public class CoopPlayerController : MonoBehaviour
         }
 
         _animator.runtimeAnimatorController = controller;
+    }
+
+    private void RefreshSteamAnimator()
+    {
+        if (_animator == null || _role == null) return;
+        bool shouldUseSteam = _steamState != null && _steamState.IsInSteamMode;
+        if (shouldUseSteam == _isUsingSteamAnimator) return;
+
+        _isUsingSteamAnimator = shouldUseSteam;
+        RuntimeAnimatorController controller = null;
+        if (shouldUseSteam)
+        {
+            controller = _role == PlayerRole.Fireboy ? emberSteamAnimatorController : aquaSteamAnimatorController;
+        }
+        else
+        {
+            controller = _role == PlayerRole.Fireboy ? emberAnimatorController : aquaAnimatorController;
+        }
+
+        if (controller == null)
+        {
+            controller = _role == PlayerRole.Fireboy ? emberAnimatorController : aquaAnimatorController;
+        }
+
+        if (controller != null)
+        {
+            _animator.runtimeAnimatorController = controller;
+        }
     }
 
     private void ConfigureRoleCollider(PlayerRole role)
@@ -198,6 +234,8 @@ public class CoopPlayerController : MonoBehaviour
 
     private void Update()
     {
+        RefreshSteamAnimator();
+
         if (!_movementEnabled)
         {
             _moveInput = Vector2.zero;
@@ -259,7 +297,7 @@ public class CoopPlayerController : MonoBehaviour
 
         Vector2 boxSize = GetColliderSize() * collisionBoxScale;
         bool useCircleCast = _circleCollider != null;
-        float castRadius = GetCircleRadius() * collisionBoxScale;
+        float castRadius = Mathf.Max(0.05f, GetCircleRadius() * circleCastScale);
         float castDistance = distance + 0.01f;
 
         RaycastHit2D hit = useCircleCast

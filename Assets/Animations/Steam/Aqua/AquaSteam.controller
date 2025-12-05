@@ -1,0 +1,77 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1102 &-2001
+AnimatorState:
+  serializedVersion: 6
+  m_ObjectHideFlags: 0
+  m_Name: Idle
+  m_Speed: 1
+  m_Position: {x: 0, y: 60, z: 0}
+  m_Motion: {fileID: 7400000, guid: 6a12d1a88d0543c0a2d70b375c63a9e7, type: 2}
+--- !u!1102 &-2002
+AnimatorState:
+  serializedVersion: 6
+  m_ObjectHideFlags: 0
+  m_Name: Left
+  m_Speed: 1
+  m_Position: {x: -200, y: -40, z: 0}
+  m_Motion: {fileID: 7400000, guid: 7c7b5fd1ce8849aea1d8999d194c2e0a, type: 2}
+--- !u!1102 &-2003
+AnimatorState:
+  serializedVersion: 6
+  m_ObjectHideFlags: 0
+  m_Name: Right
+  m_Speed: 1
+  m_Position: {x: 200, y: -40, z: 0}
+  m_Motion: {fileID: 7400000, guid: 9b2ebc7f9a4b4f228a7c6f9f61c5a19c, type: 2}
+--- !u!1102 &-2004
+AnimatorState:
+  serializedVersion: 6
+  m_ObjectHideFlags: 0
+  m_Name: Up
+  m_Speed: 1
+  m_Position: {x: 0, y: 140, z: 0}
+  m_Motion: {fileID: 7400000, guid: 5be4d2b34b1d4cfaacfdab0a8f3f261a, type: 2}
+--- !u!1102 &-2005
+AnimatorState:
+  serializedVersion: 6
+  m_ObjectHideFlags: 0
+  m_Name: Down
+  m_Speed: 1
+  m_Position: {x: 0, y: -160, z: 0}
+  m_Motion: {fileID: 7400000, guid: 4ee1a5f91a4b45f9a60c0d4fbc84a7e1, type: 2}
+--- !u!1107 &-5066142683168660973
+AnimatorStateMachine:
+  serializedVersion: 6
+  m_Name: Base Layer
+  m_ChildStates:
+  - serializedVersion: 1
+    m_State: {fileID: -2001}
+    m_Position: {x: 0, y: 60, z: 0}
+  - serializedVersion: 1
+    m_State: {fileID: -2002}
+    m_Position: {x: -200, y: -40, z: 0}
+  - serializedVersion: 1
+    m_State: {fileID: -2003}
+    m_Position: {x: 200, y: -40, z: 0}
+  - serializedVersion: 1
+    m_State: {fileID: -2004}
+    m_Position: {x: 0, y: 140, z: 0}
+  - serializedVersion: 1
+    m_State: {fileID: -2005}
+    m_Position: {x: 0, y: -160, z: 0}
+  m_DefaultState: {fileID: -2001}
+--- !u!91 &9101001
+AnimatorController:
+  m_ObjectHideFlags: 0
+  m_Name: AquaSteam
+  serializedVersion: 5
+  m_AnimatorParameters: []
+  m_AnimatorLayers:
+  - serializedVersion: 5
+    m_Name: Base Layer
+    m_StateMachine: {fileID: -5066142683168660973}
+    m_Mask: {fileID: 0}
+    m_Motions: []
+    m_Behaviours: []
+    m_Controller: {fileID: 9101001}

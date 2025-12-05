@@ -1799,6 +1799,7 @@ MonoBehaviour:
   swapCounterLabelOverride: {fileID: 0}
   themeFont: {fileID: 11400000, guid: 5abeab07b85ff4624bbab4b405f329d8, type: 2}
   themeButtonSprite: {fileID: 2530564911472380330, guid: f471c4e2950c6405c9e399cd725275be, type: 3}
+  steamPopupSprite: {fileID: 21300000, guid: ae2259f35f22f4f3f91d5dc7d317bccc, type: 3}
   themeButtonNormalColor: {r: 1, g: 1, b: 1, a: 1}
   themeButtonHighlightedColor: {r: 0.953, g: 0.859, b: 0.526, a: 1}
   themeButtonPressedColor: {r: 0.784, g: 0.784, b: 0.784, a: 1}
