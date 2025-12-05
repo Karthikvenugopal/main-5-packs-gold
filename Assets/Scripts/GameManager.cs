@@ -1351,7 +1351,7 @@ public class GameManager : MonoBehaviour
         float heartsCenterY = heartsRect != null ? heartsRect.anchoredPosition.y : 0f;
         float heartsHeight = heartsRect != null ? heartsRect.sizeDelta.y : 200f;
         float offsetX = heartsRect != null ? heartsRect.anchoredPosition.x : 0f;
-        float offsetY = heartsCenterY - (heartsHeight * 0.5f) - (height * 0.5f) - 24f;
+        float offsetY = heartsCenterY - (heartsHeight * 0.5f) - (height * 0.5f) - 24f + (heartsHeight * 0.1f);
         _liveScoreContainer.anchoredPosition = new Vector2(offsetX, offsetY);
 
         Image bg = scoreGO.AddComponent<Image>();
