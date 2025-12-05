@@ -298,6 +298,7 @@ public class GameManager : MonoBehaviour
     private TextMeshProUGUI _victoryBodyLabel;
     private TextMeshProUGUI _fireVictoryLabel;
     private TextMeshProUGUI _waterVictoryLabel;
+    private TextMeshProUGUI _bonusHeartMessageLabel;
     private GameObject _fireSummaryRoot;
     private GameObject _waterSummaryRoot;
     private VerticalLayoutGroup _victoryContentLayout;
@@ -1967,6 +1968,22 @@ public class GameManager : MonoBehaviour
         _waterVictoryLabel.text = string.Empty;
         ApplyEndPanelFont(_waterVictoryLabel);
 
+        GameObject bonusMessageGO = new GameObject("BonusHeartMessage");
+        bonusMessageGO.transform.SetParent(content.transform, false);
+        RectTransform bonusRect = bonusMessageGO.AddComponent<RectTransform>();
+        bonusRect.anchorMin = new Vector2(0f, 0.5f);
+        bonusRect.anchorMax = new Vector2(1f, 0.5f);
+        bonusRect.sizeDelta = new Vector2(0f, 60f);
+        LayoutElement bonusLayout = bonusMessageGO.AddComponent<LayoutElement>();
+        bonusLayout.preferredHeight = 60f;
+
+        _bonusHeartMessageLabel = bonusMessageGO.AddComponent<TextMeshProUGUI>();
+        _bonusHeartMessageLabel.alignment = TextAlignmentOptions.Center;
+        _bonusHeartMessageLabel.fontSize = 38f;
+        _bonusHeartMessageLabel.text = string.Empty;
+        ApplyEndPanelFont(_bonusHeartMessageLabel);
+        bonusMessageGO.SetActive(false);
+
         GameObject buttonRow = new GameObject("Buttons");
         buttonRow.transform.SetParent(content.transform, false);
         RectTransform buttonRowRect = buttonRow.AddComponent<RectTransform>();
@@ -2183,6 +2200,16 @@ public class GameManager : MonoBehaviour
         {
             bool showMainMenu = !string.IsNullOrEmpty(mainMenuSceneName);
             _victoryMainMenuButton.gameObject.SetActive(showMainMenu);
+        }
+
+        if (_bonusHeartMessageLabel != null)
+        {
+            bool showBonus = isVictory && ShouldShowBonusHeartMessage();
+            _bonusHeartMessageLabel.gameObject.SetActive(showBonus);
+            if (showBonus)
+            {
+                _bonusHeartMessageLabel.text = "Bonus Hearts Earned for Ember and Aqua";
+            }
         }
 
         _victoryPanel.SetActive(true);
@@ -2865,6 +2892,21 @@ public class GameManager : MonoBehaviour
             s_pendingHeartBonusScene = null;
             s_pendingHeartBonusAmount = 0;
         }
+    }
+
+    private bool ShouldShowBonusHeartMessage()
+    {
+        if (s_pendingHeartBonusAmount <= 0 || string.IsNullOrEmpty(s_pendingHeartBonusScene))
+        {
+            return false;
+        }
+
+        if (!TryGetNextSceneName(out string nextScene) || string.IsNullOrEmpty(nextScene))
+        {
+            return false;
+        }
+
+        return string.Equals(s_pendingHeartBonusScene, nextScene, StringComparison.OrdinalIgnoreCase);
     }
 
     
