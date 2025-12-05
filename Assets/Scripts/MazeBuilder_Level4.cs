@@ -71,7 +71,7 @@ public class MazeBuilder_Level4 : MonoBehaviour, IPairedHazardManager
         "##########......###..........#.#", // row 9
         "###################.##########.#", // row 10
         "#################M..##########.#", // row 11
-        "#..################...########.#", // row 12
+        "#..##############.....########.#", // row 12
         "#E......###########.#.########.#", // row 13
         "#######.LLL#####....#..........#", // row 14
         "##########.......#####.#######.#", // row 15
@@ -105,11 +105,7 @@ public class MazeBuilder_Level4 : MonoBehaviour, IPairedHazardManager
             PairedHazardType.Fire,
             new Vector2Int(22, 6),
             PairedHazardType.Ice),
-        new PairedHazardDefinition(
-            new Vector2Int(20, 9),
-            PairedHazardType.Fire,
-            new Vector2Int(19, 10),
-            PairedHazardType.Ice),
+
         new PairedHazardDefinition(
             new Vector2Int(28, 9),
             PairedHazardType.Fire,
