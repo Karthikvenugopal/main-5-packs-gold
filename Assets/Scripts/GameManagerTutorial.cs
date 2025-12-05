@@ -19,7 +19,7 @@ public class GameManagerTutorial : MonoBehaviour
     [SerializeField] private Color messageBackground = new Color(0f, 0f, 0f, 0.55f);
     [Header("UI Messages")]
     [SerializeField] private string tutorialStartMessage = "Welcome! Follow Instructions on the screen to complete the tutorial.";
-    [SerializeField] private string levelVictoryMessage = "Tutorial Complete! Press R to play again or continue to Level 1.";
+    [SerializeField] private string levelVictoryMessage = "";
     [SerializeField] private string waitForPartnerMessage = "{0} made it. Wait for your partner!";
     [SerializeField] private string exitReminderMessage = "Both heroes must stand in the exit to finish.";
     [Header("Player Hearts")]
@@ -171,11 +171,7 @@ public class GameManagerTutorial : MonoBehaviour
 
     private void Update()
     {
-        if (_gameFinished && Input.GetKeyDown(KeyCode.R))
-        {
-            CancelNextSceneLoad();
-            SceneManager.LoadScene(SceneManager.GetActiveScene().name);
-        }
+
 
         if (_gameActive && !_gameFinished && AreAllPlayersAtExit())
         {
