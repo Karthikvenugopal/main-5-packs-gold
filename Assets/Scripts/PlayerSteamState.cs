@@ -15,17 +15,17 @@ public class PlayerSteamState : MonoBehaviour
 
     // Fireboy: #ED642E
     private static readonly Color FireNormalColor = new Color(
-        237f / 255f,   // ED
-        100f / 255f,   // 64
-        46f  / 255f,   // 2E
+        243f / 255f,   // F3
+        229f / 255f,   // E5
+        223f / 255f,   // DF
         1f
     );
 
     // Watergirl: #3272F2
     private static readonly Color WaterNormalColor = new Color(
-        50f  / 255f,   // 32
-        114f / 255f,   // 72
-        242f / 255f,   // F2
+        208f / 255f,   // D0
+        219f / 255f,   // DB
+        241f / 255f,   // F1
         1f
     );
 
