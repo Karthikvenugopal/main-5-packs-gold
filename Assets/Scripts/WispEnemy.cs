@@ -332,7 +332,7 @@ public class WispEnemy : MonoBehaviour
                     
                     
                     
-                    _currentWaypointIndex--;
+                    _currentWaypointIndex++;
                 }
                 else
                 {
