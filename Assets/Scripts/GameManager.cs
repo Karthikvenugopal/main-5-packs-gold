@@ -1446,6 +1446,10 @@ public class GameManager : MonoBehaviour
         // Slimmer timer so it doesn't overlap tokens on Level 5.
         rect.sizeDelta = new Vector2(400f, 100f);
         rect.anchoredPosition = Vector2.zero;
+        if (IsCurrentSceneLevel5())
+        {
+            rect.anchoredPosition = new Vector2(160f, 0f);
+        }
 
         Image background = timerContainer.AddComponent<Image>();
         background.color = new Color(0f, 0f, 0f, 0.45f);
@@ -1509,6 +1513,7 @@ public class GameManager : MonoBehaviour
         float popupWidth = Mathf.Max(1f, refWidth * 0.5f);
         float popupHeight = Mathf.Max(1f, refHeight * 0.5f);
         rect.sizeDelta = new Vector2(popupWidth, popupHeight);
+        bool isLevel5 = IsCurrentSceneLevel5();
         rect.anchoredPosition = Vector2.zero;
 
         _steamPopupContainer = popup;
