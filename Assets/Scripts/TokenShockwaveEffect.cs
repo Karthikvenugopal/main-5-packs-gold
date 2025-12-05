@@ -1,8 +1,8 @@
 using UnityEngine;
 
-/// <summary>
-/// Simple expanding ring that fades out and destroys itself.
-/// </summary>
+
+
+
 [RequireComponent(typeof(SpriteRenderer))]
 public class TokenShockwaveEffect : MonoBehaviour
 {

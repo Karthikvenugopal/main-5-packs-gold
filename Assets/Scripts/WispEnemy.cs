@@ -14,10 +14,10 @@ public class WispEnemy : MonoBehaviour
     [Header("Patrol Behaviour")]
     [SerializeField] private float patrolSpeed = 2.4f;
     [SerializeField] private float waypointTolerance = 0.1f;
-    [SerializeField] private LayerMask obstacleLayers; // Kept for OnTriggerEnter2D context
+    [SerializeField] private LayerMask obstacleLayers; 
     [SerializeField] private float _mazeCellSize = 1.0f; 
 
-    // --- NEW PARAMETER: Reduce the effective radius Wisp uses to check for walls ---
+    
     [Header("Collision Tuning")]
     [Tooltip("Multiplier to shrink the Wisp's Collider radius for movement checks.")]
     [SerializeField, Range(0.1f, 1f)] private float collisionRadiusMultiplier = 0.6f;
@@ -32,7 +32,7 @@ public class WispEnemy : MonoBehaviour
 
     private static readonly Vector2[] PatrolGridPoints = new Vector2[]
     {
-        // Grid coordinates (X, Y_row_index) based on your image
+        
         new Vector2(1f, 5f), 
         new Vector2(2f, 5f), 
         new Vector2(2f, 3f), 
@@ -174,9 +174,9 @@ public class WispEnemy : MonoBehaviour
         transform.localScale = _runtimeBaseScale * pulseScale;
     }
 
-    /// <summary>
-    /// Drives the Animator to the correct directional state once an axis-aligned move vector is known.
-    /// </summary>
+    
+    
+    
     private void UpdateDirectionAnimation(Vector2 movement)
     {
         string targetState = MapMovementToState(movement);
@@ -203,7 +203,7 @@ public class WispEnemy : MonoBehaviour
         return movement.y >= 0f ? "Up" : "Down";
     }
     
-    // --- MODIFIED PATROL METHOD: PURE AXIS MOVEMENT (NO RAYCAST BLOCKING) ---
+    
     private void MoveAlongPatrolRoute()
     {
         Vector2 targetWaypoint = GridToWorldPosition(PatrolGridPoints[_currentWaypointIndex]);
@@ -211,7 +211,7 @@ public class WispEnemy : MonoBehaviour
         
         if (Vector2.Distance(currentPosition, targetWaypoint) <= waypointTolerance)
         {
-            // Force snap to the target before advancing
+            
             _rb.MovePosition(targetWaypoint); 
             AdvanceToNextWaypoint();
             targetWaypoint = GridToWorldPosition(PatrolGridPoints[_currentWaypointIndex]);
@@ -222,7 +222,7 @@ public class WispEnemy : MonoBehaviour
         Vector2 remainingDistance = targetWaypoint - currentPosition;
         Vector2 moveVector = Vector2.zero;
         
-        // --- Enforce Strict Axis Alignment ---
+        
         if (Mathf.Abs(remainingDistance.x) > Mathf.Abs(remainingDistance.y))
         {
             moveVector.x = Mathf.Sign(remainingDistance.x);
@@ -233,7 +233,7 @@ public class WispEnemy : MonoBehaviour
             moveVector.y = Mathf.Sign(remainingDistance.y);
             moveVector.x = 0; 
         }
-        // --- End Enforce Strict Axis Alignment ---
+        
 
         UpdateDirectionAnimation(moveVector);
 
@@ -241,7 +241,7 @@ public class WispEnemy : MonoBehaviour
         
         Vector2 newPosition = currentPosition + moveVector * stepDistance;
         
-        // Ensure we don't overshoot the final target position
+        
         if (Vector2.Distance(currentPosition, targetWaypoint) < Vector2.Distance(currentPosition, newPosition))
         {
             newPosition = targetWaypoint;
@@ -249,7 +249,7 @@ public class WispEnemy : MonoBehaviour
 
         _rb.MovePosition(newPosition);
     }
-    // --- END MODIFIED PATROL METHOD ---
+    
 
     private void AdvanceToNextWaypoint()
     {
@@ -300,11 +300,11 @@ public class WispEnemy : MonoBehaviour
                component.CompareTag("WaterPlayer");
     }
 
-    /// <summary>
-    /// Handles trigger collisions for the Wisp.
-    /// Inflicts damage upon touching the player.
-    /// Only triggers a full patrol route REVERSE if it hits a FireWall or IceWall.
-    /// </summary>
+    
+    
+    
+    
+    
     private void OnTriggerEnter2D(Collider2D other)
     {
         if (IsPlayerTag(other.GetComponent<Component>())) 
@@ -318,29 +318,29 @@ public class WispEnemy : MonoBehaviour
         
         if (_isPatrolling)
         {
-            // We check for FireWall/IceWall components because they are triggers 
+            
             bool isHazard = other.TryGetComponent<IceWall>(out _) || other.TryGetComponent<FireWall>(out _);
             
             if (isHazard)
             {
-                // 1. Reverse the patrol route immediately
+                
                 _isPatrolForward = !_isPatrolForward;
                 
-                // 2. Adjust index back by 1 step, based on the *new* forward direction.
+                
                 if (_isPatrolForward)
                 {
-                    // If reversing from backward to forward, current index (e.g., 4) should become 4 + 1 = 5
-                    // BUT since the index points to the obstacle (4), and we reversed (forward), we want the safe point (3).
-                    // The easiest fix is to simply decrement by 1, regardless of the new direction.
-                    _currentWaypointIndex--;
+                    
+                    
+                    
+                    _currentWaypointIndex++;
                 }
                 else
                 {
-                    // If reversing from forward to backward, current index (e.g., 5) should become 5 - 1 = 4
+                    
                     _currentWaypointIndex--;
                 }
                 
-                // Final check to handle the edge case of reversing near the start.
+                
                 _currentWaypointIndex = Mathf.Clamp(_currentWaypointIndex, 0, PatrolGridPoints.Length - 1);
             }
         }

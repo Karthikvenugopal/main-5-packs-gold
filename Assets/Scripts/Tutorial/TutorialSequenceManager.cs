@@ -1,9 +1,9 @@
 using UnityEngine;
 using System.Collections;
 
-/// <summary>
-/// Manages the sequence of tutorial instructions.
-/// </summary>
+
+
+
 public class TutorialSequenceManager : MonoBehaviour
 {
     [Header("WASD Instruction Sequence")]
@@ -39,19 +39,19 @@ public class TutorialSequenceManager : MonoBehaviour
 
     private void Start()
     {
-        // Subscribe to WASD instruction hide event
+        
         if (instructionWASD != null)
         {
             instructionWASD.OnInstructionHidden += OnWASDInstructionHidden;
         }
 
-        // Subscribe to Arrow instruction hide event
+        
         if (instructionArrow != null)
         {
             instructionArrow.OnInstructionHidden += OnArrowInstructionHidden;
         }
 
-        // Subscribe to FireWall crossed event
+        
         FireWall.OnWatergirlCrossed += OnWatergirlCrossedFirewall;
     }
 
@@ -60,7 +60,7 @@ public class TutorialSequenceManager : MonoBehaviour
         if (_workTogetherShown) return;
         _workTogetherShown = true;
 
-        // Show instruction after delay
+        
         StartCoroutine(ShowWorkTogetherInstruction());
     }
 
@@ -92,10 +92,10 @@ public class TutorialSequenceManager : MonoBehaviour
 
     private void ShowFireboyInstructions()
     {
-        // Stop Fireboy player glow
+        
         StopPlayerGlow(PlayerRole.Fireboy);
 
-        // Show Fireboy-specific instructions
+        
         if (instructionFireLoss != null)
         {
             instructionFireLoss.Show();
@@ -106,23 +106,23 @@ public class TutorialSequenceManager : MonoBehaviour
             instructionIceMelt.Show();
         }
 
-        // Stop glow again after showing instructions (in case they started it)
-        // Use a small delay to ensure Show() has completed
+        
+        
         StartCoroutine(StopFireboyGlowAfterDelay());
     }
 
     private IEnumerator StopFireboyGlowAfterDelay()
     {
-        yield return null; // Wait one frame for Show() to complete
+        yield return null; 
         StopPlayerGlow(PlayerRole.Fireboy);
     }
 
     private void ShowWatergirlInstructions()
     {
-        // Stop Watergirl player glow
+        
         StopPlayerGlow(PlayerRole.Watergirl);
 
-        // Show Watergirl-specific instructions
+        
         if (instructionIceFreeze != null)
         {
             instructionIceFreeze.Show();
@@ -133,20 +133,20 @@ public class TutorialSequenceManager : MonoBehaviour
             instructionFirePutOut.Show();
         }
 
-        // Stop Fireboy glow after showing instructions (in case they incorrectly target Fireboy)
-        // Use a small delay to ensure Show() has completed
+        
+        
         StartCoroutine(StopFireboyGlowAfterWatergirlInstructions());
     }
 
     private IEnumerator StopFireboyGlowAfterWatergirlInstructions()
     {
-        yield return null; // Wait one frame for Show() to complete
+        yield return null; 
         StopPlayerGlow(PlayerRole.Fireboy);
     }
 
     private void StopPlayerGlow(PlayerRole role)
     {
-        // Find player with matching role
+        
         CoopPlayerController[] players = FindObjectsByType<CoopPlayerController>(FindObjectsSortMode.None);
         foreach (CoopPlayerController player in players)
         {
@@ -164,7 +164,7 @@ public class TutorialSequenceManager : MonoBehaviour
 
     private void OnDestroy()
     {
-        // Unsubscribe from events
+        
         if (instructionWASD != null)
         {
             instructionWASD.OnInstructionHidden -= OnWASDInstructionHidden;
@@ -174,7 +174,7 @@ public class TutorialSequenceManager : MonoBehaviour
             instructionArrow.OnInstructionHidden -= OnArrowInstructionHidden;
         }
         
-        // Unsubscribe from FireWall event
+        
         FireWall.OnWatergirlCrossed -= OnWatergirlCrossedFirewall;
     }
 }

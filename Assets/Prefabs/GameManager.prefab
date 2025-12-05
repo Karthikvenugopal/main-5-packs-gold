@@ -68,6 +68,7 @@ MonoBehaviour:
   waitForPartnerMessage: '{0} made it. Wait for your partner!'
   exitReminderMessage: Both heroes must stand in the exit to finish.
   startingHearts: 3
+  hideBonusHeartSlotUntilEarned: 1
   nextSceneName: Level2Scene
   nextSceneDelaySeconds: 2
   useVictoryPanel: 0
@@ -81,12 +82,14 @@ MonoBehaviour:
   - Cool fire.
   - Don't touch each other & lose a heart.
   - Touch wrong obstacle & lose a heart.
+  - Score 2100+ to snag bonus hearts next level.
   instructionContinuePrompt: Press Space to start
   level2InstructionSceneName: Level2Scene
   level2InstructionLines:
   - <b>Stay sharp</b>
   - Opposites protect.
   - Stand in front of danger for your partner.
+  - Hit 1300+ and we'll drop bonus hearts for you.
   level2InstructionContinuePrompt: Press Space to start
   emberHeartFullSprite: {fileID: 6341348101557482619, guid: 3b91ad87000d64526b2b182ed1ef4834, type: 3}
   emberHeartEmptySprite: {fileID: -4643077359141595314, guid: 3333514574fc144eb95cc807c8348464, type: 3}

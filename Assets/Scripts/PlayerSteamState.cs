@@ -9,27 +9,27 @@ public class PlayerSteamState : MonoBehaviour
 
     private float _remainingTime;
 
-    // 角色 & 渲染
+    
     private CoopPlayerController _player;
     private SpriteRenderer _renderer;
 
-    // Fireboy: #ED642E
+    
     private static readonly Color FireNormalColor = new Color(
-        243f / 255f,   // F3
-        229f / 255f,   // E5
-        223f / 255f,   // DF
+        243f / 255f,   
+        229f / 255f,   
+        223f / 255f,   
         1f
     );
 
-    // Watergirl: #3272F2
+    
     private static readonly Color WaterNormalColor = new Color(
-        208f / 255f,   // D0
-        219f / 255f,   // DB
-        241f / 255f,   // F1
+        208f / 255f,   
+        219f / 255f,   
+        241f / 255f,   
         1f
     );
 
-    /// <summary>是否处于蒸汽模式中。</summary>
+    
     public bool IsInSteamMode => _remainingTime > 0f;
 
     private void Awake()
@@ -38,9 +38,9 @@ public class PlayerSteamState : MonoBehaviour
         _renderer = GetComponent<SpriteRenderer>();
     }
 
-    /// <summary>
-    /// 开启蒸汽模式。如果 duration 小于等于 0，则使用默认持续时间。
-    /// </summary>
+    
+    
+    
     public void EnterSteamMode(float duration)
     {
         if (duration <= 0f)
@@ -63,14 +63,14 @@ public class PlayerSteamState : MonoBehaviour
             {
                 _remainingTime = 0f;
                 Debug.Log($"[PlayerSteamState] {name} steam mode ENDED.");
-                ApplySteamColor(false); // 蒸汽结束，恢复颜色
+                ApplySteamColor(false); 
             }
         }
     }
 
-    /// <summary>
-    /// 根据当前角色，切换为蒸汽颜色或恢复原色。
-    /// </summary>
+    
+    
+    
     private void ApplySteamColor(bool steamOn)
     {
         if (_renderer == null || _player == null) return;

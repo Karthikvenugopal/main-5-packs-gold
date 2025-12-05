@@ -2,7 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
-using TMPro; // Still needed for other UI elements
+using TMPro; 
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.EventSystems;
@@ -21,10 +21,10 @@ public class GameManager : MonoBehaviour
         ProjectileFire = 4,
         ProjectileIce = 5
     }
-    // Assist metrics removed
+    
 
-    // --- MODIFICATION START ---
-    // ... (isTutorialMode, messageBackground, levelIntroMessage, etc.) ...
+    
+    
     [Header("Tutorial Settings")]
     [SerializeField] private bool isTutorialMode = false;
 
@@ -42,6 +42,8 @@ public class GameManager : MonoBehaviour
     [SerializeField] private string exitReminderMessage = "Both heroes must stand in the exit to finish.";
     [Header("Player Hearts")]
     [SerializeField] private int startingHearts = 3;
+    [Tooltip("Hide the bonus heart slot until players have actually earned it.")]
+    [SerializeField] private bool hideBonusHeartSlotUntilEarned = true;
     private const int MaxBonusHeartReward = 1;
     [Header("Progression")]
     [SerializeField] private string nextSceneName;
@@ -51,7 +53,7 @@ public class GameManager : MonoBehaviour
     [SerializeField] private bool useVictoryPanel = true;
     [SerializeField] private string victoryTitleText = "Level Complete";
     [SerializeField] private string victoryBodyText = "Choose where to go next.";
-    // --- MODIFICATION START ---
+    
     [SerializeField] private string[] victorySlogans = new[]
     {
         "No Cap, That Was Epic!",
@@ -62,7 +64,7 @@ public class GameManager : MonoBehaviour
         "Vibe Check: Passed!",
         "Sheeeeeesh! You Did That!"
     };
-    // --- MODIFICATION END ---
+    
     [SerializeField] private string defeatTitleText = "Out of Hearts";
     [SerializeField] private string defeatBodyText = "You ran out of hearts. Try again?";
     [SerializeField] private string nextLevelButtonText = "Next Level";
@@ -80,62 +82,66 @@ public class GameManager : MonoBehaviour
     [SerializeField] private int basePoints = 1000;
     [SerializeField] private int pointsPerToken = 100;
     [SerializeField] private float timeBonusMultiplier = 50f;
-    [SerializeField] private float targetTimeSeconds = 60f; // Level 1: 1 minute
+    [SerializeField] private float targetTimeSeconds = 60f; 
     [Tooltip("Target time for Level 2. Set to 0 to use targetTimeSeconds.")]
-    [SerializeField] private float level2TargetTimeSeconds = 180f; // Level 2: 3 minutes
+    [SerializeField] private float level2TargetTimeSeconds = 180f; 
     [Tooltip("Target time for Level 3. Set to 0 to use targetTimeSeconds.")]
-    [SerializeField] private float level3TargetTimeSeconds = 120f; // Level 3: 2 minutes
+    [SerializeField] private float level3TargetTimeSeconds = 120f; 
     [Tooltip("Target time for Level 4. Set to 0 to use targetTimeSeconds.")]
-    [SerializeField] private float level4TargetTimeSeconds = 150f; // Level 4: 2:30 minutes
+    [SerializeField] private float level4TargetTimeSeconds = 150f; 
     [Tooltip("Target time for Level 5. Set to 0 to use targetTimeSeconds.")]
-    [SerializeField] private float level5TargetTimeSeconds = 0f; // Level 5: uses default
+    [SerializeField] private float level5TargetTimeSeconds = 0f; 
     [Header("Level Intro Instructions")]
     [SerializeField] private bool showInstructionPanel = true;
     [SerializeField] private string instructionPanelSceneName = "Level1Scene";
     [SerializeField] private string[] instructionLines = new[]
     {
-        "<b>Level 1</b>",
+        "",
         "",
         "Collect maximum number of tokens and exit",
         "",
         "Caution: Touch each other? lose a heart.",
         "Caution: Touch wrong obstacle? lose a heart.",
-        "Work together but never collide!"
+        "Work together but never collide!",
+        "Score 2100+ to snag bonus hearts next level."
     };
     [SerializeField] private string instructionContinuePrompt = "Press Space to start";
     [SerializeField] private string level2InstructionSceneName = "Level2Scene";
     [SerializeField] private string[] level2InstructionLines = new[]
     {
-        "<b>Level 2</b>",
         "",
-        "Tip: Opposites protect. Shield your partner from danger."
+        "",
+        "Tip: Opposites protect. Shield your partner from danger.",
+        "Hit 1300+ and we'll drop bonus hearts for you."
     };
     [SerializeField] private string level2InstructionContinuePrompt = "Press Space to start";
     [SerializeField] private string level3InstructionSceneName = "Level3Scene";
     [SerializeField] private string[] level3InstructionLines = new[]
     {
-        "<b>Level 3</b>",
+        "",
         "",
         "Dynamic obstacles: Stay Sharp", 
         "Destroying one obstacle can lead to the creation of a new one",
         "",
-        "Keep collecting tokens and avoid hazards!"
+        "Keep collecting tokens and avoid hazards!",
+        "Pull 1200+ and enjoy extra hearts on the next round."
     };
     [SerializeField] private string level3InstructionContinuePrompt = "Press Space to start";
     [SerializeField] private string level4InstructionSceneName = "Level4Scene";
     [SerializeField] private string[] level4InstructionLines = new[]
     {
-        "<b>Level 4</b>",
+        "",
         "",
         "Beware of the green wisp!",
         "Touch the purple spiral together to activate Steam Mode.",
-        "Act fast—Steam Mode is timed!"
+        "Act fast—Steam Mode is timed!",
+        "Beat 1800+ and boom, bonus hearts unlocked."
     };
     [SerializeField] private string level4InstructionContinuePrompt = "Press Space to start";
     [SerializeField] private string level5InstructionSceneName = "Level5Scene";
     [SerializeField] private string[] level5InstructionLines = new[]
     {
-        "<b>Level 5</b>",
+        "",
         "",
         "Use SPACE button to swap positions",
         "Can only swap 3 times: choose wisely!"
@@ -166,9 +172,12 @@ public class GameManager : MonoBehaviour
     [SerializeField] private Vector2 heartIconSize = new Vector2(50f, 50f);
     [Tooltip("The size (Width, Height) for the token icons.")]
     [SerializeField] private Vector2 tokenIconSize = new Vector2(45f, 45f);
+    [Header("Score Display")]
+    [SerializeField] private bool showLiveScoreBoard = true;
+    [SerializeField] private Color liveScoreBackground = new Color(0f, 0f, 0f, 0.35f);
 
-    // --- MODIFICATION START ---
-    // This new variable controls the height of the top UI bar.
+    
+    
     [Header("UI Layout")]
     [Tooltip("The height (in reference pixels) of the top UI bar")]
     [SerializeField] private float topUiBarHeight = 160f;
@@ -193,9 +202,9 @@ public class GameManager : MonoBehaviour
     [SerializeField] private Color themeButtonHighlightedColor = new Color(0.953f, 0.859f, 0.526f, 1f);
     [SerializeField] private Color themeButtonPressedColor = new Color(0.784f, 0.784f, 0.784f, 1f);
     [SerializeField] private Color themeButtonSelectedColor = new Color(0.961f, 0.961f, 0.961f, 1f);
-    [SerializeField] private Color themeButtonTextColor = new Color(0.2f, 0.2f, 0.2f, 1f); // Dark text for light buttons
+    [SerializeField] private Color themeButtonTextColor = new Color(0.2f, 0.2f, 0.2f, 1f); 
 
-    // Public Accessors for Theme
+    
     public Sprite ThemeButtonSprite => themeButtonSprite;
     public Color ThemeButtonNormalColor => themeButtonNormalColor;
     public Color ThemeButtonHighlightedColor => themeButtonHighlightedColor;
@@ -220,16 +229,16 @@ public class GameManager : MonoBehaviour
         }
     }
 #endif
-    // --- MODIFICATION END ---
+    
 
     [Header("Audio")]
     [SerializeField] private AudioClip heartLossSfx;
     [SerializeField, Range(0f, 1f)] private float heartLossSfxVolume = 0.9f;
 
 
-    // Keeps a visible record of how many fire tokens the team has picked up.
+    
     public int fireTokensCollected = 0;
-    // Keeps a visible record of how many water tokens the team has picked up.
+    
     public int waterTokensCollected = 0;
 
     private static int s_totalFireTokensCollected;
@@ -237,7 +246,7 @@ public class GameManager : MonoBehaviour
     private static readonly Dictionary<string, int> s_levelScoreThresholds = new(StringComparer.OrdinalIgnoreCase)
     {
         { "Level1Scene", 2100 },
-        { "Level2Scene", 5500 },
+        { "Level2Scene", 1300 },
         { "Level3Scene", 1200 },
         { "Level4Scene", 1800 }
     };
@@ -265,14 +274,14 @@ public class GameManager : MonoBehaviour
     private TextMeshProUGUI _swapCounterLabel;
     private SwapCounterManualAnchor _swapCounterManualAnchor;
     
-    // --- MODIFICATION START ---
-    // We add a reference for the top UI bar's RectTransform.
+    
+    
     private RectTransform _topUiBar;
     private RectTransform _topUiContentRoot;
     private bool _topUiBarIsStretched;
     private float _topUiHorizontalPadding;
     private Vector2 _uiReferenceResolution = Vector2.zero;
-    // --- MODIFICATION END ---
+    
     private HeartLossAnimator _heartLossAnimator;
     
     private List<Image> _emberHeartImages = new List<Image>();
@@ -296,6 +305,9 @@ public class GameManager : MonoBehaviour
     private TextMeshProUGUI _victoryBodyLabel;
     private TextMeshProUGUI _fireVictoryLabel;
     private TextMeshProUGUI _waterVictoryLabel;
+    private TextMeshProUGUI _bonusHeartMessageLabel;
+    private TextMeshProUGUI _liveScoreLabel;
+    private RectTransform _liveScoreContainer;
     private GameObject _fireSummaryRoot;
     private GameObject _waterSummaryRoot;
     private VerticalLayoutGroup _victoryContentLayout;
@@ -304,10 +316,11 @@ public class GameManager : MonoBehaviour
     private Button _victoryNextLevelButton;
     private Image _victoryTrophyImage;
 
+    private int _unlockedBonusHeartSlots;
     private readonly List<CoopPlayerController> _players = new();
     private readonly HashSet<CoopPlayerController> _playersAtExit = new();
 
-    // analytics code
+    
     [Header("Analytics")]
     [SerializeField] private Analytics.LevelTimer levelTimer;
 
@@ -326,11 +339,11 @@ public class GameManager : MonoBehaviour
     private bool _instructionPausedTime;
     private float _previousTimeScale = 1f;
     
-    // Scoring system fields
+    
     private bool _scoringTimerStarted;
     private float _scoringStartTime;
     
-    // Audio fields
+    
     private AudioClip _generatedHeartLossClip;
 
     public bool TryGetTokenCompletionSnapshot(out Analytics.TokenCompletionSnapshot snapshot)
@@ -375,7 +388,7 @@ public class GameManager : MonoBehaviour
 
         if (!isTutorialMode)
         {
-            CreateStatusUI(); // This function is now modified
+            CreateStatusUI(); 
         }
         ResetTokenTracking();
         ResetHearts();
@@ -383,18 +396,19 @@ public class GameManager : MonoBehaviour
         EnsureLevelTimer();
         CreateInstructionPanelIfNeeded();
         
-        // Initialize scoring timer (will start when level actually begins)
+        
         _scoringTimerStarted = false;
         _scoringStartTime = 0f;
     }
 
-    // ... (Update, RegisterPlayer, OnLevelReady, TryStartLevel, etc. are UNCHANGED) ...
-    // ... (Scroll down to EnsureHudCanvas) ...
+    
+    
     
     private void Update()
     {
         UpdateSteamTimer();
         UpdateTokenBreathing();
+        UpdateLiveScoreDisplay();
         if (_waitingForInstructionAck)
         {
             if (Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.Return))
@@ -512,7 +526,7 @@ public class GameManager : MonoBehaviour
         _gameFinished = false;
         _playersAtExit.Clear();
 
-        // Start the scoring timer when the level actually begins (separate from analytics timer)
+        
         _scoringStartTime = Time.realtimeSinceStartup;
         _scoringTimerStarted = true;
 
@@ -528,11 +542,11 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    // ==================== Steam helpers ====================
+    
 
-    /// <summary>
-    /// 判断某个具体玩家是否处于蒸汽模式
-    /// </summary>
+    
+    
+    
     private bool IsPlayerInSteamMode(CoopPlayerController player)
     {
         if (player == null) return false;
@@ -541,9 +555,9 @@ public class GameManager : MonoBehaviour
         return steam != null && steam.IsInSteamMode;
     }
 
-    /// <summary>
-    /// 根据角色（Fireboy / Watergirl）判断该角色的玩家是否在蒸汽模式
-    /// </summary>
+    
+    
+    
     private bool IsRoleInSteamMode(PlayerRole role)
     {
         foreach (var player in _players)
@@ -575,7 +589,7 @@ public class GameManager : MonoBehaviour
             return;
         }
 
-        // === 新增：如果任意一方处于蒸汽模式，则玩家互撞不扣血 ===
+        
         if (IsPlayerInSteamMode(playerA) || IsPlayerInSteamMode(playerB))
         {
             Debug.Log("[GameManager] OnPlayersTouched: touch ignored because at least one player is in STEAM MODE.");
@@ -685,7 +699,7 @@ public class GameManager : MonoBehaviour
 
     public TMP_FontAsset GetUpperUiFont()
     {
-        // Prioritize the Theme Font if set
+        
         if (themeFont != null)
         {
             return themeFont;
@@ -829,14 +843,14 @@ public class GameManager : MonoBehaviour
                string.Equals(currentScene, "Level5", StringComparison.OrdinalIgnoreCase);
     }
 
-    // --- MODIFICATION START ---
-    // This function is modified to parent the Status UI to the _topUiBar
-    // and anchor it to the top-center.
+    
+    
+    
     private void CreateStatusUI()
     {
         if (_hudCanvas == null) return;
         
-        // This logic to create a second one is still here per your request
+        
         string backgroundName = "MessageBackground";
         if (_hudCanvas.transform.Find(backgroundName) != null)
         {
@@ -856,12 +870,12 @@ public class GameManager : MonoBehaviour
 
         RectTransform bgRect = background.AddComponent<RectTransform>();
         
-        // --- MODIFICATION: Anchor to the Top-Center of the bar ---
-        bgRect.anchorMin = new Vector2(0.5f, 1f); // Top-Center
-        bgRect.anchorMax = new Vector2(0.5f, 1f); // Top-Center
+        
+        bgRect.anchorMin = new Vector2(0.5f, 1f); 
+        bgRect.anchorMax = new Vector2(0.5f, 1f); 
         bgRect.pivot = new Vector2(0.5f, 1f);
         bgRect.sizeDelta = new Vector2(1000f, 120f);
-        // Position it further down from the top-center of the bar for clarity
+        
         bgRect.anchoredPosition = new Vector2(0f, -100f); 
 
         Image image = background.AddComponent<Image>();
@@ -885,7 +899,7 @@ public class GameManager : MonoBehaviour
         _statusLabel.text = string.Empty;
         _statusLabel.color = Color.white;
     }
-    // --- MODIFICATION END ---
+    
 
 
     private bool TryGetInstructionContentForScene(out string[] lines, out string prompt)
@@ -969,12 +983,12 @@ public class GameManager : MonoBehaviour
         instructionsRect.anchorMax = new Vector2(0.5f, 0.5f);
         instructionsRect.pivot = new Vector2(0.5f, 0.5f);
         instructionsRect.sizeDelta = new Vector2(1900f, 180f);
-        instructionsRect.anchoredPosition = new Vector2(0f, 180f);
+        instructionsRect.anchoredPosition = new Vector2(0f, 100f);
 
         TextMeshProUGUI instructionsLabel = instructionsGO.AddComponent<TextMeshProUGUI>();
-        // Reverted to default font for readability
+        
         instructionsLabel.alignment = TextAlignmentOptions.Center;
-        instructionsLabel.fontSize = 80f;
+        instructionsLabel.fontSize = 60f;
         instructionsLabel.fontStyle = FontStyles.Bold;
         instructionsLabel.text = lines != null && lines.Length > 0
             ? string.Join("\n", lines)
@@ -992,7 +1006,7 @@ public class GameManager : MonoBehaviour
         promptRect.sizeDelta = new Vector2(700f, 80f);
 
         TextMeshProUGUI promptLabel = promptGO.AddComponent<TextMeshProUGUI>();
-        // Reverted to default font for readability
+        
         promptLabel.alignment = TextAlignmentOptions.Center;
         promptLabel.fontSize = 36f;
         promptLabel.fontStyle = FontStyles.Bold;
@@ -1015,7 +1029,7 @@ public class GameManager : MonoBehaviour
 
     private void DismissInstructionPanel()
     {
-        // ... (This function is UNCHANGED) ...
+        
         _waitingForInstructionAck = false;
 
         if (_instructionPanel != null)
@@ -1033,7 +1047,7 @@ public class GameManager : MonoBehaviour
 
     private void RestoreTimeScaleIfNeeded()
     {
-        // ... (This function is UNCHANGED) ...
+        
         if (_instructionPausedTime)
         {
             Time.timeScale = _previousTimeScale;
@@ -1041,17 +1055,17 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Returns true if the instruction panel is currently waiting for player acknowledgment.
-    /// This can be used by other scripts (like Level5Manager) to prevent input conflicts.
-    /// </summary>
+    
+    
+    
+    
     public bool IsWaitingForInstructionAck()
     {
         return _waitingForInstructionAck;
     }
 
-    // --- MODIFICATION START ---
-    // This function is modified to create the _topUiBar.
+    
+    
     private void EnsureHudCanvas()
     {
         if (_hudCanvas != null) return;
@@ -1083,11 +1097,11 @@ public class GameManager : MonoBehaviour
             return;
         }
         
-        // --- NEW: Create the Top UI Bar ---
+        
         GameObject topBarGO = new GameObject("TopUI_Bar_Background");
-        topBarGO.transform.SetParent(canvasGO.transform, false); // Parent to the Canvas
+        topBarGO.transform.SetParent(canvasGO.transform, false); 
         Image topBarImg = topBarGO.AddComponent<Image>();
-        topBarImg.color = topUiBarColor; // Use the new color variable
+        topBarImg.color = topUiBarColor; 
 
         _topUiBar = topBarGO.GetComponent<RectTransform>();
         
@@ -1095,7 +1109,7 @@ public class GameManager : MonoBehaviour
         _topUiBarIsStretched = stretchBar;
         if (stretchBar)
         {
-            // Stretch edge-to-edge horizontally.
+            
             _topUiBar.anchorMin = new Vector2(0f, 1f);
             _topUiBar.anchorMax = new Vector2(1f, 1f);
             _topUiBar.pivot = new Vector2(0.5f, 1f);
@@ -1104,7 +1118,7 @@ public class GameManager : MonoBehaviour
         }
         else
         {
-            // Clamp to a fixed width centered at the top.
+            
             _topUiBar.anchorMin = new Vector2(0.5f, 1f); 
             _topUiBar.anchorMax = new Vector2(0.5f, 1f); 
             _topUiBar.pivot = new Vector2(0.5f, 1f);
@@ -1113,9 +1127,9 @@ public class GameManager : MonoBehaviour
             float referenceWidth = _uiReferenceResolution.x <= 0f ? clampedBarWidth : _uiReferenceResolution.x;
             _topUiHorizontalPadding = Mathf.Max(0f, (referenceWidth - clampedBarWidth) * 0.5f);
         }
-        _topUiBar.anchoredPosition = Vector2.zero; // Position at the top
+        _topUiBar.anchoredPosition = Vector2.zero; 
 
-        // Create a centered content root that keeps hearts/tokens grouped together.
+        
         GameObject topUiContent = new GameObject("TopUIContent");
         topUiContent.transform.SetParent(topBarGO.transform, false);
         _topUiContentRoot = topUiContent.AddComponent<RectTransform>();
@@ -1124,9 +1138,9 @@ public class GameManager : MonoBehaviour
         _topUiContentRoot.offsetMin = new Vector2(40f, 20f);
         _topUiContentRoot.offsetMax = new Vector2(-40f, -20f);
 
-        // --- END NEW ---
+        
     }
-    // --- MODIFICATION END ---
+    
 
     private void EnsureEventSystemExists()
     {
@@ -1138,16 +1152,16 @@ public class GameManager : MonoBehaviour
         DontDestroyOnLoad(eventSystemGO);
     }
 
-    // --- MODIFICATION START ---
-    // This function now parents the Hearts UI into the centered Top UI stack.
+    
+    
     private void CreateHeartsUI()
     {
         if (_hudCanvas == null) return;
         
-        // --- 1. Create the Master Container for all "Life" UI ---
+        
         GameObject heartsMasterContainer = new GameObject("HeartsMasterContainer", typeof(RectTransform));
         
-        // --- MODIFICATION: Parent to the centered Top UI content root ---
+        
         var heartsParent = _topUiContentRoot != null ? _topUiContentRoot : _topUiBar;
         heartsMasterContainer.transform.SetParent(heartsParent, false);
 
@@ -1172,20 +1186,20 @@ public class GameManager : MonoBehaviour
         masterFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
         masterFitter.horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
         
-        // --- 2. Create the "Lives" Title ---
+        
         GameObject heartsTitleGO = new GameObject("TitleLabel");
         heartsTitleGO.transform.SetParent(heartsMasterContainer.transform, false);
         TextMeshProUGUI heartsTitle = heartsTitleGO.AddComponent<TextMeshProUGUI>();
         ApplyUpperUiFont(heartsTitle);
         heartsTitle.text = "Lives";
         heartsTitle.fontSize = 42f;
-        // heartsTitle.fontStyle = FontStyles.Bold;
+        
         heartsTitle.color = Color.white;
         heartsTitle.alignment = TextAlignmentOptions.Right;
         LayoutElement heartsTitleLayout = heartsTitleGO.AddComponent<LayoutElement>();
         heartsTitleLayout.preferredWidth = 140f;
         
-        // --- 3. Container for heart rows ---
+        
         GameObject heartsContentGO = new GameObject("HeartsContent");
         heartsContentGO.transform.SetParent(heartsMasterContainer.transform, false);
         RectTransform heartsContentRect = heartsContentGO.AddComponent<RectTransform>();
@@ -1201,7 +1215,7 @@ public class GameManager : MonoBehaviour
         heartsContentFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
         heartsContentFitter.horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
 
-        // --- 4. Create Hearts Container for Ember ---
+        
         GameObject emberHeartsGO = new GameObject("EmberHeartsContainer");
         emberHeartsGO.transform.SetParent(heartsContentGO.transform, false); 
         
@@ -1245,7 +1259,7 @@ public class GameManager : MonoBehaviour
             _emberHeartImages.Add(heartImg);
         }
 
-        // --- 5. Create Hearts Container for Aqua ---
+        
         GameObject aquaHeartsGO = new GameObject("AquaHeartsContainer");
         aquaHeartsGO.transform.SetParent(heartsContentGO.transform, false); 
 
@@ -1299,19 +1313,106 @@ public class GameManager : MonoBehaviour
 
         _heartLossAnimator.ConfigureAudio(GetHeartLossClip(), heartLossAudioSource, heartLossSfxVolume);
         _heartLossAnimator.HeartAnimationFinished += UpdateHeartsUI;
+
+        CreateLiveScoreBoard(masterRect);
     }
-    // --- MODIFICATION END ---
     
-    // --- MODIFICATION START ---
-    // This function now parents the Tokens UI into the centered Top UI stack.
+    
+    
+    
+    private bool IsCurrentSceneLevel2()
+    {
+        string currentScene = SceneManager.GetActiveScene().name;
+        if (string.IsNullOrEmpty(currentScene))
+        {
+            return false;
+        }
+
+        if (!string.IsNullOrEmpty(level2InstructionSceneName) &&
+            string.Equals(currentScene, level2InstructionSceneName, StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        return string.Equals(currentScene, "Level2Scene", StringComparison.OrdinalIgnoreCase) ||
+               string.Equals(currentScene, "Level2", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private void CreateLiveScoreBoard(RectTransform heartsRect)
+    {
+        if (!showLiveScoreBoard)
+        {
+            return;
+        }
+
+        Transform parent = heartsRect != null ? heartsRect.parent : (_topUiContentRoot != null ? _topUiContentRoot : _topUiBar);
+        if (parent == null)
+        {
+            return;
+        }
+
+        GameObject scoreGO = new GameObject("LiveScoreBoard", typeof(RectTransform));
+        scoreGO.transform.SetParent(parent, false);
+        _liveScoreContainer = scoreGO.GetComponent<RectTransform>();
+
+        Vector2 anchorMin = heartsRect != null ? heartsRect.anchorMin : new Vector2(1f, 0.5f);
+        Vector2 anchorMax = heartsRect != null ? heartsRect.anchorMax : new Vector2(1f, 0.5f);
+        Vector2 pivot = heartsRect != null ? heartsRect.pivot : new Vector2(1f, 0.5f);
+        
+        _liveScoreContainer.anchorMin = anchorMin;
+        _liveScoreContainer.anchorMax = anchorMax;
+        _liveScoreContainer.pivot = pivot;
+
+        float width = heartsRect != null ? heartsRect.sizeDelta.x : 360f;
+        float height = 70f;
+        _liveScoreContainer.sizeDelta = new Vector2(width, height);
+
+        float heartsCenterY = heartsRect != null ? heartsRect.anchoredPosition.y : 0f;
+        float heartsHeight = heartsRect != null ? heartsRect.sizeDelta.y : 200f;
+        float offsetX = heartsRect != null ? heartsRect.anchoredPosition.x : 0f;
+        
+        // Default Y: below the hearts
+        float offsetY = heartsCenterY - (heartsHeight * 0.5f) - (height * 0.5f) - 24f + (heartsHeight * 0.1f);
+
+        if (IsCurrentSceneLevel2() || IsCurrentSceneLevel5())
+        {
+            offsetX += (heartIconSize.x * 0.5f);
+        }
+
+        _liveScoreContainer.anchoredPosition = new Vector2(offsetX, offsetY);
+
+        Image bg = scoreGO.AddComponent<Image>();
+        bg.color = liveScoreBackground;
+
+        GameObject labelGO = new GameObject("Label", typeof(RectTransform));
+        labelGO.transform.SetParent(scoreGO.transform, false);
+        RectTransform labelRect = labelGO.GetComponent<RectTransform>();
+        labelRect.anchorMin = Vector2.zero;
+        labelRect.anchorMax = Vector2.one;
+        labelRect.offsetMin = new Vector2(16f, 10f);
+        labelRect.offsetMax = new Vector2(-16f, -10f);
+
+        _liveScoreLabel = labelGO.AddComponent<TextMeshProUGUI>();
+        ApplyUpperUiFont(_liveScoreLabel);
+        _liveScoreLabel.alignment = TextAlignmentOptions.Right;
+        _liveScoreLabel.fontSize = 38f;
+        _liveScoreLabel.text = "Score: --";
+        _liveScoreLabel.color = Color.white;
+
+        UpdateLiveScoreDisplay();
+    }
+    
+    
+    
+    
     private void CreateTokensUI()
     {
         if (_hudCanvas == null) return;
         
-        // --- 1. Create the Master Container for all "Collect" UI ---
+        
         GameObject tokensMasterContainer = new GameObject("TokensMasterContainer", typeof(RectTransform));
         
-        // --- MODIFICATION: Parent to the centered Top UI content root ---
+        
         var tokensParent = _topUiContentRoot != null ? _topUiContentRoot : _topUiBar;
         tokensMasterContainer.transform.SetParent(tokensParent, false);
 
@@ -1334,16 +1435,16 @@ public class GameManager : MonoBehaviour
         
         ContentSizeFitter masterFitter = tokensMasterContainer.AddComponent<ContentSizeFitter>();
         masterFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
-        masterFitter.horizontalFit = ContentSizeFitter.FitMode.PreferredSize; // Let it wrap width
+        masterFitter.horizontalFit = ContentSizeFitter.FitMode.PreferredSize; 
 
-        // --- 2. Create the "Collect" Title ---
+        
         GameObject tokensTitleGO = new GameObject("TitleLabel");
         tokensTitleGO.transform.SetParent(tokensMasterContainer.transform, false);
         TextMeshProUGUI tokensTitle = tokensTitleGO.AddComponent<TextMeshProUGUI>();
         ApplyUpperUiFont(tokensTitle);
         tokensTitle.text = "Collect";
         tokensTitle.fontSize = 42f;
-        // tokensTitle.fontStyle = FontStyles.Bold;
+        
         tokensTitle.color = Color.white;
         tokensTitle.alignment = TextAlignmentOptions.Left;
         LayoutElement tokensTitleLayout = tokensTitleGO.AddComponent<LayoutElement>();
@@ -1364,7 +1465,7 @@ public class GameManager : MonoBehaviour
         tokensContentFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
         tokensContentFitter.horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
 
-        // --- 3. Create Token Container for Ember ---
+        
         GameObject emberTokensGO = new GameObject("EmberTokensContainer");
         emberTokensGO.transform.SetParent(tokensContentGO.transform, false); 
         
@@ -1382,9 +1483,9 @@ public class GameManager : MonoBehaviour
         float tokenContainerHeight = tokenIconSize.y + emberLayout.padding.top + emberLayout.padding.bottom;
         emberRect.sizeDelta = new Vector2(520f, tokenContainerHeight); 
         
-        // --- MODIFICATION: Add Content Size Fitter ---
+        
         ContentSizeFitter emberFitter = emberTokensGO.AddComponent<ContentSizeFitter>();
-        emberFitter.horizontalFit = ContentSizeFitter.FitMode.PreferredSize; // Make it wrap content
+        emberFitter.horizontalFit = ContentSizeFitter.FitMode.PreferredSize; 
 
         GameObject emberLabelGO = new GameObject("Label");
         emberLabelGO.transform.SetParent(emberTokensGO.transform, false); 
@@ -1397,7 +1498,7 @@ public class GameManager : MonoBehaviour
         LayoutElement emberLabelLayout = emberLabelGO.AddComponent<LayoutElement>();
         emberLabelLayout.preferredWidth = 130f; 
 
-        // --- 4. Create Token Container for Aqua ---
+        
         GameObject aquaTokensGO = new GameObject("AquaTokensContainer");
         aquaTokensGO.transform.SetParent(tokensContentGO.transform, false); 
         
@@ -1414,9 +1515,9 @@ public class GameManager : MonoBehaviour
         RectTransform aquaRect = aquaTokensGO.GetComponent<RectTransform>();
         aquaRect.sizeDelta = new Vector2(520f, tokenContainerHeight);
         
-        // --- MODIFICATION: Add Content Size Fitter ---
+        
         ContentSizeFitter aquaFitter = aquaTokensGO.AddComponent<ContentSizeFitter>();
-        aquaFitter.horizontalFit = ContentSizeFitter.FitMode.PreferredSize; // Make it wrap content
+        aquaFitter.horizontalFit = ContentSizeFitter.FitMode.PreferredSize; 
 
         GameObject aquaLabelGO = new GameObject("Label");
         aquaLabelGO.transform.SetParent(aquaTokensGO.transform, false); 
@@ -1431,7 +1532,7 @@ public class GameManager : MonoBehaviour
 
         UpdateTokensUI();
     }
-    // --- MODIFICATION END ---
+    
 
     private void CreateSteamTimerUI()
     {
@@ -1444,7 +1545,7 @@ public class GameManager : MonoBehaviour
         rect.anchorMin = new Vector2(0.5f, 0.5f);
         rect.anchorMax = new Vector2(0.5f, 0.5f);
         rect.pivot = new Vector2(0.5f, 0.5f);
-        // Slimmer timer so it doesn't overlap tokens on Level 5.
+        
         rect.sizeDelta = new Vector2(400f, 100f);
         rect.anchoredPosition = Vector2.zero;
         if (IsCurrentSceneLevel5())
@@ -1709,7 +1810,7 @@ public class GameManager : MonoBehaviour
 
             if (!anchor.gameObject.scene.IsValid())
             {
-                continue; // Skip prefabs or assets not in the active scene
+                continue; 
             }
 
             _swapCounterManualAnchor = anchor;
@@ -1822,7 +1923,7 @@ public class GameManager : MonoBehaviour
 
     private void CreateVictoryPanel()
     {
-        // ... (This function is UNCHANGED, it's an overlay so it's fine) ...
+        
         if (!useVictoryPanel || _hudCanvas == null || _victoryPanel != null) return;
 
         _victoryPanel = new GameObject("EndOfLevelPanel");
@@ -1832,7 +1933,7 @@ public class GameManager : MonoBehaviour
         rect.anchorMin = new Vector2(0.5f, 0.5f);
         rect.anchorMax = new Vector2(0.5f, 0.5f);
         rect.pivot = new Vector2(0.5f, 0.5f);
-        rect.sizeDelta = new Vector2(900f, 650f); // Larger panel for breathing room
+        rect.sizeDelta = new Vector2(900f, 650f); 
         rect.anchoredPosition = Vector2.zero;
 
         Image background = _victoryPanel.AddComponent<Image>();
@@ -1843,13 +1944,13 @@ public class GameManager : MonoBehaviour
         RectTransform contentRect = content.AddComponent<RectTransform>();
         contentRect.anchorMin = Vector2.zero;
         contentRect.anchorMax = Vector2.one;
-        contentRect.offsetMin = new Vector2(48f, 32f); // Reduced top offset to bring title closer to top
+        contentRect.offsetMin = new Vector2(48f, 32f); 
         contentRect.offsetMax = new Vector2(-48f, -48f);
 
         _victoryContentLayout = content.AddComponent<VerticalLayoutGroup>();
         _victoryContentLayout.childAlignment = TextAnchor.UpperCenter;
-        _victoryContentLayout.spacing = 10f; // Reduced spacing to bring buttons closer to score text
-        _victoryContentLayout.padding = new RectOffset(0, 0, 5, 10); // Reduced top padding to bring title closer to top
+        _victoryContentLayout.spacing = 10f; 
+        _victoryContentLayout.padding = new RectOffset(0, 0, 5, 10); 
         _victoryContentLayout.childControlWidth = true;
         _victoryContentLayout.childForceExpandWidth = true;
         _victoryContentLayout.childControlHeight = false;
@@ -1871,19 +1972,19 @@ public class GameManager : MonoBehaviour
         _victoryTitleLabel.text = victoryTitleText;
         ApplyEndPanelFont(_victoryTitleLabel);
 
-        // Create Trophy Image (between title and body/score text)
+        
         GameObject trophyContainer = new GameObject("TrophyContainer");
         trophyContainer.transform.SetParent(content.transform, false);
         RectTransform trophyContainerRect = trophyContainer.AddComponent<RectTransform>();
         trophyContainerRect.anchorMin = new Vector2(0f, 0.5f);
         trophyContainerRect.anchorMax = new Vector2(1f, 0.5f);
-        trophyContainerRect.sizeDelta = new Vector2(0f, trophyIconSize.y + 30f); // Add extra space below trophy
+        trophyContainerRect.sizeDelta = new Vector2(0f, trophyIconSize.y + 30f); 
         LayoutElement trophyContainerLayout = trophyContainer.AddComponent<LayoutElement>();
-        trophyContainerLayout.preferredHeight = trophyIconSize.y + 30f; // Extra space for spacing
+        trophyContainerLayout.preferredHeight = trophyIconSize.y + 30f; 
         trophyContainerLayout.flexibleWidth = 0f;
         trophyContainerLayout.flexibleHeight = 0f;
 
-        // Add horizontal layout to center the trophy
+        
         HorizontalLayoutGroup trophyContainerLayoutGroup = trophyContainer.AddComponent<HorizontalLayoutGroup>();
         trophyContainerLayoutGroup.childAlignment = TextAnchor.MiddleCenter;
         trophyContainerLayoutGroup.childControlWidth = false;
@@ -1902,7 +2003,7 @@ public class GameManager : MonoBehaviour
             _victoryTrophyImage.sprite = trophySprite;
         }
         _victoryTrophyImage.preserveAspect = true;
-        trophyContainer.SetActive(false); // Hidden by default, shown only on victory
+        trophyContainer.SetActive(false); 
 
         GameObject bodyGO = new GameObject("Body");
         bodyGO.transform.SetParent(content.transform, false);
@@ -1911,7 +2012,7 @@ public class GameManager : MonoBehaviour
         bodyRect.anchorMax = new Vector2(1f, 0.5f);
         bodyRect.sizeDelta = new Vector2(0f, 150f);
         LayoutElement bodyLayout = bodyGO.AddComponent<LayoutElement>();
-        bodyLayout.preferredHeight = 150f; // Increased to accommodate multiple lines for score display
+        bodyLayout.preferredHeight = 150f; 
 
         _victoryBodyLabel = bodyGO.AddComponent<TextMeshProUGUI>();
         _victoryBodyLabel.alignment = TextAlignmentOptions.Center;
@@ -1925,9 +2026,9 @@ public class GameManager : MonoBehaviour
         RectTransform summaryRect = summaryGroup.AddComponent<RectTransform>();
         summaryRect.anchorMin = new Vector2(0f, 0.5f);
         summaryRect.anchorMax = new Vector2(1f, 0.5f);
-        summaryRect.sizeDelta = new Vector2(0f, 0f); // Reduced size since it's hidden
+        summaryRect.sizeDelta = new Vector2(0f, 0f); 
         LayoutElement summaryLayoutElement = summaryGroup.AddComponent<LayoutElement>();
-        summaryLayoutElement.preferredHeight = 0f; // Reduced height since summary is hidden
+        summaryLayoutElement.preferredHeight = 0f; 
 
         VerticalLayoutGroup summaryLayout = summaryGroup.AddComponent<VerticalLayoutGroup>();
         summaryLayout.childAlignment = TextAnchor.MiddleCenter;
@@ -1965,12 +2066,28 @@ public class GameManager : MonoBehaviour
         _waterVictoryLabel.text = string.Empty;
         ApplyEndPanelFont(_waterVictoryLabel);
 
+        GameObject bonusMessageGO = new GameObject("BonusHeartMessage");
+        bonusMessageGO.transform.SetParent(content.transform, false);
+        RectTransform bonusRect = bonusMessageGO.AddComponent<RectTransform>();
+        bonusRect.anchorMin = new Vector2(0f, 0.5f);
+        bonusRect.anchorMax = new Vector2(1f, 0.5f);
+        bonusRect.sizeDelta = new Vector2(0f, 60f);
+        LayoutElement bonusLayout = bonusMessageGO.AddComponent<LayoutElement>();
+        bonusLayout.preferredHeight = 60f;
+
+        _bonusHeartMessageLabel = bonusMessageGO.AddComponent<TextMeshProUGUI>();
+        _bonusHeartMessageLabel.alignment = TextAlignmentOptions.Center;
+        _bonusHeartMessageLabel.fontSize = 38f;
+        _bonusHeartMessageLabel.text = string.Empty;
+        ApplyEndPanelFont(_bonusHeartMessageLabel);
+        bonusMessageGO.SetActive(false);
+
         GameObject buttonRow = new GameObject("Buttons");
         buttonRow.transform.SetParent(content.transform, false);
         RectTransform buttonRowRect = buttonRow.AddComponent<RectTransform>();
         buttonRowRect.anchorMin = new Vector2(0f, 0.5f);
         buttonRowRect.anchorMax = new Vector2(1f, 0.5f);
-        buttonRowRect.sizeDelta = new Vector2(0f, 100f); // Increased height for buttons
+        buttonRowRect.sizeDelta = new Vector2(0f, 100f); 
         LayoutElement buttonRowLayout = buttonRow.AddComponent<LayoutElement>();
         buttonRowLayout.preferredHeight = 100f;
 
@@ -2043,13 +2160,13 @@ public class GameManager : MonoBehaviour
 
         TextMeshProUGUI label = labelGO.AddComponent<TextMeshProUGUI>();
         label.alignment = TextAlignmentOptions.Center;
-        label.fontSize = 32f; // Adjusted for theme
+        label.fontSize = 32f; 
         label.color = Color.white;
         label.text = labelText;
         label.fontStyle = FontStyles.Bold;
         ApplyEndPanelFont(label);
 
-        // Apply Theme Sprite and Colors
+        
         if (themeButtonSprite != null)
         {
             bg.sprite = themeButtonSprite;
@@ -2057,7 +2174,7 @@ public class GameManager : MonoBehaviour
             bg.pixelsPerUnitMultiplier = 1f;
         }
         
-        // Reset color to white so the sprite color shows through, or use the theme normal color if no sprite
+        
         bg.color = Color.white; 
 
         ColorBlock colors = button.colors;
@@ -2084,14 +2201,14 @@ public class GameManager : MonoBehaviour
 
     private void ShowEndPanel(EndGameState state)
     {
-        // ... (This function is UNCHANGED) ...
+        
         if (!useVictoryPanel || _victoryPanel == null) return;
 
         bool isVictory = state == EndGameState.Victory;
 
         if (_victoryTitleLabel != null)
         {
-            // --- MODIFICATION START ---
+            
             if (isVictory && victorySlogans != null && victorySlogans.Length > 0)
             {
                 _victoryTitleLabel.text = victorySlogans[UnityEngine.Random.Range(0, victorySlogans.Length)];
@@ -2100,10 +2217,10 @@ public class GameManager : MonoBehaviour
             {
                 _victoryTitleLabel.text = isVictory ? victoryTitleText : defeatTitleText;
             }
-            // --- MODIFICATION END ---
+            
         }
 
-        // Show/hide trophy based on victory state
+        
         if (_victoryTrophyImage != null)
         {
             GameObject trophyContainer = _victoryTrophyImage.transform.parent?.gameObject;
@@ -2115,7 +2232,7 @@ public class GameManager : MonoBehaviour
 
         if (_victoryBodyLabel != null)
         {
-            // Check if we're in a scored level and scoring is enabled
+            
             if (isVictory && enableScoring && IsScoredLevel())
             {
                 _victoryBodyLabel.text = BuildScoreDisplayText();
@@ -2128,13 +2245,13 @@ public class GameManager : MonoBehaviour
 
         if (_fireSummaryRoot != null)
         {
-            // Hide token count display for all levels
+            
             _fireSummaryRoot.SetActive(false);
         }
 
         if (_waterSummaryRoot != null)
         {
-            // Hide token count display for all levels
+            
             _waterSummaryRoot.SetActive(false);
         }
 
@@ -2183,6 +2300,16 @@ public class GameManager : MonoBehaviour
             _victoryMainMenuButton.gameObject.SetActive(showMainMenu);
         }
 
+        if (_bonusHeartMessageLabel != null)
+        {
+            bool showBonus = isVictory && ShouldShowBonusHeartMessage();
+            _bonusHeartMessageLabel.gameObject.SetActive(showBonus);
+            if (showBonus)
+            {
+                _bonusHeartMessageLabel.text = "Bonus Hearts Earned for Ember and Aqua";
+            }
+        }
+
         _victoryPanel.SetActive(true);
     }
 
@@ -2196,6 +2323,7 @@ public class GameManager : MonoBehaviour
     {
         int clampedHearts = Mathf.Max(0, startingHearts);
         int bonusHearts = ConsumePendingHeartBonusForCurrentScene();
+        _unlockedBonusHeartSlots = Mathf.Clamp(bonusHearts, 0, MaxBonusHeartReward);
         int totalHearts = Mathf.Clamp(clampedHearts + bonusHearts, 0, startingHearts + MaxBonusHeartReward);
         _fireHearts = totalHearts;
         _waterHearts = totalHearts;
@@ -2223,7 +2351,7 @@ public class GameManager : MonoBehaviour
 
     private void ResetTokenTracking()
     {
-        // ... (This function is UNCHANGED) ...
+        
         fireTokensCollected = 0;
         waterTokensCollected = 0;
         _totalFireTokens = 0;
@@ -2233,8 +2361,6 @@ public class GameManager : MonoBehaviour
 
     private void UpdateHeartsUI()
     {
-        // ... (This function is UNCHANGED) ...
-        // Loop through all of Ember's heart images
         for (int i = 0; i < _emberHeartImages.Count; i++)
         {
             var heartImage = _emberHeartImages[i];
@@ -2245,6 +2371,12 @@ public class GameManager : MonoBehaviour
 
             if (_heartLossAnimator != null && _heartLossAnimator.IsAnimatingHeart(heartImage.gameObject))
             {
+                continue;
+            }
+
+            if (ShouldHideBonusSlot(i))
+            {
+                heartImage.gameObject.SetActive(false);
                 continue;
             }
 
@@ -2266,7 +2398,7 @@ public class GameManager : MonoBehaviour
             }
         }
 
-        // Loop through all of Aqua's heart images
+        
         for (int i = 0; i < _aquaHeartImages.Count; i++)
         {
             var heartImage = _aquaHeartImages[i];
@@ -2277,6 +2409,12 @@ public class GameManager : MonoBehaviour
 
             if (_heartLossAnimator != null && _heartLossAnimator.IsAnimatingHeart(heartImage.gameObject))
             {
+                continue;
+            }
+
+            if (ShouldHideBonusSlot(i))
+            {
+                heartImage.gameObject.SetActive(false);
                 continue;
             }
 
@@ -2297,6 +2435,27 @@ public class GameManager : MonoBehaviour
                 heartImage.enabled = false;
             }
         }
+    }
+
+    private bool ShouldHideBonusSlot(int heartIndex)
+    {
+        if (!hideBonusHeartSlotUntilEarned)
+        {
+            return false;
+        }
+
+        if (heartIndex < startingHearts)
+        {
+            return false;
+        }
+
+        if (_unlockedBonusHeartSlots <= 0)
+        {
+            return true;
+        }
+
+        int maxVisibleIndex = startingHearts + _unlockedBonusHeartSlots;
+        return heartIndex >= maxVisibleIndex;
     }
 
     private void TriggerHeartLossAnimations(bool isEmber, int previousHeartCount, int heartsLost)
@@ -2320,23 +2479,23 @@ public class GameManager : MonoBehaviour
 
     private void UpdateTokensUI()
     {
-        // ... (This function is UNCHANGED) ...
-        // Loop through all of Ember's token images
+        
+        
         for (int i = 0; i < _emberTokenImages.Count; i++)
         {
             if (i < fireTokensCollected)
             {
-                // This index is less than the collected count, show "collected" sprite
+                
                 _emberTokenImages[i].sprite = fireTokenCollectedSprite;
             }
             else
             {
-                // This index is greater, show "empty" sprite
+                
                 _emberTokenImages[i].sprite = fireTokenEmptySprite;
             }
         }
 
-        // Loop through all of Aqua's token images
+        
         for (int i = 0; i < _aquaTokenImages.Count; i++)
         {
             if (i < waterTokensCollected)
@@ -2359,6 +2518,37 @@ public class GameManager : MonoBehaviour
 
         _tokenBreathTimer += Time.unscaledDeltaTime;
         ApplyTokenBreathToImages(CalculateTokenBreathMultiplier());
+    }
+
+    private void UpdateLiveScoreDisplay()
+    {
+        if (_liveScoreLabel == null)
+        {
+            return;
+        }
+
+        if (!enableScoring || !IsScoredLevel())
+        {
+            _liveScoreLabel.text = "Score: --";
+            return;
+        }
+
+        LevelScoreResult score = CalculateCurrentLevelScore();
+        if (!score.HasScore)
+        {
+            _liveScoreLabel.text = "Score: --";
+            return;
+        }
+
+        string total = FormatNumber(score.TotalScore);
+        if (IsCurrentSceneLevel2() || IsCurrentSceneLevel5())
+        {
+            _liveScoreLabel.text = $"Score:\n{total}";
+        }
+        else
+        {
+            _liveScoreLabel.text = $"Score: {total}";
+        }
     }
 
     private AudioClip GetHeartLossClip()
@@ -2462,14 +2652,14 @@ public class GameManager : MonoBehaviour
         rect.localScale = baseScale * multiplier;
     }
 
-    // --- MODIFICATION START ---
-    // This function is modified to FIX the bug where token icons were not appearing.
-    // The line "AddComponent<LayoutElement>()" was accidentally removed in the previous
-    // version and has been RESTORED. This is required for the ContentSizeFitter.
     
-    /// <summary>
-    /// Public method to recount tokens in the scene. Useful for levels that spawn tokens programmatically.
-    /// </summary>
+    
+    
+    
+    
+    
+    
+    
     public void RecountTokensInScene()
     {
         RecountTokensInSceneInternal();
@@ -2491,9 +2681,9 @@ public class GameManager : MonoBehaviour
             }
             else if (token.CompareTag("WaterToken"))
             {
-                // *** PLEASE CHECK THIS: ***
-                // Make sure your blue droplet prefabs/objects in the scene
-                // have their 'Tag' set to 'WaterToken' in the Inspector!
+                
+                
+                
                 waterCount++;
             }
         }
@@ -2506,7 +2696,7 @@ public class GameManager : MonoBehaviour
             return;
         }
         
-        // 1. Find the master container, *then* the sub-containers
+        
         Transform searchRoot = _topUiContentRoot != null ? _topUiContentRoot : (_topUiBar != null ? _topUiBar : _hudCanvas.transform);
         Transform tokensMasterContainer = searchRoot.Find("TokensMasterContainer");
         if (tokensMasterContainer == null)
@@ -2520,7 +2710,7 @@ public class GameManager : MonoBehaviour
         Transform aquaContainer = tokensMasterContainer.Find("TokensContent/AquaTokensContainer") ??
                                   tokensMasterContainer.Find("AquaTokensContainer");
 
-        // 2. Clear any old token images (in case of scene restart)
+        
         foreach (Image img in _emberTokenImages)
         {
             if (img != null)
@@ -2541,7 +2731,7 @@ public class GameManager : MonoBehaviour
         }
         _aquaTokenImages.Clear();
         
-        // 3. Create the "empty" token slots based on the level's total
+        
         if (emberContainer != null)
         {
             for (int i = 0; i < _totalFireTokens; i++)
@@ -2555,11 +2745,11 @@ public class GameManager : MonoBehaviour
                 tokenRect.sizeDelta = tokenIconSize; 
                 tokenRect.localScale = Vector3.one;
                 
-                // --- BUG FIX ---
-                // This line is CRITICAL and has been re-added.
-                // It tells the HorizontalLayoutGroup how wide the icon is.
+                
+                
+                
                 tokenImgGO.AddComponent<LayoutElement>().preferredWidth = tokenIconSize.x;
-                // --- END BUG FIX ---
+                
                 
                 _emberTokenImages.Add(tokenImg);
                 _tokenIconBaseScales[tokenImg] = tokenRect.localScale;
@@ -2579,10 +2769,10 @@ public class GameManager : MonoBehaviour
                 tokenRect.sizeDelta = tokenIconSize; 
                 tokenRect.localScale = Vector3.one;
 
-                // --- BUG FIX ---
-                // This line is CRITICAL and has been re-added.
+                
+                
                 tokenImgGO.AddComponent<LayoutElement>().preferredWidth = tokenIconSize.x;
-                // --- END BUG FIX ---
+                
                 
                 _aquaTokenImages.Add(tokenImg);
                 _tokenIconBaseScales[tokenImg] = tokenRect.localScale;
@@ -2592,7 +2782,7 @@ public class GameManager : MonoBehaviour
         UpdateTokensUI();
         SyncTokenTracker(resetLevelState: false);
     }
-    // --- MODIFICATION END ---
+    
 
 
     private void DamageBothPlayers(CoopPlayerController playerA, CoopPlayerController playerB)
@@ -2600,7 +2790,7 @@ public class GameManager : MonoBehaviour
         if (!_gameActive || _gameFinished) return;
         if (playerA == null && playerB == null) return;
 
-        // === 新增：蒸汽模式下完全免疫“互相碰撞”伤害 ===
+        
         if (IsPlayerInSteamMode(playerA) || IsPlayerInSteamMode(playerB))
         {
             Debug.Log("[GameManager] DamageBothPlayers: cancelled, steam mode active for at least one player.");
@@ -2626,7 +2816,7 @@ public class GameManager : MonoBehaviour
     {
         if (amount <= 0 || !_gameActive || _gameFinished) return;
 
-        // === 新增：蒸汽模式下所有伤害都免疫 ===
+        
         if (IsRoleInSteamMode(role))
         {
             Debug.Log($"[GameManager] DamagePlayer blocked for {role} because of STEAM MODE. Cause={cause}");
@@ -2649,7 +2839,7 @@ public class GameManager : MonoBehaviour
                 _fireHearts = Mathf.Max(0, _fireHearts - amount);
                 TriggerHeartLossAnimations(true, previousFireHearts, previousFireHearts - _fireHearts);
                 break;
-            case PlayerRole.Watergirl: // This is the line I fixed for you before
+            case PlayerRole.Watergirl: 
                 _waterHearts = Mathf.Max(0, _waterHearts - amount);
                 TriggerHeartLossAnimations(false, previousWaterHearts, previousWaterHearts - _waterHearts);
                 break;
@@ -2658,7 +2848,7 @@ public class GameManager : MonoBehaviour
                  break;
         }
 
-        UpdateHeartsUI(); // This will now update the images
+        UpdateHeartsUI(); 
         TriggerHurtEffect(role);
 
         SendAnalyticsForDamage(role, cause, worldOverride);
@@ -2685,7 +2875,7 @@ public class GameManager : MonoBehaviour
                 return p.transform.position;
             }
         }
-        // Fallback: average all players we have, or origin.
+        
         Vector3 sum = Vector3.zero;
         int count = 0;
         for (int i = 0; i < _players.Count; i++)
@@ -2712,7 +2902,7 @@ public class GameManager : MonoBehaviour
             CancelNextSceneLoad();
             UpdateStatus("");
             ShowEndPanel(EndGameState.Defeat);
-            SendAnalyticsForDamage(PlayerRole.Fireboy, DamageCause.Unknown, null); // fallback hotspot on defeat
+            SendAnalyticsForDamage(PlayerRole.Fireboy, DamageCause.Unknown, null); 
             SendAnalyticsForDamage(PlayerRole.Watergirl, DamageCause.Unknown, null);
     }
 
@@ -2794,7 +2984,7 @@ public class GameManager : MonoBehaviour
 
             _gameFinished = true;
             _gameActive = false;
-            // analytics code
+            
             EnsureLevelTimer();
             (levelTimer ?? FindAnyObjectByType<Analytics.LevelTimer>())?.MarkSuccess();
             UpdateStatus("");
@@ -2840,7 +3030,22 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    // analytics code
+    private bool ShouldShowBonusHeartMessage()
+    {
+        if (s_pendingHeartBonusAmount <= 0 || string.IsNullOrEmpty(s_pendingHeartBonusScene))
+        {
+            return false;
+        }
+
+        if (!TryGetNextSceneName(out string nextScene) || string.IsNullOrEmpty(nextScene))
+        {
+            return false;
+        }
+
+        return string.Equals(s_pendingHeartBonusScene, nextScene, StringComparison.OrdinalIgnoreCase);
+    }
+
+    
     
         private void EnsureLevelTimer()
         {
@@ -2853,7 +3058,7 @@ public class GameManager : MonoBehaviour
             if (existing != null)
             {
                 levelTimer = existing;
-                // Ensures abandon/quit attempts are captured
+                
                 levelTimer.autoSendFailureOnDestroy = true;
                 return;
             }
@@ -2931,7 +3136,7 @@ public class GameManager : MonoBehaviour
         int activeIndex = activeScene.buildIndex;
         int totalScenes = SceneManager.sceneCountInBuildSettings;
 
-        // Explicit Level3 -> Level4 handoff even if build order isn't set yet.
+        
         if (!string.IsNullOrEmpty(level3InstructionSceneName) &&
             !string.IsNullOrEmpty(level4InstructionSceneName) &&
             activeScene.name == level3InstructionSceneName)
@@ -3060,8 +3265,8 @@ public class GameManager : MonoBehaviour
     private bool IsScoredLevel()
     {
         string currentScene = SceneManager.GetActiveScene().name;
-        // Check if we're in any of the main level scenes (Level1 through Level5)
-        // Tutorial uses GameManagerTutorial, so it's automatically excluded
+        
+        
         return (!string.IsNullOrEmpty(instructionPanelSceneName) && currentScene == instructionPanelSceneName) ||
                (!string.IsNullOrEmpty(level2InstructionSceneName) && currentScene == level2InstructionSceneName) ||
                (!string.IsNullOrEmpty(level3InstructionSceneName) && currentScene == level3InstructionSceneName) ||
@@ -3073,7 +3278,7 @@ public class GameManager : MonoBehaviour
     {
         string currentScene = SceneManager.GetActiveScene().name;
         
-        // Check for level-specific target times
+        
         if (!string.IsNullOrEmpty(level2InstructionSceneName) && currentScene == level2InstructionSceneName)
         {
             return level2TargetTimeSeconds > 0f ? level2TargetTimeSeconds : targetTimeSeconds;
@@ -3094,7 +3299,7 @@ public class GameManager : MonoBehaviour
             return level5TargetTimeSeconds > 0f ? level5TargetTimeSeconds : targetTimeSeconds;
         }
         
-        // Default to Level 1 target time (or general target time)
+        
         return targetTimeSeconds;
     }
 

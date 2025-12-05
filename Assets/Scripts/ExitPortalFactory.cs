@@ -2,23 +2,23 @@ using System;
 using TMPro;
 using UnityEngine;
 
-/// <summary>
-/// Helper that builds a compact exit portal with a tight trigger and consistent visuals.
-/// </summary>
+
+
+
 public static class ExitPortalFactory
 {
     private const float PortalWidthCells = 2f;
     private const float PortalHeightCells = 1f;
     private static Sprite s_whiteSprite;
 
-    /// <summary>
-    /// Creates a two-tile wide exit portal at the requested world position.
-    /// </summary>
-    /// <param name="parent">Transform that should own the portal.</param>
-    /// <param name="worldCenter">World-space center for the portal.</param>
-    /// <param name="cellSize">Size of a single grid cell (used for sizing).</param>
-    /// <param name="configureExitZone">Callback that wires the ExitZone to the correct manager.</param>
-    /// <returns>The root GameObject of the created portal.</returns>
+    
+    
+    
+    
+    
+    
+    
+    
     public static GameObject CreateExitPortal(
         Transform parent,
         Vector3 worldCenter,
@@ -53,7 +53,7 @@ public static class ExitPortalFactory
         float thickness = Mathf.Max(0.04f, cellSize * 0.08f);
         Color outlineColor = new Color(0.9f, 0.75f, 0.35f, 1f);
 
-        // Top edge
+        
         CreateOutlineEdge(
             parent,
             "TopEdge",
@@ -62,7 +62,7 @@ public static class ExitPortalFactory
             outlineColor
         );
 
-        // Bottom edge
+        
         CreateOutlineEdge(
             parent,
             "BottomEdge",
@@ -71,7 +71,7 @@ public static class ExitPortalFactory
             outlineColor
         );
 
-        // Left edge
+        
         CreateOutlineEdge(
             parent,
             "LeftEdge",
@@ -80,7 +80,7 @@ public static class ExitPortalFactory
             outlineColor
         );
 
-        // Right edge
+        
         CreateOutlineEdge(
             parent,
             "RightEdge",
