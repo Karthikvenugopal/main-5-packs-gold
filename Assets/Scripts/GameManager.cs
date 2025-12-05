@@ -42,6 +42,8 @@ public class GameManager : MonoBehaviour
     [SerializeField] private string exitReminderMessage = "Both heroes must stand in the exit to finish.";
     [Header("Player Hearts")]
     [SerializeField] private int startingHearts = 3;
+    [Tooltip("Hide the bonus heart slot until players have actually earned it.")]
+    [SerializeField] private bool hideBonusHeartSlotUntilEarned = true;
     private const int MaxBonusHeartReward = 1;
     [Header("Progression")]
     [SerializeField] private string nextSceneName;
@@ -94,48 +96,52 @@ public class GameManager : MonoBehaviour
     [SerializeField] private string instructionPanelSceneName = "Level1Scene";
     [SerializeField] private string[] instructionLines = new[]
     {
-        "<b>Level 1</b>",
+        "",
         "",
         "Collect maximum number of tokens and exit",
         "",
         "Caution: Touch each other? lose a heart.",
         "Caution: Touch wrong obstacle? lose a heart.",
-        "Work together but never collide!"
+        "Work together but never collide!",
+        "Score 2100+ to snag bonus hearts next level."
     };
     [SerializeField] private string instructionContinuePrompt = "Press Space to start";
     [SerializeField] private string level2InstructionSceneName = "Level2Scene";
     [SerializeField] private string[] level2InstructionLines = new[]
     {
-        "<b>Level 2</b>",
         "",
-        "Tip: Opposites protect. Shield your partner from danger."
+        "",
+        "Tip: Opposites protect. Shield your partner from danger.",
+        "Hit 1300+ and we'll drop bonus hearts for you."
     };
     [SerializeField] private string level2InstructionContinuePrompt = "Press Space to start";
     [SerializeField] private string level3InstructionSceneName = "Level3Scene";
     [SerializeField] private string[] level3InstructionLines = new[]
     {
-        "<b>Level 3</b>",
+        "",
         "",
         "Dynamic obstacles: Stay Sharp", 
         "Destroying one obstacle can lead to the creation of a new one",
         "",
-        "Keep collecting tokens and avoid hazards!"
+        "Keep collecting tokens and avoid hazards!",
+        "Pull 1200+ and enjoy extra hearts on the next round."
     };
     [SerializeField] private string level3InstructionContinuePrompt = "Press Space to start";
     [SerializeField] private string level4InstructionSceneName = "Level4Scene";
     [SerializeField] private string[] level4InstructionLines = new[]
     {
-        "<b>Level 4</b>",
+        "",
         "",
         "Beware of the green wisp!",
         "Touch the purple spiral together to activate Steam Mode.",
-        "Act fast—Steam Mode is timed!"
+        "Act fast—Steam Mode is timed!",
+        "Beat 1800+ and boom, bonus hearts unlocked."
     };
     [SerializeField] private string level4InstructionContinuePrompt = "Press Space to start";
     [SerializeField] private string level5InstructionSceneName = "Level5Scene";
     [SerializeField] private string[] level5InstructionLines = new[]
     {
-        "<b>Level 5</b>",
+        "",
         "",
         "Use SPACE button to swap positions",
         "Can only swap 3 times: choose wisely!"
@@ -166,6 +172,9 @@ public class GameManager : MonoBehaviour
     [SerializeField] private Vector2 heartIconSize = new Vector2(50f, 50f);
     [Tooltip("The size (Width, Height) for the token icons.")]
     [SerializeField] private Vector2 tokenIconSize = new Vector2(45f, 45f);
+    [Header("Score Display")]
+    [SerializeField] private bool showLiveScoreBoard = true;
+    [SerializeField] private Color liveScoreBackground = new Color(0f, 0f, 0f, 0.35f);
 
     
     
@@ -237,7 +246,7 @@ public class GameManager : MonoBehaviour
     private static readonly Dictionary<string, int> s_levelScoreThresholds = new(StringComparer.OrdinalIgnoreCase)
     {
         { "Level1Scene", 2100 },
-        { "Level2Scene", 5500 },
+        { "Level2Scene", 1300 },
         { "Level3Scene", 1200 },
         { "Level4Scene", 1800 }
     };
@@ -296,6 +305,9 @@ public class GameManager : MonoBehaviour
     private TextMeshProUGUI _victoryBodyLabel;
     private TextMeshProUGUI _fireVictoryLabel;
     private TextMeshProUGUI _waterVictoryLabel;
+    private TextMeshProUGUI _bonusHeartMessageLabel;
+    private TextMeshProUGUI _liveScoreLabel;
+    private RectTransform _liveScoreContainer;
     private GameObject _fireSummaryRoot;
     private GameObject _waterSummaryRoot;
     private VerticalLayoutGroup _victoryContentLayout;
@@ -304,6 +316,7 @@ public class GameManager : MonoBehaviour
     private Button _victoryNextLevelButton;
     private Image _victoryTrophyImage;
 
+    private int _unlockedBonusHeartSlots;
     private readonly List<CoopPlayerController> _players = new();
     private readonly HashSet<CoopPlayerController> _playersAtExit = new();
 
@@ -395,6 +408,7 @@ public class GameManager : MonoBehaviour
     {
         UpdateSteamTimer();
         UpdateTokenBreathing();
+        UpdateLiveScoreDisplay();
         if (_waitingForInstructionAck)
         {
             if (Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.Return))
@@ -1299,6 +1313,93 @@ public class GameManager : MonoBehaviour
 
         _heartLossAnimator.ConfigureAudio(GetHeartLossClip(), heartLossAudioSource, heartLossSfxVolume);
         _heartLossAnimator.HeartAnimationFinished += UpdateHeartsUI;
+
+        CreateLiveScoreBoard(masterRect);
+    }
+    
+    
+    
+    
+    private bool IsCurrentSceneLevel2()
+    {
+        string currentScene = SceneManager.GetActiveScene().name;
+        if (string.IsNullOrEmpty(currentScene))
+        {
+            return false;
+        }
+
+        if (!string.IsNullOrEmpty(level2InstructionSceneName) &&
+            string.Equals(currentScene, level2InstructionSceneName, StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        return string.Equals(currentScene, "Level2Scene", StringComparison.OrdinalIgnoreCase) ||
+               string.Equals(currentScene, "Level2", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private void CreateLiveScoreBoard(RectTransform heartsRect)
+    {
+        if (!showLiveScoreBoard)
+        {
+            return;
+        }
+
+        Transform parent = heartsRect != null ? heartsRect.parent : (_topUiContentRoot != null ? _topUiContentRoot : _topUiBar);
+        if (parent == null)
+        {
+            return;
+        }
+
+        GameObject scoreGO = new GameObject("LiveScoreBoard", typeof(RectTransform));
+        scoreGO.transform.SetParent(parent, false);
+        _liveScoreContainer = scoreGO.GetComponent<RectTransform>();
+
+        Vector2 anchorMin = heartsRect != null ? heartsRect.anchorMin : new Vector2(1f, 0.5f);
+        Vector2 anchorMax = heartsRect != null ? heartsRect.anchorMax : new Vector2(1f, 0.5f);
+        Vector2 pivot = heartsRect != null ? heartsRect.pivot : new Vector2(1f, 0.5f);
+        
+        _liveScoreContainer.anchorMin = anchorMin;
+        _liveScoreContainer.anchorMax = anchorMax;
+        _liveScoreContainer.pivot = pivot;
+
+        float width = heartsRect != null ? heartsRect.sizeDelta.x : 360f;
+        float height = 70f;
+        _liveScoreContainer.sizeDelta = new Vector2(width, height);
+
+        float heartsCenterY = heartsRect != null ? heartsRect.anchoredPosition.y : 0f;
+        float heartsHeight = heartsRect != null ? heartsRect.sizeDelta.y : 200f;
+        float offsetX = heartsRect != null ? heartsRect.anchoredPosition.x : 0f;
+        
+        // Default Y: below the hearts
+        float offsetY = heartsCenterY - (heartsHeight * 0.5f) - (height * 0.5f) - 24f + (heartsHeight * 0.1f);
+
+        if (IsCurrentSceneLevel2() || IsCurrentSceneLevel5())
+        {
+            offsetX += (heartIconSize.x * 0.5f);
+        }
+
+        _liveScoreContainer.anchoredPosition = new Vector2(offsetX, offsetY);
+
+        Image bg = scoreGO.AddComponent<Image>();
+        bg.color = liveScoreBackground;
+
+        GameObject labelGO = new GameObject("Label", typeof(RectTransform));
+        labelGO.transform.SetParent(scoreGO.transform, false);
+        RectTransform labelRect = labelGO.GetComponent<RectTransform>();
+        labelRect.anchorMin = Vector2.zero;
+        labelRect.anchorMax = Vector2.one;
+        labelRect.offsetMin = new Vector2(16f, 10f);
+        labelRect.offsetMax = new Vector2(-16f, -10f);
+
+        _liveScoreLabel = labelGO.AddComponent<TextMeshProUGUI>();
+        ApplyUpperUiFont(_liveScoreLabel);
+        _liveScoreLabel.alignment = TextAlignmentOptions.Right;
+        _liveScoreLabel.fontSize = 38f;
+        _liveScoreLabel.text = "Score: --";
+        _liveScoreLabel.color = Color.white;
+
+        UpdateLiveScoreDisplay();
     }
     
     
@@ -1965,6 +2066,22 @@ public class GameManager : MonoBehaviour
         _waterVictoryLabel.text = string.Empty;
         ApplyEndPanelFont(_waterVictoryLabel);
 
+        GameObject bonusMessageGO = new GameObject("BonusHeartMessage");
+        bonusMessageGO.transform.SetParent(content.transform, false);
+        RectTransform bonusRect = bonusMessageGO.AddComponent<RectTransform>();
+        bonusRect.anchorMin = new Vector2(0f, 0.5f);
+        bonusRect.anchorMax = new Vector2(1f, 0.5f);
+        bonusRect.sizeDelta = new Vector2(0f, 60f);
+        LayoutElement bonusLayout = bonusMessageGO.AddComponent<LayoutElement>();
+        bonusLayout.preferredHeight = 60f;
+
+        _bonusHeartMessageLabel = bonusMessageGO.AddComponent<TextMeshProUGUI>();
+        _bonusHeartMessageLabel.alignment = TextAlignmentOptions.Center;
+        _bonusHeartMessageLabel.fontSize = 38f;
+        _bonusHeartMessageLabel.text = string.Empty;
+        ApplyEndPanelFont(_bonusHeartMessageLabel);
+        bonusMessageGO.SetActive(false);
+
         GameObject buttonRow = new GameObject("Buttons");
         buttonRow.transform.SetParent(content.transform, false);
         RectTransform buttonRowRect = buttonRow.AddComponent<RectTransform>();
@@ -2183,6 +2300,16 @@ public class GameManager : MonoBehaviour
             _victoryMainMenuButton.gameObject.SetActive(showMainMenu);
         }
 
+        if (_bonusHeartMessageLabel != null)
+        {
+            bool showBonus = isVictory && ShouldShowBonusHeartMessage();
+            _bonusHeartMessageLabel.gameObject.SetActive(showBonus);
+            if (showBonus)
+            {
+                _bonusHeartMessageLabel.text = "Bonus Hearts Earned for Ember and Aqua";
+            }
+        }
+
         _victoryPanel.SetActive(true);
     }
 
@@ -2196,6 +2323,7 @@ public class GameManager : MonoBehaviour
     {
         int clampedHearts = Mathf.Max(0, startingHearts);
         int bonusHearts = ConsumePendingHeartBonusForCurrentScene();
+        _unlockedBonusHeartSlots = Mathf.Clamp(bonusHearts, 0, MaxBonusHeartReward);
         int totalHearts = Mathf.Clamp(clampedHearts + bonusHearts, 0, startingHearts + MaxBonusHeartReward);
         _fireHearts = totalHearts;
         _waterHearts = totalHearts;
@@ -2233,8 +2361,6 @@ public class GameManager : MonoBehaviour
 
     private void UpdateHeartsUI()
     {
-        
-        
         for (int i = 0; i < _emberHeartImages.Count; i++)
         {
             var heartImage = _emberHeartImages[i];
@@ -2245,6 +2371,12 @@ public class GameManager : MonoBehaviour
 
             if (_heartLossAnimator != null && _heartLossAnimator.IsAnimatingHeart(heartImage.gameObject))
             {
+                continue;
+            }
+
+            if (ShouldHideBonusSlot(i))
+            {
+                heartImage.gameObject.SetActive(false);
                 continue;
             }
 
@@ -2280,6 +2412,12 @@ public class GameManager : MonoBehaviour
                 continue;
             }
 
+            if (ShouldHideBonusSlot(i))
+            {
+                heartImage.gameObject.SetActive(false);
+                continue;
+            }
+
             heartImage.gameObject.SetActive(true);
 
             if (i < _waterHearts)
@@ -2297,6 +2435,27 @@ public class GameManager : MonoBehaviour
                 heartImage.enabled = false;
             }
         }
+    }
+
+    private bool ShouldHideBonusSlot(int heartIndex)
+    {
+        if (!hideBonusHeartSlotUntilEarned)
+        {
+            return false;
+        }
+
+        if (heartIndex < startingHearts)
+        {
+            return false;
+        }
+
+        if (_unlockedBonusHeartSlots <= 0)
+        {
+            return true;
+        }
+
+        int maxVisibleIndex = startingHearts + _unlockedBonusHeartSlots;
+        return heartIndex >= maxVisibleIndex;
     }
 
     private void TriggerHeartLossAnimations(bool isEmber, int previousHeartCount, int heartsLost)
@@ -2359,6 +2518,37 @@ public class GameManager : MonoBehaviour
 
         _tokenBreathTimer += Time.unscaledDeltaTime;
         ApplyTokenBreathToImages(CalculateTokenBreathMultiplier());
+    }
+
+    private void UpdateLiveScoreDisplay()
+    {
+        if (_liveScoreLabel == null)
+        {
+            return;
+        }
+
+        if (!enableScoring || !IsScoredLevel())
+        {
+            _liveScoreLabel.text = "Score: --";
+            return;
+        }
+
+        LevelScoreResult score = CalculateCurrentLevelScore();
+        if (!score.HasScore)
+        {
+            _liveScoreLabel.text = "Score: --";
+            return;
+        }
+
+        string total = FormatNumber(score.TotalScore);
+        if (IsCurrentSceneLevel2() || IsCurrentSceneLevel5())
+        {
+            _liveScoreLabel.text = $"Score:\n{total}";
+        }
+        else
+        {
+            _liveScoreLabel.text = $"Score: {total}";
+        }
     }
 
     private AudioClip GetHeartLossClip()
@@ -2838,6 +3028,21 @@ public class GameManager : MonoBehaviour
             s_pendingHeartBonusScene = null;
             s_pendingHeartBonusAmount = 0;
         }
+    }
+
+    private bool ShouldShowBonusHeartMessage()
+    {
+        if (s_pendingHeartBonusAmount <= 0 || string.IsNullOrEmpty(s_pendingHeartBonusScene))
+        {
+            return false;
+        }
+
+        if (!TryGetNextSceneName(out string nextScene) || string.IsNullOrEmpty(nextScene))
+        {
+            return false;
+        }
+
+        return string.Equals(s_pendingHeartBonusScene, nextScene, StringComparison.OrdinalIgnoreCase);
     }
 
     
