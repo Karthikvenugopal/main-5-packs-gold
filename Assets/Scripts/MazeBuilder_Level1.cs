@@ -244,7 +244,7 @@ public class MazeBuilder_Level1 : MonoBehaviour
         dialogueTrigger.SetFontSize(3.0f);
 
         // Set fixed dialogue position near the maze center (approximate coordinates)
-        Vector2 fixedDialoguePosition = new Vector2(6.5f * cellSize, -3.0f * cellSize);
+        Vector2 fixedDialoguePosition = new Vector2(6.8f * cellSize, -2.5f * cellSize);
         dialogueTrigger.SetFixedPosition(fixedDialoguePosition);
         // Immediately trigger the dialogue so it appears even if players moved away from the trigger zone
         dialogueTrigger.TriggerFixedDialogue();
@@ -267,7 +267,7 @@ public class MazeBuilder_Level1 : MonoBehaviour
 
         // Calculate fixed position (slightly right and higher near the top-left corner)
         // Adjusted for centered player: moved slightly right to avoid overlap, and lowered to match player shift
-        Vector2 fixedDialoguePosition = new Vector2(2.0f * cellSize, -0.8f * cellSize);
+        Vector2 fixedDialoguePosition = new Vector2(2.2f * cellSize, -0.6f * cellSize);
 
         // Create trigger zone GameObject
         GameObject triggerZone = new GameObject("EmberControlsDialogueTrigger");
@@ -286,6 +286,8 @@ public class MazeBuilder_Level1 : MonoBehaviour
         dialogueTrigger.SetFontSize(3f);
         // Set fixed position mode - dialogue will appear at fixed position when player enters trigger
         dialogueTrigger.SetFixedPosition(fixedDialoguePosition);
+        // Immediately trigger the dialogue so it appears right away
+        dialogueTrigger.TriggerFixedDialogue();
     }
 
     private void SpawnAquaControlsDialogue()
@@ -324,6 +326,8 @@ public class MazeBuilder_Level1 : MonoBehaviour
         dialogueTrigger.SetFontSize(3f);
         // Set fixed position mode - dialogue will appear at fixed position when player enters trigger
         dialogueTrigger.SetFixedPosition(fixedDialoguePosition);
+        // Immediately trigger the dialogue so it appears right away
+        dialogueTrigger.TriggerFixedDialogue();
     }
 
     private Vector2 GetCellCenterPosition(int x, int y)
