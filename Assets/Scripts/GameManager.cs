@@ -1444,7 +1444,7 @@ public class GameManager : MonoBehaviour
         rect.anchorMax = new Vector2(0.5f, 0.5f);
         rect.pivot = new Vector2(0.5f, 0.5f);
         // Slimmer timer so it doesn't overlap tokens on Level 5.
-        rect.sizeDelta = new Vector2(260f, 80f);
+        rect.sizeDelta = new Vector2(400f, 100f);
         rect.anchoredPosition = Vector2.zero;
 
         Image background = timerContainer.AddComponent<Image>();
@@ -1466,6 +1466,7 @@ public class GameManager : MonoBehaviour
         ApplyEndPanelFont(_steamTimerLabel);
         _steamTimerLabel.alignment = TextAlignmentOptions.Center;
         _steamTimerLabel.fontSize = 34f;
+        _steamTimerLabel.fontStyle = FontStyles.Bold;
         _steamTimerLabel.color = Color.white;
         _steamTimerLabel.raycastTarget = false;
         UpdateSteamTimerLabel();
