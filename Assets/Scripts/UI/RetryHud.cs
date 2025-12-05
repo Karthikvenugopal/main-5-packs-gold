@@ -144,13 +144,12 @@ public class RetryHud : MonoBehaviour
         titleText.text = "Options";
         titleText.alignment = TextAlignmentOptions.Center;
         titleText.fontSize = 64f; // Increased title font
-        titleText.color = Color.white;
-        
         var font = GetThemeFont();
         if (font != null)
         {
             titleText.font = font;
         }
+        ApplyDefaultModalFont(titleText);
 
         _continueButton = CreateModalButton("Continue", ContinueGame);
         _restartButton = CreateModalButton("Restart Level", RestartScene);
@@ -193,6 +192,7 @@ public class RetryHud : MonoBehaviour
         
         // Theme Application for Modal Buttons
         ApplyThemeToButton(img, button, labelText);
+        ApplyDefaultModalFont(labelText);
         
         labelText.raycastTarget = false;
 
@@ -231,6 +231,18 @@ public class RetryHud : MonoBehaviour
             if (selected.HasValue) colors.selectedColor = selected.Value;
             button.colors = colors;
         }
+    }
+
+    private void ApplyDefaultModalFont(TextMeshProUGUI labelText)
+    {
+        if (labelText == null) return;
+
+        if (TMP_Settings.defaultFontAsset != null)
+        {
+            labelText.font = TMP_Settings.defaultFontAsset;
+        }
+
+        labelText.color = Color.white;
     }
 
     // --- Helper Methods to abstract Theme Provider ---

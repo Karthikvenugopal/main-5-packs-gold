@@ -187,6 +187,7 @@ public class GameManager : MonoBehaviour
     [Header("Theme Settings")]
     [SerializeField] private TMP_FontAsset themeFont;
     [SerializeField] private Sprite themeButtonSprite;
+    [SerializeField] private Sprite steamPopupSprite;
     [SerializeField] private Color themeButtonNormalColor = Color.white;
     [SerializeField] private Color themeButtonHighlightedColor = new Color(0.953f, 0.859f, 0.526f, 1f);
     [SerializeField] private Color themeButtonPressedColor = new Color(0.784f, 0.784f, 0.784f, 1f);
@@ -212,6 +213,10 @@ public class GameManager : MonoBehaviour
         {
             themeButtonSprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Images/button.png");
         }
+        if (steamPopupSprite == null)
+        {
+            steamPopupSprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Images/steammode.png");
+        }
     }
 #endif
     // --- MODIFICATION END ---
@@ -235,14 +240,17 @@ public class GameManager : MonoBehaviour
     private const float SteamTimerFlashFrequency = 8f;
     private const float SteamTimerFlashThreshold = 3f;
     private const float SteamPopupDuration = 1.8f;
-    private static readonly Color SteamPopupBaseColor = new Color(0.7f, 0.18f, 0.95f, 1f);
+    private static readonly Color SteamPopupImageColor = Color.white;
+    private static readonly Color SteamPopupTextColor = new Color(0.7f, 0.18f, 0.95f, 1f);
     private Canvas _hudCanvas;
     private GameObject _steamTimerContainer;
     private TextMeshProUGUI _steamTimerLabel;
     private bool _steamTimerActive;
     private float _steamTimerRemaining;
     private GameObject _steamPopupContainer;
-    private TextMeshProUGUI _steamPopupLabel;
+    private Image _steamPopupImage;
+    private TextMeshProUGUI _steamPopupText;
+    private bool _steamPopupUsesText;
     private Coroutine _steamPopupCoroutine;
     private TextMeshProUGUI _swapCounterLabel;
     private SwapCounterManualAnchor _swapCounterManualAnchor;
@@ -864,10 +872,11 @@ public class GameManager : MonoBehaviour
         textRect.offsetMax = new Vector2(-20f, -20f);
 
         _statusLabel = textGO.AddComponent<TextMeshProUGUI>();
-        ApplyUpperUiFont(_statusLabel);
+        ApplyEndPanelFont(_statusLabel);
         _statusLabel.alignment = TextAlignmentOptions.Center;
         _statusLabel.fontSize = 40f;
         _statusLabel.text = string.Empty;
+        _statusLabel.color = Color.white;
     }
     // --- MODIFICATION END ---
 
@@ -1434,9 +1443,11 @@ public class GameManager : MonoBehaviour
         labelRect.anchorMax = Vector2.one;
         labelRect.offsetMin = Vector2.zero;
         labelRect.offsetMax = Vector2.zero;
+        labelRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, 840f);
+        labelRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, 220f);
 
         _steamTimerLabel = labelGO.AddComponent<TextMeshProUGUI>();
-        ApplyUpperUiFont(_steamTimerLabel);
+        ApplyEndPanelFont(_steamTimerLabel);
         _steamTimerLabel.alignment = TextAlignmentOptions.Center;
         _steamTimerLabel.fontSize = 34f;
         _steamTimerLabel.color = Color.white;
@@ -1476,7 +1487,11 @@ public class GameManager : MonoBehaviour
         rect.anchorMin = new Vector2(0.5f, 0.5f);
         rect.anchorMax = new Vector2(0.5f, 0.5f);
         rect.pivot = new Vector2(0.5f, 0.5f);
-        rect.sizeDelta = new Vector2(840f, 220f);
+        float refWidth = _uiReferenceResolution.x > 0f ? _uiReferenceResolution.x : Screen.width;
+        float refHeight = _uiReferenceResolution.y > 0f ? _uiReferenceResolution.y : Screen.height;
+        float popupWidth = Mathf.Max(1f, refWidth * 0.5f);
+        float popupHeight = Mathf.Max(1f, refHeight * 0.5f);
+        rect.sizeDelta = new Vector2(popupWidth, popupHeight);
         rect.anchoredPosition = Vector2.zero;
 
         _steamPopupContainer = popup;
@@ -1490,14 +1505,41 @@ public class GameManager : MonoBehaviour
         labelRect.anchorMax = Vector2.one;
         labelRect.offsetMin = Vector2.zero;
         labelRect.offsetMax = Vector2.zero;
+        labelRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, rect.sizeDelta.x);
+        labelRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, rect.sizeDelta.y);
 
-        _steamPopupLabel = labelGO.AddComponent<TextMeshProUGUI>();
-        ApplyUpperUiFont(_steamPopupLabel);
-        _steamPopupLabel.alignment = TextAlignmentOptions.Center;
-        _steamPopupLabel.fontSize = 110f;
-        _steamPopupLabel.fontStyle = FontStyles.Bold;
-        _steamPopupLabel.color = SteamPopupBaseColor;
-        _steamPopupLabel.raycastTarget = false;
+        _steamPopupImage = labelGO.AddComponent<Image>();
+        _steamPopupImage.type = Image.Type.Simple;
+        _steamPopupImage.preserveAspect = true;
+        if (steamPopupSprite != null)
+        {
+            _steamPopupImage.sprite = steamPopupSprite;
+        }
+        else
+        {
+            Debug.LogWarning("[GameManager] Steam mode popup sprite is missing; add Assets/Images/steammode.png to the inspector.", this);
+        }
+        _steamPopupImage.color = SteamPopupImageColor;
+        _steamPopupImage.raycastTarget = false;
+
+        GameObject textGO = new GameObject("SteamPopupText");
+        textGO.transform.SetParent(popup.transform, false);
+        var textRect = textGO.AddComponent<RectTransform>();
+        textRect.anchorMin = Vector2.zero;
+        textRect.anchorMax = Vector2.one;
+        textRect.offsetMin = Vector2.zero;
+        textRect.offsetMax = Vector2.zero;
+        textRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, rect.sizeDelta.x);
+        textRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, rect.sizeDelta.y);
+
+        _steamPopupText = textGO.AddComponent<TextMeshProUGUI>();
+        ApplyEndPanelFont(_steamPopupText);
+        _steamPopupText.alignment = TextAlignmentOptions.Center;
+        _steamPopupText.fontSize = 110f;
+        _steamPopupText.fontStyle = FontStyles.Bold;
+        _steamPopupText.color = SteamPopupTextColor;
+        _steamPopupText.raycastTarget = false;
+        _steamPopupText.gameObject.SetActive(false);
     }
 
     private void CreateSwapCounterUI()
@@ -1686,10 +1728,23 @@ public class GameManager : MonoBehaviour
 
     private void ShowSteamPopup(string text)
     {
-        if (_steamPopupContainer == null || _steamPopupLabel == null) return;
+        if (_steamPopupContainer == null || (_steamPopupImage == null && _steamPopupText == null)) return;
 
-        _steamPopupLabel.text = text;
-        _steamPopupLabel.color = SteamPopupBaseColor;
+        _steamPopupUsesText = !string.Equals(text, "STEAM\nMODE!", StringComparison.OrdinalIgnoreCase);
+        if (_steamPopupUsesText)
+        {
+            _steamPopupImage.gameObject.SetActive(false);
+            _steamPopupText.gameObject.SetActive(true);
+            _steamPopupText.text = text;
+            _steamPopupText.color = SteamPopupTextColor;
+        }
+        else
+        {
+            _steamPopupText.gameObject.SetActive(false);
+            _steamPopupImage.gameObject.SetActive(true);
+            _steamPopupImage.color = SteamPopupImageColor;
+        }
+
         _steamPopupContainer.transform.localScale = Vector3.one;
         _steamPopupContainer.SetActive(true);
 
@@ -1711,15 +1766,32 @@ public class GameManager : MonoBehaviour
             bounceScale += Mathf.Sin(progress * Mathf.PI) * 0.2f;
             _steamPopupContainer.transform.localScale = Vector3.one * bounceScale;
 
-            Color color = Color.Lerp(SteamPopupBaseColor, Color.white, progress);
+            Color baseColor = _steamPopupUsesText ? SteamPopupTextColor : SteamPopupImageColor;
+            Color color = Color.Lerp(baseColor, Color.white, progress);
             color.a = Mathf.Lerp(1f, 0f, progress);
-            _steamPopupLabel.color = color;
+            if (_steamPopupUsesText && _steamPopupText != null)
+            {
+                _steamPopupText.color = color;
+            }
+            else if (_steamPopupImage != null)
+            {
+                _steamPopupImage.color = color;
+            }
 
             elapsed += Time.unscaledDeltaTime;
             yield return null;
         }
 
-        _steamPopupLabel.color = new Color(SteamPopupBaseColor.r, SteamPopupBaseColor.g, SteamPopupBaseColor.b, 0f);
+        Color transparentColor = new Color(SteamPopupImageColor.r, SteamPopupImageColor.g, SteamPopupImageColor.b, 0f);
+        if (_steamPopupUsesText && _steamPopupText != null)
+        {
+            Color textTransparent = new Color(SteamPopupTextColor.r, SteamPopupTextColor.g, SteamPopupTextColor.b, 0f);
+            _steamPopupText.color = textTransparent;
+        }
+        else if (_steamPopupImage != null)
+        {
+            _steamPopupImage.color = transparentColor;
+        }
         _steamPopupContainer.transform.localScale = Vector3.one;
         _steamPopupContainer.SetActive(false);
         _steamPopupCoroutine = null;

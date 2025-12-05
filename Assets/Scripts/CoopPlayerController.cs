@@ -84,6 +84,7 @@ public class CoopPlayerController : MonoBehaviour
     private BoxCollider2D _boxCollider;
     private Vector2 _defaultColliderSize;
     private Vector2 _defaultColliderOffset;
+    private CircleCollider2D _circleCollider;
 
     private readonly Dictionary<int, float> _lastHazardDamageTimes = new();
 
@@ -96,7 +97,8 @@ public class CoopPlayerController : MonoBehaviour
     private void Awake()
     {
         _rigidbody = GetComponent<Rigidbody2D>();
-        _collider = GetComponent<CircleCollider2D>() ?? GetComponent<Collider2D>();
+        _circleCollider = GetComponent<CircleCollider2D>();
+        _collider = _circleCollider ?? GetComponent<Collider2D>();
         _spriteRenderer = GetComponent<SpriteRenderer>();
         _animator = GetComponent<Animator>();
         _boxCollider = GetComponent<BoxCollider2D>();
@@ -256,26 +258,19 @@ public class CoopPlayerController : MonoBehaviour
         Vector2 targetPosition = _rigidbody.position + direction * distance;
 
         Vector2 boxSize = GetColliderSize() * collisionBoxScale;
+        bool useCircleCast = _circleCollider != null;
+        float castRadius = GetCircleRadius() * collisionBoxScale;
+        float castDistance = distance + 0.01f;
 
-        RaycastHit2D hit = Physics2D.BoxCast(
-            _rigidbody.position,
-            boxSize,
-            0f,
-            direction,
-            distance + 0.01f,
-            collisionMask
-        );
+        RaycastHit2D hit = useCircleCast
+            ? Physics2D.CircleCast(_rigidbody.position, castRadius, direction, castDistance, collisionMask)
+            : Physics2D.BoxCast(_rigidbody.position, boxSize, 0f, direction, castDistance, collisionMask);
 
         if (hit.collider != null && TryHandleSpecialObstacle(hit.collider))
         {
-            hit = Physics2D.BoxCast(
-                _rigidbody.position,
-                boxSize,
-                0f,
-                direction,
-                distance + 0.01f,
-                collisionMask
-            );
+            hit = useCircleCast
+                ? Physics2D.CircleCast(_rigidbody.position, castRadius, direction, castDistance, collisionMask)
+                : Physics2D.BoxCast(_rigidbody.position, boxSize, 0f, direction, castDistance, collisionMask);
         }
 
         if (_pendingPushOverride)
@@ -327,11 +322,18 @@ public class CoopPlayerController : MonoBehaviour
 
         return _collider switch
         {
+            CircleCollider2D circle when circle != null => Vector2.one * GetCircleRadius() * 2f,
             BoxCollider2D box when box != null => box.size,
-            CircleCollider2D circle when circle != null => Vector2.one * circle.radius * 2f,
             CapsuleCollider2D capsule when capsule != null => capsule.size,
             _ => Vector2.one * 0.9f
         };
+    }
+
+    private float GetCircleRadius()
+    {
+        if (_circleCollider == null) return 0.45f;
+        float maxScale = Mathf.Max(Mathf.Abs(transform.lossyScale.x), Mathf.Abs(transform.lossyScale.y));
+        return _circleCollider.radius * maxScale;
     }
 
     private bool TryHandleSpecialObstacle(Collider2D collider)
