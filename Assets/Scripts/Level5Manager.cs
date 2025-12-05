@@ -75,13 +75,13 @@ public class Level5Manager : MonoBehaviour, ISequentialHazardManager
         // "########################"
 
         "##################",
-        "#f..I.4###f..wF.S#",
+        "#f..I.4###f..wF.W#",
         "#Iw##fF###FI######",
         "#.I##Fw###.w.Ff.4#",
         "#..II..FMI..######",
         "#F#II#I###..Iw.Ff#",
         "#.#w.#f###.#######",
-        "#W#11#....1#######",
+        "#S#11#....1#######",
         "######LLLLL#######",
         "######LLLLL#######",
         "#######.E.########",
@@ -128,7 +128,7 @@ public class Level5Manager : MonoBehaviour, ISequentialHazardManager
     private float _swapCooldown = 0f;
     private const float SwapCooldownDuration = 0.5f; // Prevent rapid swapping
     private int _swapCount = 0;
-    private const int MaxSwaps = 4;
+    private const int MaxSwaps = 3;
 
     private void Start()
     {
@@ -163,6 +163,13 @@ public class Level5Manager : MonoBehaviour, ISequentialHazardManager
     {
         // Only allow position swapping in Level 5
         if (!IsLevel5())
+        {
+            return;
+        }
+
+        // Don't process swap input if instruction screen is still showing
+        // This prevents the first spacebar press (used to dismiss instructions) from counting as a swap
+        if (gameManager != null && gameManager.IsWaitingForInstructionAck())
         {
             return;
         }

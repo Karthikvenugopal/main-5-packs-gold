@@ -37,11 +37,12 @@ public class GameManager : MonoBehaviour
     [Header("UI Messages")]
     [SerializeField] private string levelIntroMessage = "";
     [SerializeField] private string levelStartMessage = "";
-    [SerializeField] private string levelVictoryMessage = "Victory! Both heroes reached safety. Press R to play again.";
+    [SerializeField] private string levelVictoryMessage = "";
     [SerializeField] private string waitForPartnerMessage = "{0} made it. Wait for your partner!";
     [SerializeField] private string exitReminderMessage = "Both heroes must stand in the exit to finish.";
     [Header("Player Hearts")]
     [SerializeField] private int startingHearts = 3;
+    private const int MaxBonusHeartReward = 1;
     [Header("Progression")]
     [SerializeField] private string nextSceneName;
     [SerializeField] private float nextSceneDelaySeconds = 2f;
@@ -233,6 +234,15 @@ public class GameManager : MonoBehaviour
 
     private static int s_totalFireTokensCollected;
     private static int s_totalWaterTokensCollected;
+    private static readonly Dictionary<string, int> s_levelScoreThresholds = new(StringComparer.OrdinalIgnoreCase)
+    {
+        { "Level1Scene", 2100 },
+        { "Level2Scene", 5500 },
+        { "Level3Scene", 1200 },
+        { "Level4Scene", 1800 }
+    };
+    private static string s_pendingHeartBonusScene;
+    private static int s_pendingHeartBonusAmount;
 
     private const float SteamTimerFallbackDuration = 10f;
     private const float SteamTimerBounceFrequency = 5f;
@@ -309,6 +319,7 @@ public class GameManager : MonoBehaviour
     private bool _levelReady;
     private bool _gameActive;
     private bool _gameFinished;
+    public bool GameFinished => _gameFinished;
     private Coroutine _loadNextSceneRoutine;
     private GameObject _instructionPanel;
     private bool _waitingForInstructionAck;
@@ -394,11 +405,7 @@ public class GameManager : MonoBehaviour
             return;
         }
 
-        if (_gameFinished && Input.GetKeyDown(KeyCode.R))
-        {
-            CancelNextSceneLoad();
-            SceneManager.LoadScene(SceneManager.GetActiveScene().name);
-        }
+
 
         if (_gameActive && !_gameFinished && AreAllPlayersAtExit())
         {
@@ -853,7 +860,7 @@ public class GameManager : MonoBehaviour
         bgRect.anchorMin = new Vector2(0.5f, 1f); // Top-Center
         bgRect.anchorMax = new Vector2(0.5f, 1f); // Top-Center
         bgRect.pivot = new Vector2(0.5f, 1f);
-        bgRect.sizeDelta = new Vector2(680f, 120f);
+        bgRect.sizeDelta = new Vector2(1000f, 120f);
         // Position it further down from the top-center of the bar for clarity
         bgRect.anchoredPosition = new Vector2(0f, -100f); 
 
@@ -1031,6 +1038,15 @@ public class GameManager : MonoBehaviour
             Time.timeScale = _previousTimeScale;
             _instructionPausedTime = false;
         }
+    }
+
+    /// <summary>
+    /// Returns true if the instruction panel is currently waiting for player acknowledgment.
+    /// This can be used by other scripts (like Level5Manager) to prevent input conflicts.
+    /// </summary>
+    public bool IsWaitingForInstructionAck()
+    {
+        return _waitingForInstructionAck;
     }
 
     // --- MODIFICATION START ---
@@ -1214,7 +1230,7 @@ public class GameManager : MonoBehaviour
         emberLabelLayout.preferredWidth = 160f; 
 
         _emberHeartImages.Clear();
-        for (int i = 0; i < startingHearts; i++)
+        for (int i = 0; i < startingHearts + MaxBonusHeartReward; i++)
         {
             GameObject heartImgGO = new GameObject($"Heart_{i}");
             heartImgGO.transform.SetParent(emberHeartsGO.transform, false);
@@ -1257,7 +1273,7 @@ public class GameManager : MonoBehaviour
         aquaLabelLayout.preferredWidth = 160f; 
 
         _aquaHeartImages.Clear();
-        for (int i = 0; i < startingHearts; i++)
+        for (int i = 0; i < startingHearts + MaxBonusHeartReward; i++)
         {
             GameObject heartImgGO = new GameObject($"Heart_{i}");
             heartImgGO.transform.SetParent(aquaHeartsGO.transform, false);
@@ -2171,11 +2187,31 @@ public class GameManager : MonoBehaviour
 
     private void ResetHearts()
     {
-        // ... (This function is UNCHANGED) ...
         int clampedHearts = Mathf.Max(0, startingHearts);
-        _fireHearts = clampedHearts;
-        _waterHearts = clampedHearts;
+        int bonusHearts = ConsumePendingHeartBonusForCurrentScene();
+        int totalHearts = Mathf.Clamp(clampedHearts + bonusHearts, 0, startingHearts + MaxBonusHeartReward);
+        _fireHearts = totalHearts;
+        _waterHearts = totalHearts;
         UpdateHeartsUI();
+    }
+
+    private int ConsumePendingHeartBonusForCurrentScene()
+    {
+        if (s_pendingHeartBonusAmount <= 0 || string.IsNullOrEmpty(s_pendingHeartBonusScene))
+        {
+            return 0;
+        }
+
+        string activeScene = SceneManager.GetActiveScene().name;
+        if (!string.Equals(activeScene, s_pendingHeartBonusScene, StringComparison.OrdinalIgnoreCase))
+        {
+            return 0;
+        }
+
+        int bonus = Mathf.Clamp(s_pendingHeartBonusAmount, 0, MaxBonusHeartReward);
+        s_pendingHeartBonusAmount = 0;
+        s_pendingHeartBonusScene = null;
+        return bonus;
     }
 
     private void ResetTokenTracking()
@@ -2667,7 +2703,7 @@ public class GameManager : MonoBehaviour
             levelTimer?.MarkFailure();
             FreezePlayers();
             CancelNextSceneLoad();
-            UpdateStatus(levelDefeatMessage);
+            UpdateStatus("");
             ShowEndPanel(EndGameState.Defeat);
             SendAnalyticsForDamage(PlayerRole.Fireboy, DamageCause.Unknown, null); // fallback hotspot on defeat
             SendAnalyticsForDamage(PlayerRole.Watergirl, DamageCause.Unknown, null);
@@ -2754,11 +2790,48 @@ public class GameManager : MonoBehaviour
             // analytics code
             EnsureLevelTimer();
             (levelTimer ?? FindAnyObjectByType<Analytics.LevelTimer>())?.MarkSuccess();
-            UpdateStatus(levelVictoryMessage);
+            UpdateStatus("");
             FreezePlayers();
             CancelNextSceneLoad();
+            EvaluateBonusHeartReward();
             ShowEndPanel(EndGameState.Victory);
         }
+
+    private void EvaluateBonusHeartReward()
+    {
+        if (!enableScoring || !IsScoredLevel())
+        {
+            return;
+        }
+
+        if (!TryGetNextSceneName(out string nextScene) || string.IsNullOrEmpty(nextScene))
+        {
+            return;
+        }
+
+        string currentScene = SceneManager.GetActiveScene().name;
+        if (!s_levelScoreThresholds.TryGetValue(currentScene, out int requiredScore))
+        {
+            return;
+        }
+
+        LevelScoreResult score = CalculateCurrentLevelScore();
+        if (!score.HasScore)
+        {
+            return;
+        }
+
+        if (score.TotalScore > requiredScore)
+        {
+            s_pendingHeartBonusScene = nextScene;
+            s_pendingHeartBonusAmount = MaxBonusHeartReward;
+        }
+        else if (string.Equals(s_pendingHeartBonusScene, nextScene, StringComparison.OrdinalIgnoreCase))
+        {
+            s_pendingHeartBonusScene = null;
+            s_pendingHeartBonusAmount = 0;
+        }
+    }
 
     // analytics code
     
@@ -2866,6 +2939,12 @@ public class GameManager : MonoBehaviour
             return true;
         }
 
+        if (string.Equals(activeScene.name, "Level4Scene", StringComparison.OrdinalIgnoreCase))
+        {
+            sceneName = !string.IsNullOrEmpty(level5InstructionSceneName) ? level5InstructionSceneName : "Level5Scene";
+            return true;
+        }
+
         if (activeIndex >= 0 && totalScenes > 0)
         {
             for (int index = activeIndex + 1; index < totalScenes; index++)
@@ -2967,8 +3046,8 @@ public class GameManager : MonoBehaviour
 
     private bool IsFinalLevelScene(string sceneName)
     {
-        return !string.IsNullOrEmpty(level4InstructionSceneName) &&
-               sceneName == level4InstructionSceneName;
+        return !string.IsNullOrEmpty(level5InstructionSceneName) &&
+               sceneName == level5InstructionSceneName;
     }
 
     private bool IsScoredLevel()
@@ -3012,37 +3091,65 @@ public class GameManager : MonoBehaviour
         return targetTimeSeconds;
     }
 
-    private string BuildScoreDisplayText()
+    private struct LevelScoreResult
     {
-        // Use the scoring timer (actual gameplay time) instead of analytics timer
-        float elapsedSecondsRaw = _scoringTimerStarted 
-            ? Mathf.Max(0f, Time.realtimeSinceStartup - _scoringStartTime) 
+        public bool HasScore;
+        public float ElapsedSeconds;
+        public float TargetTimeSeconds;
+        public int TotalTokensCollected;
+        public int TotalTokensAvailable;
+        public int TokenBonus;
+        public int TimeBonus;
+        public int TotalScore;
+    }
+
+    private LevelScoreResult CalculateCurrentLevelScore()
+    {
+        if (!enableScoring || !IsScoredLevel())
+        {
+            return default;
+        }
+
+        float elapsedSecondsRaw = _scoringTimerStarted
+            ? Mathf.Max(0f, Time.realtimeSinceStartup - _scoringStartTime)
             : 0f;
-        // Round to whole seconds to match the display format (MM:SS)
         float elapsedSeconds = Mathf.Floor(elapsedSecondsRaw);
         float levelTargetTime = GetTargetTimeForCurrentLevel();
-        
-        // Calculate score components
+
         int totalTokens = fireTokensCollected + waterTokensCollected;
         int tokenBonus = totalTokens * pointsPerToken;
         float timeBonus = Mathf.Max(0f, (levelTargetTime - elapsedSeconds) * timeBonusMultiplier);
         int timeBonusInt = Mathf.RoundToInt(timeBonus);
         int totalScore = basePoints + tokenBonus + timeBonusInt;
-        
-        // Format time as MM:SS
-        string timeFormatted = FormatTime(elapsedSeconds);
-        string timeBonusFormatted = FormatNumber(timeBonusInt);
-        
-        // Format token display (X/Y)
-        int totalTokensInLevel = _totalFireTokens + _totalWaterTokens;
-        string tokenBonusFormatted = FormatNumber(tokenBonus);
-        
-        // Format total score
-        string totalScoreFormatted = FormatNumber(totalScore);
-        
-        // Build the display text
+
+        return new LevelScoreResult
+        {
+            HasScore = true,
+            ElapsedSeconds = elapsedSeconds,
+            TargetTimeSeconds = levelTargetTime,
+            TotalTokensCollected = totalTokens,
+            TotalTokensAvailable = _totalFireTokens + _totalWaterTokens,
+            TokenBonus = tokenBonus,
+            TimeBonus = timeBonusInt,
+            TotalScore = totalScore
+        };
+    }
+
+    private string BuildScoreDisplayText()
+    {
+        LevelScoreResult score = CalculateCurrentLevelScore();
+        if (!score.HasScore)
+        {
+            return victoryBodyText;
+        }
+
+        string timeFormatted = FormatTime(score.ElapsedSeconds);
+        string timeBonusFormatted = FormatNumber(score.TimeBonus);
+        string tokenBonusFormatted = FormatNumber(score.TokenBonus);
+        string totalScoreFormatted = FormatNumber(score.TotalScore);
+
         return $"Time: {timeFormatted} (Bonus +{timeBonusFormatted})\n" +
-               $"Tokens: {totalTokens}/{totalTokensInLevel} (+{tokenBonusFormatted})\n" +
+               $"Tokens: {score.TotalTokensCollected}/{score.TotalTokensAvailable} (+{tokenBonusFormatted})\n" +
                $"Total Score: {totalScoreFormatted} points";
     }
 
