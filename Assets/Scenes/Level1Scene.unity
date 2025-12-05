@@ -486,6 +486,10 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 777697172324581036, guid: 8c454dc0a577643e89ba9e1793c4e03f, type: 3}
+      propertyPath: hideBonusHeartSlotUntilEarned
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 777697172324581036, guid: 8c454dc0a577643e89ba9e1793c4e03f, type: 3}
       propertyPath: heartIconSize.x
       value: 30
       objectReference: {fileID: 0}

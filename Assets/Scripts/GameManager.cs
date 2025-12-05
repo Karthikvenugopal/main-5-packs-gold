@@ -42,6 +42,8 @@ public class GameManager : MonoBehaviour
     [SerializeField] private string exitReminderMessage = "Both heroes must stand in the exit to finish.";
     [Header("Player Hearts")]
     [SerializeField] private int startingHearts = 3;
+    [Tooltip("Hide the bonus heart slot until players have actually earned it.")]
+    [SerializeField] private bool hideBonusHeartSlotUntilEarned = false;
     private const int MaxBonusHeartReward = 1;
     [Header("Progression")]
     [SerializeField] private string nextSceneName;
@@ -2233,8 +2235,6 @@ public class GameManager : MonoBehaviour
 
     private void UpdateHeartsUI()
     {
-        
-        
         for (int i = 0; i < _emberHeartImages.Count; i++)
         {
             var heartImage = _emberHeartImages[i];
@@ -2245,6 +2245,12 @@ public class GameManager : MonoBehaviour
 
             if (_heartLossAnimator != null && _heartLossAnimator.IsAnimatingHeart(heartImage.gameObject))
             {
+                continue;
+            }
+
+            if (ShouldHideBonusSlot(i, _fireHearts))
+            {
+                heartImage.gameObject.SetActive(false);
                 continue;
             }
 
@@ -2280,6 +2286,12 @@ public class GameManager : MonoBehaviour
                 continue;
             }
 
+            if (ShouldHideBonusSlot(i, _waterHearts))
+            {
+                heartImage.gameObject.SetActive(false);
+                continue;
+            }
+
             heartImage.gameObject.SetActive(true);
 
             if (i < _waterHearts)
@@ -2297,6 +2309,21 @@ public class GameManager : MonoBehaviour
                 heartImage.enabled = false;
             }
         }
+    }
+
+    private bool ShouldHideBonusSlot(int heartIndex, int currentHearts)
+    {
+        if (!hideBonusHeartSlotUntilEarned)
+        {
+            return false;
+        }
+
+        if (heartIndex < startingHearts)
+        {
+            return false;
+        }
+
+        return currentHearts <= startingHearts;
     }
 
     private void TriggerHeartLossAnimations(bool isEmber, int previousHeartCount, int heartsLost)
