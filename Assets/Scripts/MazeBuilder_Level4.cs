@@ -3,11 +3,11 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-/// <summary>
-/// Template maze builder for Level 4.
-/// Replace the Layout array with your ASCII maze and the builder will spawn walls,
-/// floors, hazards, cannons, player spawns, and the exit automatically.
-/// </summary>
+
+
+
+
+
 public class MazeBuilder_Level4 : MonoBehaviour, IPairedHazardManager
 {
     [Header("Maze Settings")]
@@ -43,39 +43,39 @@ public class MazeBuilder_Level4 : MonoBehaviour, IPairedHazardManager
     [SerializeField] private Color iceOutlineColor = new Color(0.4f, 0.75f, 1f, 0.9f);
     [SerializeField, Min(0.001f)] private float outlineWidth = 0.05f;
 
-    /// <summary>
-    /// Replace this with the actual Level 4 ASCII maze.
-    /// Legend (feel free to extend):
-    /// # = Wall
-    /// . = Floor
-    /// F = Ember spawn
-    /// W = Aqua spawn
-    /// I = Ice wall (meltable by Ember)
-    /// H = Fire wall (douseable by Aqua)
-    /// 1 = Fire cannon
-    /// 2 = Ice cannon
-    /// E = Exit
-    /// P = Wisp
-    /// </summary>
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     private static readonly string[] Layout =
     {
-        "################################", // row 0
-        "#F##.............3#............#", // row 1
-        "#.##.#####.####.###.######.###L#", // row 2
-        "#...........4##..M..######...#L#", // row 3
-        "##.#Z############.##########.#L#", // row 4
-        "#P.#Z###...######.##.....#...#.#", // row 5
-        "####.###.#.######.##.#.#.#.#.#.#", // row 6
-        "####.....#.####...##.#.#.#.#.#.#", // row 7
-        "#W...#.###.####.####.#.#.#.#.#.#", // row 8
-        "##########......###..........#.#", // row 9
-        "###################.##########.#", // row 10
-        "#################M..##########.#", // row 11
-        "#..##############.....########.#", // row 12
-        "#E......###########.#.########.#", // row 13
-        "#######.LLL#####....#..........#", // row 14
-        "##########.......#####.#######.#", // row 15
-        "################################"  // row 16
+        "################################", 
+        "#F##.............3#............#", 
+        "#.##.#####.####.###.######.###L#", 
+        "#...........4##..M..######...#L#", 
+        "##.#Z############.##########.#L#", 
+        "#P.#Z###...######.##.....#...#.#", 
+        "####.###.#.######.##.#.#.#.#.#.#", 
+        "####.....#.####...##.#.#.#.#.#.#", 
+        "#W...#.###.####.####.#.#.#.#.#.#", 
+        "##########......###..........#.#", 
+        "###################.##########.#", 
+        "#################M..##########.#", 
+        "#..##############.....########.#", 
+        "#E......###########.#.########.#", 
+        "#######.LLL#####....#..........#", 
+        "##########.......#####.#######.#", 
+        "################################"  
     };
 
     private static readonly PairedHazardDefinition[] PairedHazardConfigurations =
@@ -139,7 +139,7 @@ public class MazeBuilder_Level4 : MonoBehaviour, IPairedHazardManager
 
     private void SpawnTutorialTrigger()
     {
-        // Position (15, 3) is just before the first Steam Area
+        
         Vector2 position = new Vector2(15 * cellSize, -3 * cellSize);
         
         GameObject triggerZone = new GameObject("TutorialTrigger_Steam");
@@ -154,8 +154,8 @@ public class MazeBuilder_Level4 : MonoBehaviour, IPairedHazardManager
         DialogueTriggerZone dialogueTrigger = triggerZone.AddComponent<DialogueTriggerZone>();
         dialogueTrigger.SetDialogueText("Stay close together in the mist\nto activate Steam Mode and\npass through the Steam Walls!");
         
-        // Use fixed position for the text so it appears at the specific location
-        // Text position at (23, -3, -9)
+        
+        
         dialogueTrigger.SetFixedPosition(new Vector3(22.5f * cellSize, -3 * cellSize, -9f));
         
         dialogueTrigger.SetFontSize(3.5f);
@@ -252,12 +252,12 @@ public class MazeBuilder_Level4 : MonoBehaviour, IPairedHazardManager
                         SpawnFloor(cellPosition);
                         SpawnWispActivationZone(cellPosition);
                         break;
-                    case 'M':       // steam area
+                    case 'M':       
                         SpawnFloor(cellPosition);
                         SpawnSteamArea(cellPosition);
                         break;
 
-                    case 'L':       // steam wall
+                    case 'L':       
                         SpawnFloor(cellPosition);
                         SpawnSteamWall(cellPosition);
                         break;
@@ -277,7 +277,7 @@ public class MazeBuilder_Level4 : MonoBehaviour, IPairedHazardManager
         GameObject wall = Instantiate(wallPrefab, position, Quaternion.identity, transform);
         wall.layer = LayerMask.NameToLayer("Wall");
 
-        // Ensure walls are drawn above the floor (Order 1)
+        
         if (wall.TryGetComponent(out SpriteRenderer renderer))
         {
             renderer.sortingOrder = 1;
@@ -290,7 +290,7 @@ public class MazeBuilder_Level4 : MonoBehaviour, IPairedHazardManager
         if (floorPrefab == null) return;
         GameObject floor = Instantiate(floorPrefab, position, Quaternion.identity, transform);
 
-        // Set floor to the base layer (Order 0)
+        
         if (floor.TryGetComponent(out SpriteRenderer renderer))
         {
             renderer.sortingOrder = 0;
@@ -311,7 +311,7 @@ public class MazeBuilder_Level4 : MonoBehaviour, IPairedHazardManager
             component = iceWall.AddComponent<IceWall>();
         }
         
-        // Ensure ice walls are drawn above the floor (Order 1)
+        
         if (iceWall.TryGetComponent(out SpriteRenderer renderer))
         {
             renderer.sortingOrder = 1;
@@ -332,7 +332,7 @@ public class MazeBuilder_Level4 : MonoBehaviour, IPairedHazardManager
         GameObject fireWall = Instantiate(prefab, position, Quaternion.identity, transform);
         fireWall.layer = LayerMask.NameToLayer("Wall");
         
-        // Ensure fire walls are drawn above the floor (Order 1)
+        
         if (fireWall.TryGetComponent(out SpriteRenderer renderer))
         {
             renderer.sortingOrder = 1;
@@ -387,12 +387,12 @@ public class MazeBuilder_Level4 : MonoBehaviour, IPairedHazardManager
 
     private void SpawnLevel4Cannon(Vector2 position, CannonVariant variant)
     {
-        // Move half a tile up: position.y is top of cell, -0.5 is center. 
-        // "Half a tile up" from center (-0.5) is 0.0 (top of cell).
-        // Or simply add 0.5f * cellSize to the previous center calculation.
+        
+        
+        
         Vector3 worldPosition = new Vector3(
             position.x + 0.5f * cellSize,
-            position.y, // Was position.y - 0.5f * cellSize
+            position.y, 
             0f
         );
 
@@ -402,7 +402,7 @@ public class MazeBuilder_Level4 : MonoBehaviour, IPairedHazardManager
             selectedPrefab = cannonPrefab;
         }
 
-        // Rotate 90 degrees to the left (Counter-Clockwise)
+        
         Quaternion rotation = Quaternion.Euler(0, 0, 90);
 
         GameObject cannon = selectedPrefab != null
@@ -434,23 +434,23 @@ public class MazeBuilder_Level4 : MonoBehaviour, IPairedHazardManager
             selectedHitEffect = cannonHitEffectPrefab;
         }
 
-        // Force colors to match Level 2/3 theme (independent of shared code/prefab defaults)
+        
         if (variant == CannonVariant.Fire)
         {
             hazard.OverrideTheme(
-                new Color(0.35f, 0.18f, 0.12f), // Body
-                new Color(0.78f, 0.32f, 0.18f), // Barrel
-                new Color(0.86f, 0.2f, 0.2f),   // Projectile
-                new Color(1f, 0.6f, 0.1f, 0.85f) // Impact
+                new Color(0.35f, 0.18f, 0.12f), 
+                new Color(0.78f, 0.32f, 0.18f), 
+                new Color(0.86f, 0.2f, 0.2f),   
+                new Color(1f, 0.6f, 0.1f, 0.85f) 
             );
         }
         else
         {
             hazard.OverrideTheme(
-                new Color(0.18f, 0.28f, 0.45f), // Body
-                new Color(0.4f, 0.7f, 0.95f),   // Barrel
-                new Color(0.55f, 0.85f, 1f),    // Projectile
-                new Color(0.6f, 0.9f, 1f, 0.85f) // Impact
+                new Color(0.18f, 0.28f, 0.45f), 
+                new Color(0.4f, 0.7f, 0.95f),   
+                new Color(0.55f, 0.85f, 1f),    
+                new Color(0.6f, 0.9f, 1f, 0.85f) 
             );
         }
 
@@ -484,7 +484,7 @@ public class MazeBuilder_Level4 : MonoBehaviour, IPairedHazardManager
         );
     }
 
-    // --- MODIFIED METHOD: Set sortingOrder to 3 ---
+    
     private void SpawnWisp(Vector2 position)
     {
         if (wispPrefab == null)
@@ -502,7 +502,7 @@ public class MazeBuilder_Level4 : MonoBehaviour, IPairedHazardManager
 
         GameObject wisp = Instantiate(wispPrefab, worldPosition, Quaternion.identity, transform);
         
-        // Set Wisp to a high order (Order 3) so it's above walls (Order 1) and floor (Order 0)
+        
         if (wisp.TryGetComponent(out SpriteRenderer renderer))
         {
             renderer.sortingOrder = 3; 
@@ -513,7 +513,7 @@ public class MazeBuilder_Level4 : MonoBehaviour, IPairedHazardManager
             wispEnemy.ConfigureGridAlignment(cellSize, new Vector2(0.5f, 0.5f), new Vector2(-0.5f, -0.5f));
         }
     }
-    // --- END MODIFIED METHOD ---
+    
 
     private void SpawnWispActivationZone(Vector2 position)
     {
@@ -550,8 +550,8 @@ public class MazeBuilder_Level4 : MonoBehaviour, IPairedHazardManager
 
         if (area.TryGetComponent(out SpriteRenderer renderer))
         {
-            renderer.sortingOrder = 2;          // 在墙上面一点
-            // 颜色如果你不在 prefab 里调，也可以在这里强行调
+            renderer.sortingOrder = 2;          
+            
             renderer.color = new Color(0.85f, 0.65f, 0.95f, 0.45f);
         }
 
@@ -559,7 +559,7 @@ public class MazeBuilder_Level4 : MonoBehaviour, IPairedHazardManager
     }
 
 
-    // 生成 Steam Wall（只能在 10s 蒸汽形态时通过的墙）
+    
     private GameObject SpawnSteamWall(Vector2 position)
     {
         if (steamWallPrefab == null)
@@ -569,11 +569,11 @@ public class MazeBuilder_Level4 : MonoBehaviour, IPairedHazardManager
         }
 
         GameObject wall = Instantiate(steamWallPrefab, position, Quaternion.identity, transform);
-        wall.layer = LayerMask.NameToLayer("Wall");   // 让它跟普通墙一样挡路
+        wall.layer = LayerMask.NameToLayer("Wall");   
 
         if (wall.TryGetComponent(out SpriteRenderer renderer))
         {
-            renderer.sortingOrder = 1;                // 和普通墙同一层
+            renderer.sortingOrder = 1;                
         }
 
         return wall;

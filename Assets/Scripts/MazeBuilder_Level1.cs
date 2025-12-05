@@ -153,8 +153,8 @@ public class MazeBuilder_Level1 : MonoBehaviour
 
     private void SpawnExit(Vector2 position)
     {
-        // Position is already the cell center from GetCellCenterPosition
-        // Shift left by half a cell to better center the 2-cell wide portal on the path
+        
+        
         Vector3 worldCenter = new Vector3(position.x - 0.5f * cellSize, position.y, 0f);
         
         ExitPortalFactory.CreateExitPortal(
@@ -190,14 +190,14 @@ public class MazeBuilder_Level1 : MonoBehaviour
 
     private IEnumerator SpawnDialogueTriggerDelayed()
     {
-        // Wait 5 seconds before spawning the dialogue trigger
+        
         yield return new WaitForSeconds(3f);
         SpawnDialogueTrigger();
     }
 
     private void SpawnDialogueTrigger()
     {
-        // Place dialogue trigger early in the level, at row 1 (index 1), column 2
+        
         int targetRow = 1;
         int targetCol = 2;
 
@@ -207,35 +207,35 @@ public class MazeBuilder_Level1 : MonoBehaviour
             return;
         }
 
-        // Calculate world position (same as BuildMaze uses)
+        
         Vector2 worldPosition = GetCellCenterPosition(targetCol, targetRow);
 
-        // Create trigger zone GameObject
+        
         GameObject triggerZone = new GameObject("DialogueTriggerZone");
         triggerZone.transform.position = worldPosition;
         triggerZone.transform.SetParent(transform);
 
-        // Add BoxCollider2D for trigger
+        
         BoxCollider2D trigger = triggerZone.AddComponent<BoxCollider2D>();
         trigger.isTrigger = true;
         trigger.size = new Vector2(cellSize * 0.9f, cellSize * 0.9f);
         trigger.offset = Vector2.zero;
 
-        // Add DialogueTriggerZone component with custom text, position, and font size
+        
         DialogueTriggerZone dialogueTrigger = triggerZone.AddComponent<DialogueTriggerZone>();
         dialogueTrigger.SetDialogueText("Collect tokens to boost your score");
         dialogueTrigger.SetFontSize(3.0f);
 
-        // Set fixed dialogue position near the maze center (approximate coordinates)
+        
         Vector2 fixedDialoguePosition = new Vector2(6.8f * cellSize, -2.5f * cellSize);
         dialogueTrigger.SetFixedPosition(fixedDialoguePosition);
-        // Immediately trigger the dialogue so it appears even if players moved away from the trigger zone
+        
         dialogueTrigger.TriggerFixedDialogue();
     }
 
     private void SpawnEmberControlsDialogue()
     {
-        // Place dialogue trigger near the Fireboy spawn point (row 1, column 1)
+        
         int targetRow = 1;
         int targetCol = 1;
 
@@ -245,37 +245,37 @@ public class MazeBuilder_Level1 : MonoBehaviour
             return;
         }
 
-        // Calculate trigger world position (same as BuildMaze uses)
+        
         Vector2 triggerWorldPosition = GetCellCenterPosition(targetCol, targetRow) + new Vector2(1f * cellSize, 0f);
 
-        // Calculate fixed position (slightly right and higher near the top-left corner)
-        // Adjusted for centered player: moved slightly right to avoid overlap, and lowered to match player shift
+        
+        
         Vector2 fixedDialoguePosition = new Vector2(2.2f * cellSize, -0.6f * cellSize);
 
-        // Create trigger zone GameObject
+        
         GameObject triggerZone = new GameObject("EmberControlsDialogueTrigger");
         triggerZone.transform.position = triggerWorldPosition;
         triggerZone.transform.SetParent(transform);
 
-        // Add BoxCollider2D for trigger
+        
         BoxCollider2D trigger = triggerZone.AddComponent<BoxCollider2D>();
         trigger.isTrigger = true;
         trigger.size = new Vector2(cellSize * 0.9f, cellSize * 0.9f);
         trigger.offset = Vector2.zero;
 
-        // Add DialogueTriggerZone component with custom text and settings
+        
         DialogueTriggerZone dialogueTrigger = triggerZone.AddComponent<DialogueTriggerZone>();
         dialogueTrigger.SetDialogueText("W/A/S/D Moves Ember");
         dialogueTrigger.SetFontSize(3f);
-        // Set fixed position mode - dialogue will appear at fixed position when player enters trigger
+        
         dialogueTrigger.SetFixedPosition(fixedDialoguePosition);
-        // Immediately trigger the dialogue so it appears right away
+        
         dialogueTrigger.TriggerFixedDialogue();
     }
 
     private void SpawnAquaControlsDialogue()
     {
-        // Place dialogue trigger near the Watergirl spawn point (row 7, column 1)
+        
         int targetRow = 7;
         int targetCol = 1;
 
@@ -285,31 +285,31 @@ public class MazeBuilder_Level1 : MonoBehaviour
             return;
         }
 
-        // Calculate trigger world position (same as BuildMaze uses)
+        
         Vector2 triggerWorldPosition = GetCellCenterPosition(targetCol, targetRow) + new Vector2(1f * cellSize, 0f);
 
-        // Calculate fixed position for dialogue at bottom left corner of maze
-        // Adjusted for centered player: moved slightly right to avoid overlap, and lowered to match player shift
+        
+        
         Vector2 fixedDialoguePosition = new Vector2(2.0f * cellSize, -8.5f * cellSize);
 
-        // Create trigger zone GameObject
+        
         GameObject triggerZone = new GameObject("AquaControlsDialogueTrigger");
         triggerZone.transform.position = triggerWorldPosition;
         triggerZone.transform.SetParent(transform);
 
-        // Add BoxCollider2D for trigger
+        
         BoxCollider2D trigger = triggerZone.AddComponent<BoxCollider2D>();
         trigger.isTrigger = true;
         trigger.size = new Vector2(cellSize * 0.9f, cellSize * 0.9f);
         trigger.offset = Vector2.zero;
 
-        // Add DialogueTriggerZone component with custom text and settings
+        
         DialogueTriggerZone dialogueTrigger = triggerZone.AddComponent<DialogueTriggerZone>();
         dialogueTrigger.SetDialogueText("↑ ← ↓ → moved Aqua");
         dialogueTrigger.SetFontSize(3f);
-        // Set fixed position mode - dialogue will appear at fixed position when player enters trigger
+        
         dialogueTrigger.SetFixedPosition(fixedDialoguePosition);
-        // Immediately trigger the dialogue so it appears right away
+        
         dialogueTrigger.TriggerFixedDialogue();
     }
 

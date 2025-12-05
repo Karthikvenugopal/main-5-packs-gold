@@ -96,7 +96,7 @@ public class CoopPlayerController : MonoBehaviour
 
     private readonly Dictionary<int, float> _lastHazardDamageTimes = new();
 
-    // 蒸汽状态引用
+    
     private PlayerSteamState _steamState;
     public bool IsInSteamMode => _steamState != null && _steamState.IsInSteamMode;
     private bool _wasInSteamMode;
@@ -432,7 +432,7 @@ public class CoopPlayerController : MonoBehaviour
     {
         if (collider == null) return false;
 
-        // 蒸汽模式：不触发任何特殊墙体逻辑
+        
         if (IsInSteamMode)
         {
             Debug.Log($"[CoopPlayerController] {name} is in STEAM MODE, ignore special obstacle: {collider.name}", this);
@@ -557,7 +557,7 @@ public class CoopPlayerController : MonoBehaviour
 
     private bool TryApplyHazardDamage(Collider2D hazard)
     {
-        // 蒸汽模式：完全免疫 Hazard 伤害
+        
         if (IsInSteamMode)
         {
             Debug.Log($"[CoopPlayerController] {name} in STEAM MODE, ignore hazard damage from {hazard.name}", this);
@@ -759,12 +759,12 @@ public class CoopPlayerController : MonoBehaviour
         transform.localScale = baseScale;
     }
 
-    /// <summary>
-    /// Allows non-wall enemies (like Wisp) to inflict damage on the player.
-    /// </summary>
+    
+    
+    
     public void TakeDamageFromEnemy(Collider2D enemyCollider, int damageAmount = 1)
     {
-        // 蒸汽模式：敌人也不能掉心
+        
         if (IsInSteamMode)
         {
             Debug.Log($"[CoopPlayerController] {name} in STEAM MODE, ignore enemy damage from {enemyCollider.name}", this);

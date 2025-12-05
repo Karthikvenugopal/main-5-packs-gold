@@ -292,7 +292,7 @@ public class Level3Manager : MonoBehaviour, ISequentialHazardManager
                         break;
                 }
 
-                // Additional spawn marker for Fireboy if the layout cell is the chosen coordinate.
+                
                 if (gridPosition == FireSpawnCell && GameObject.Find(FireSpawnName) == null)
                 {
                     CreateSpawnMarker(cellPosition, FireSpawnName);

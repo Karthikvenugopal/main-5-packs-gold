@@ -2,10 +2,10 @@ using UnityEngine;
 using TMPro;
 using System.Collections;
 
-/// <summary>
-/// Triggers a dialogue box when a player enters a specific zone.
-/// The dialogue appears near the player and auto-hides after a specified duration.
-/// </summary>
+
+
+
+
 [RequireComponent(typeof(BoxCollider2D))]
 public class DialogueTriggerZone : MonoBehaviour
 {
@@ -51,7 +51,7 @@ public class DialogueTriggerZone : MonoBehaviour
 
         _hasTriggered = true;
         
-        // Use fixed position if enabled, otherwise use player-relative position
+        
         if (useFixedPosition)
         {
             ShowDialogueAtFixedPosition(fixedPosition);
@@ -64,21 +64,21 @@ public class DialogueTriggerZone : MonoBehaviour
 
     private void ShowDialogueNearPlayer(CoopPlayerController player)
     {
-        // Don't create multiple dialogue boxes
+        
         if (_currentDialogueBox != null)
         {
             Destroy(_currentDialogueBox);
         }
 
-        // Create dialogue box GameObject
+        
         GameObject dialogueBox = new GameObject("DialogueBox");
         dialogueBox.transform.SetParent(transform);
         
-        // Position it near the player
+        
         Vector3 playerPosition = player.transform.position;
         dialogueBox.transform.position = playerPosition + (Vector3)offsetFromPlayer;
 
-        // Create background
+        
         GameObject background = new GameObject("Background");
         background.transform.SetParent(dialogueBox.transform);
         background.transform.localPosition = Vector3.zero;
@@ -87,14 +87,14 @@ public class DialogueTriggerZone : MonoBehaviour
         bgRenderer.color = backgroundColor;
         bgRenderer.sortingOrder = 100;
 
-        // Create a simple white sprite for the background
+        
         Texture2D texture = new Texture2D(1, 1);
         texture.SetPixel(0, 0, Color.white);
         texture.Apply();
         Sprite sprite = Sprite.Create(texture, new Rect(0, 0, 1, 1), new Vector2(0.5f, 0.5f), 100f);
         bgRenderer.sprite = sprite;
 
-        // Create text
+        
         GameObject textObject = new GameObject("Text");
         textObject.transform.SetParent(dialogueBox.transform);
         textObject.transform.localPosition = Vector3.zero;
@@ -106,41 +106,41 @@ public class DialogueTriggerZone : MonoBehaviour
         textMesh.alignment = TextAlignmentOptions.Center;
         textMesh.fontStyle = FontStyles.Bold;
         textMesh.enableWordWrapping = true;
-        textMesh.rectTransform.sizeDelta = new Vector2(8f, 0f); // Auto-height
+        textMesh.rectTransform.sizeDelta = new Vector2(8f, 0f); 
         
-        // Ensure text is drawn above background (Order 100) and walls (Order 1)
+        
         if (textMesh.TryGetComponent(out MeshRenderer meshRenderer))
         {
             meshRenderer.sortingOrder = 101;
         }
 
-        // Force text to update bounds
+        
         textMesh.ForceMeshUpdate();
 
-        // Store text reference and original color for pulsating effect
+        
         _currentTextMesh = textMesh;
         _originalTextColor = textColor;
 
-        // Size background to fit text with padding
+        
         Bounds textBounds = textMesh.bounds;
         float bgWidth = textBounds.size.x + padding * 2f;
         float bgHeight = textBounds.size.y + padding * 2f;
         
         background.transform.localScale = new Vector3(bgWidth, bgHeight, 1f);
-        background.transform.localPosition = new Vector3(0f, 0f, 0.01f); // Slightly behind text
+        background.transform.localPosition = new Vector3(0f, 0f, 0.01f); 
 
-        // Center the text on the background
+        
         textObject.transform.localPosition = new Vector3(0f, 0f, -0.01f);
 
         _currentDialogueBox = dialogueBox;
 
-        // Start pulsating effect if enabled
+        
         if (enablePulsatingEffect)
         {
             StartPulsatingEffect();
         }
 
-        // Auto-hide after duration
+        
         StartCoroutine(HideDialogueAfterDelay(dialogueBox, displayDuration));
     }
 
@@ -161,7 +161,7 @@ public class DialogueTriggerZone : MonoBehaviour
             _pulseCoroutine = null;
         }
 
-        // Restore original color
+        
         if (_currentTextMesh != null)
         {
             _currentTextMesh.color = _originalTextColor;
@@ -172,13 +172,13 @@ public class DialogueTriggerZone : MonoBehaviour
     {
         while (_currentDialogueBox != null && _currentTextMesh != null)
         {
-            // Calculate pulse value using PingPong (oscillates between 0 and 1)
+            
             float pulse = Mathf.PingPong(Time.time * pulseSpeed, 1f);
 
-            // Interpolate between min and max intensity
+            
             float intensity = Mathf.Lerp(minGlowIntensity, maxGlowIntensity, pulse);
 
-            // Blend the original color with the glow color based on intensity
+            
             Color blendedColor = Color.Lerp(_originalTextColor, glowColor, intensity);
             _currentTextMesh.color = blendedColor;
 
@@ -192,10 +192,10 @@ public class DialogueTriggerZone : MonoBehaviour
 
         if (dialogueBox != null)
         {
-            // Stop pulsating effect
+            
             StopPulsatingEffect();
 
-            // Fade out effect
+            
             SpriteRenderer bg = dialogueBox.transform.Find("Background")?.GetComponent<SpriteRenderer>();
             TextMeshPro text = dialogueBox.transform.Find("Text")?.GetComponent<TextMeshPro>();
 
@@ -233,44 +233,44 @@ public class DialogueTriggerZone : MonoBehaviour
         _currentTextMesh = null;
     }
 
-    /// <summary>
-    /// Set the dialogue text programmatically
-    /// </summary>
+    
+    
+    
     public void SetDialogueText(string text)
     {
         dialogueText = text;
     }
 
-    /// <summary>
-    /// Set the offset position of the dialogue box relative to the player
-    /// </summary>
+    
+    
+    
     public void SetOffsetFromPlayer(Vector2 offset)
     {
         offsetFromPlayer = offset;
     }
 
-    /// <summary>
-    /// Set the font size of the dialogue text
-    /// </summary>
+    
+    
+    
     public void SetFontSize(float size)
     {
         fontSize = size;
     }
 
-    /// <summary>
-    /// Enable fixed position mode and set the fixed position
-    /// This allows Level 1 to use fixed positions without affecting Level 2
-    /// </summary>
+    
+    
+    
+    
     public void SetFixedPosition(Vector3 position)
     {
         useFixedPosition = true;
         fixedPosition = position;
     }
 
-    /// <summary>
-    /// Immediately show the dialogue at the configured fixed position (if enabled)
-    /// Useful when a level wants the dialogue to appear without waiting for a trigger enter event.
-    /// </summary>
+    
+    
+    
+    
     public void TriggerFixedDialogue()
     {
         if (!useFixedPosition)
@@ -283,26 +283,26 @@ public class DialogueTriggerZone : MonoBehaviour
         ShowDialogueAtFixedPosition(fixedPosition);
     }
 
-    /// <summary>
-    /// Show dialogue at a fixed world position (not relative to player)
-    /// This allows Level 1 to use fixed positions without affecting Level 2's player-relative dialogues
-    /// </summary>
+    
+    
+    
+    
     public void ShowDialogueAtFixedPosition(Vector3 worldPosition)
     {
-        // Don't create multiple dialogue boxes
+        
         if (_currentDialogueBox != null)
         {
             Destroy(_currentDialogueBox);
         }
 
-        // Create dialogue box GameObject
+        
         GameObject dialogueBox = new GameObject("DialogueBox");
         dialogueBox.transform.SetParent(transform);
         
-        // Position it at the fixed world position
+        
         dialogueBox.transform.position = worldPosition;
 
-        // Create background
+        
         GameObject background = new GameObject("Background");
         background.transform.SetParent(dialogueBox.transform);
         background.transform.localPosition = Vector3.zero;
@@ -311,14 +311,14 @@ public class DialogueTriggerZone : MonoBehaviour
         bgRenderer.color = backgroundColor;
         bgRenderer.sortingOrder = 100;
 
-        // Create a simple white sprite for the background
+        
         Texture2D texture = new Texture2D(1, 1);
         texture.SetPixel(0, 0, Color.white);
         texture.Apply();
         Sprite sprite = Sprite.Create(texture, new Rect(0, 0, 1, 1), new Vector2(0.5f, 0.5f), 100f);
         bgRenderer.sprite = sprite;
 
-        // Create text
+        
         GameObject textObject = new GameObject("Text");
         textObject.transform.SetParent(dialogueBox.transform);
         textObject.transform.localPosition = Vector3.zero;
@@ -330,47 +330,47 @@ public class DialogueTriggerZone : MonoBehaviour
         textMesh.alignment = TextAlignmentOptions.Center;
         textMesh.fontStyle = FontStyles.Bold;
         textMesh.enableWordWrapping = true;
-        textMesh.rectTransform.sizeDelta = new Vector2(8f, 0f); // Auto-height
+        textMesh.rectTransform.sizeDelta = new Vector2(8f, 0f); 
         
-        // Ensure text is drawn above background (Order 100) and walls (Order 1)
+        
         if (textMesh.TryGetComponent(out MeshRenderer meshRenderer))
         {
             meshRenderer.sortingOrder = 101;
         }
 
-        // Force text to update bounds
+        
         textMesh.ForceMeshUpdate();
 
-        // Store text reference and original color for pulsating effect
+        
         _currentTextMesh = textMesh;
         _originalTextColor = textColor;
 
-        // Size background to fit text with padding
+        
         Bounds textBounds = textMesh.bounds;
         float bgWidth = textBounds.size.x + padding * 2f;
         float bgHeight = textBounds.size.y + padding * 2f;
         
         background.transform.localScale = new Vector3(bgWidth, bgHeight, 1f);
-        background.transform.localPosition = new Vector3(0f, 0f, 0.01f); // Slightly behind text
+        background.transform.localPosition = new Vector3(0f, 0f, 0.01f); 
 
-        // Center the text on the background
+        
         textObject.transform.localPosition = new Vector3(0f, 0f, -0.01f);
 
         _currentDialogueBox = dialogueBox;
 
-        // Start pulsating effect if enabled
+        
         if (enablePulsatingEffect)
         {
             StartPulsatingEffect();
         }
 
-        // Auto-hide after duration
+        
         StartCoroutine(HideDialogueAfterDelay(dialogueBox, displayDuration));
     }
 
-    /// <summary>
-    /// Reset the trigger so it can be triggered again (useful for testing or respawning)
-    /// </summary>
+    
+    
+    
     public void ResetTrigger()
     {
         _hasTriggered = false;

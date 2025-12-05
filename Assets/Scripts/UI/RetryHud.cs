@@ -3,12 +3,12 @@ using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using TMPro;
 
-// Runtime HUD to show an Options button with a simple pause menu on level scenes.
-// Provides Continue, Restart Level, and Main Menu.
+
+
 public class RetryHud : MonoBehaviour
 {
-    // Use a low sorting order so the instruction overlay (black popup)
-    // renders above this HUD and masks the button until gameplay starts.
+    
+    
     private const int SortingOrder = -10;
     private static readonly Color ButtonColor = new Color(0.2f, 0.45f, 0.9f, 1f);
     private static readonly Color PanelColor = new Color(0f, 0f, 0f, 0.85f);
@@ -17,7 +17,7 @@ public class RetryHud : MonoBehaviour
     private static void Install()
     {
         SceneManager.sceneLoaded += OnSceneLoaded;
-        // Handle the currently loaded scene when entering Play Mode
+        
         OnSceneLoaded(SceneManager.GetActiveScene(), LoadSceneMode.Single);
     }
 
@@ -72,7 +72,7 @@ public class RetryHud : MonoBehaviour
 
         if (GameManager.Instance != null)
         {
-            // Hide the button completely when the game is finished
+            
             _optionsButton.gameObject.SetActive(!GameManager.Instance.GameFinished);
         }
         else
@@ -98,7 +98,7 @@ public class RetryHud : MonoBehaviour
         rect.anchorMax = new Vector2(1f, 0f);
         rect.pivot = new Vector2(1f, 0f);
         rect.anchoredPosition = new Vector2(-15f, 15f);
-        rect.sizeDelta = new Vector2(220f, 75f); // Midway size
+        rect.sizeDelta = new Vector2(220f, 75f); 
 
         var img = btnGO.AddComponent<Image>();
         img.color = ButtonColor;
@@ -121,7 +121,7 @@ public class RetryHud : MonoBehaviour
         tmp.fontSizeMax = 34f;
         tmp.fontStyle = FontStyles.Bold;
         
-        // Theme Application
+        
         ApplyThemeToButton(img, _optionsButton, tmp);
         tmp.color = Color.white;
 
@@ -139,15 +139,15 @@ public class RetryHud : MonoBehaviour
         rect.anchorMin = new Vector2(0.5f, 0.5f);
         rect.anchorMax = new Vector2(0.5f, 0.5f);
         rect.pivot = new Vector2(0.5f, 0.5f);
-        rect.sizeDelta = new Vector2(800f, 600f); // Significantly increased panel size
+        rect.sizeDelta = new Vector2(800f, 600f); 
         rect.anchoredPosition = Vector2.zero;
 
         var bg = _modalPanel.AddComponent<Image>();
         bg.color = PanelColor;
 
         var layout = _modalPanel.AddComponent<VerticalLayoutGroup>();
-        layout.padding = new RectOffset(60, 60, 60, 60); // Significantly increased padding
-        layout.spacing = 50f; // Significantly increased spacing
+        layout.padding = new RectOffset(60, 60, 60, 60); 
+        layout.spacing = 50f; 
         layout.childAlignment = TextAnchor.MiddleCenter;
         layout.childControlHeight = true;
         layout.childForceExpandHeight = true;
@@ -158,7 +158,7 @@ public class RetryHud : MonoBehaviour
         var titleText = titleGO.AddComponent<TextMeshProUGUI>();
         titleText.text = "Options";
         titleText.alignment = TextAlignmentOptions.Center;
-        titleText.fontSize = 64f; // Increased title font
+        titleText.fontSize = 64f; 
         var font = GetThemeFont();
         if (font != null)
         {
@@ -187,12 +187,12 @@ public class RetryHud : MonoBehaviour
         button.onClick.AddListener(handler);
 
         var layout = btnGO.AddComponent<LayoutElement>();
-        layout.preferredHeight = 120f; // Significantly increased button height
+        layout.preferredHeight = 120f; 
 
         var labelGO = new GameObject("Label");
         labelGO.transform.SetParent(btnGO.transform, false);
         
-        // Fix: Ensure label stretches to fill the button
+        
         var labelRect = labelGO.AddComponent<RectTransform>();
         labelRect.anchorMin = Vector2.zero;
         labelRect.anchorMax = Vector2.one;
@@ -202,10 +202,10 @@ public class RetryHud : MonoBehaviour
         var labelText = labelGO.AddComponent<TextMeshProUGUI>();
         labelText.text = label;
         labelText.alignment = TextAlignmentOptions.Center;
-        labelText.fontSize = 48f; // Significantly increased font size
-        labelText.enableWordWrapping = false; // Prevent wrapping
+        labelText.fontSize = 48f; 
+        labelText.enableWordWrapping = false; 
         
-        // Theme Application for Modal Buttons
+        
         ApplyThemeToButton(img, button, labelText);
         ApplyDefaultModalFont(labelText);
         
@@ -260,7 +260,7 @@ public class RetryHud : MonoBehaviour
         labelText.color = Color.white;
     }
 
-    // --- Helper Methods to abstract Theme Provider ---
+    
 
     private TMP_FontAsset GetThemeFont()
     {

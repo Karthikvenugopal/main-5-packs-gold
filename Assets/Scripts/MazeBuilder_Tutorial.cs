@@ -38,10 +38,10 @@ public class MazeBuilder_Tutorial : MonoBehaviour
     private const string FireboySpawnName = "FireboySpawn";
     private const string WatergirlSpawnName = "WatergirlSpawn";
 
-    // Public property to expose cellSize
+    
     public float CellSize => cellSize;
 
-    // Public method to expose Layout
+    
     public string[] GetLayout() => Layout;
 
     private void Start()

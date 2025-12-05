@@ -1,18 +1,18 @@
 using UnityEngine;
 
-/// <summary>
-/// Editor-visible marker that indicates where a collectible token should spawn.
-/// Keeps level editing simple while still allowing the maze to be generated at runtime.
-/// </summary>
+
+
+
+
 public class TokenAnchor : MonoBehaviour
 {
     [SerializeField] private TokenSpriteConfigurator.TokenType tokenType = TokenSpriteConfigurator.TokenType.Fire;
 
     public TokenSpriteConfigurator.TokenType TokenType => tokenType;
 
-    /// <summary>
-    /// Sets the token type for runtime-created anchors.
-    /// </summary>
+    
+    
+    
     public void SetTokenType(TokenSpriteConfigurator.TokenType type)
     {
         tokenType = type;
@@ -29,7 +29,7 @@ public class TokenAnchor : MonoBehaviour
 
         if (tokenType == TokenSpriteConfigurator.TokenType.Fire)
         {
-            // Draw a simple triangle outline.
+            
             Vector3 top = position + Vector3.up * size;
             Vector3 left = position + Quaternion.Euler(0f, 0f, 140f) * Vector3.up * size;
             Vector3 right = position + Quaternion.Euler(0f, 0f, -140f) * Vector3.up * size;
@@ -40,7 +40,7 @@ public class TokenAnchor : MonoBehaviour
         }
         else
         {
-            // Draw a droplet-ish gizmo by combining a circle and a point.
+            
             Gizmos.DrawSphere(position + Vector3.up * size * 0.25f, size * 0.7f);
             Gizmos.DrawSphere(position + Vector3.down * size * 0.7f, size * 0.35f);
         }
