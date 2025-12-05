@@ -262,6 +262,7 @@ public class GameManager : MonoBehaviour
     private static readonly Color SteamPopupImageColor = Color.white;
     private static readonly Color SteamPopupTextColor = new Color(0.7f, 0.18f, 0.95f, 1f);
     private Canvas _hudCanvas;
+    private CanvasScaler _hudCanvasScaler;
     private GameObject _steamTimerContainer;
     private TextMeshProUGUI _steamTimerLabel;
     private bool _steamTimerActive;
@@ -843,6 +844,24 @@ public class GameManager : MonoBehaviour
                string.Equals(currentScene, "Level5", StringComparison.OrdinalIgnoreCase);
     }
 
+    private bool IsCurrentSceneLevel3Instruction()
+    {
+        string currentScene = SceneManager.GetActiveScene().name;
+        if (string.IsNullOrEmpty(currentScene))
+        {
+            return false;
+        }
+
+        if (!string.IsNullOrEmpty(level3InstructionSceneName) &&
+            string.Equals(currentScene, level3InstructionSceneName, StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        return string.Equals(currentScene, "Level3Scene", StringComparison.OrdinalIgnoreCase) ||
+               string.Equals(currentScene, "Level3", StringComparison.OrdinalIgnoreCase);
+    }
+
     
     
     
@@ -957,6 +976,42 @@ public class GameManager : MonoBehaviour
         return lines != null && lines.Length > 0;
     }
 
+    private float GetInstructionFontSizeForCurrentScene()
+    {
+        const float level3BaseSize = 52f;
+        const float defaultBaseSize = 60f;
+        const float minSize = 36f;
+        const float maxSize = 72f;
+
+        float baseSize = IsCurrentSceneLevel3Instruction() ? level3BaseSize : defaultBaseSize;
+        float scaledSize = baseSize * GetInstructionScaleFactor();
+        return Mathf.Clamp(scaledSize, minSize, maxSize);
+    }
+
+    private float GetInstructionScaleFactor()
+    {
+        const float minScale = 0.65f;
+        const float maxScale = 1.35f;
+
+        if (_hudCanvasScaler != null &&
+            _hudCanvasScaler.uiScaleMode == CanvasScaler.ScaleMode.ScaleWithScreenSize)
+        {
+            return Mathf.Clamp(_hudCanvasScaler.scaleFactor, minScale, maxScale);
+        }
+
+        float referenceWidth = _uiReferenceResolution.x > 0f ? _uiReferenceResolution.x : Screen.width;
+        float referenceHeight = _uiReferenceResolution.y > 0f ? _uiReferenceResolution.y : Screen.height;
+        if (referenceWidth <= 0f || referenceHeight <= 0f)
+        {
+            return 1f;
+        }
+
+        float widthScale = Screen.width / referenceWidth;
+        float heightScale = Screen.height / referenceHeight;
+        float computedScale = Mathf.Lerp(widthScale, heightScale, 0.5f);
+        return Mathf.Clamp(computedScale, minScale, maxScale);
+    }
+
     private void CreateInstructionPanelIfNeeded()
     {
         if (_hudCanvas == null || _instructionPanel != null) return;
@@ -988,7 +1043,7 @@ public class GameManager : MonoBehaviour
         TextMeshProUGUI instructionsLabel = instructionsGO.AddComponent<TextMeshProUGUI>();
         
         instructionsLabel.alignment = TextAlignmentOptions.Center;
-        instructionsLabel.fontSize = 60f;
+        instructionsLabel.fontSize = GetInstructionFontSizeForCurrentScene();
         instructionsLabel.fontStyle = FontStyles.Bold;
         instructionsLabel.text = lines != null && lines.Length > 0
             ? string.Join("\n", lines)
@@ -1083,6 +1138,8 @@ public class GameManager : MonoBehaviour
         scaler.referenceResolution = referenceResolution;
         _uiReferenceResolution = referenceResolution;
         scaler.matchWidthOrHeight = 0.5f;
+
+        _hudCanvasScaler = scaler;
 
         canvasGO.AddComponent<GraphicRaycaster>();
 
