@@ -37,7 +37,7 @@ public class GameManager : MonoBehaviour
     [Header("UI Messages")]
     [SerializeField] private string levelIntroMessage = "";
     [SerializeField] private string levelStartMessage = "";
-    [SerializeField] private string levelVictoryMessage = "Victory! Both heroes reached safety. Press R to play again.";
+    [SerializeField] private string levelVictoryMessage = "";
     [SerializeField] private string waitForPartnerMessage = "{0} made it. Wait for your partner!";
     [SerializeField] private string exitReminderMessage = "Both heroes must stand in the exit to finish.";
     [Header("Player Hearts")]
@@ -1022,6 +1022,15 @@ public class GameManager : MonoBehaviour
             Time.timeScale = _previousTimeScale;
             _instructionPausedTime = false;
         }
+    }
+
+    /// <summary>
+    /// Returns true if the instruction panel is currently waiting for player acknowledgment.
+    /// This can be used by other scripts (like Level5Manager) to prevent input conflicts.
+    /// </summary>
+    public bool IsWaitingForInstructionAck()
+    {
+        return _waitingForInstructionAck;
     }
 
     // --- MODIFICATION START ---

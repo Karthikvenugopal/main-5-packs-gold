@@ -518,6 +518,10 @@ PrefabInstance:
       value: 
       objectReference: {fileID: -2880978766386009668, guid: 28fb0f56d13b04528a3ef03f381a909e, type: 3}
     - target: {fileID: 777697172324581036, guid: 8c454dc0a577643e89ba9e1793c4e03f, type: 3}
+      propertyPath: levelVictoryMessage
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 777697172324581036, guid: 8c454dc0a577643e89ba9e1793c4e03f, type: 3}
       propertyPath: aquaHeartEmptySprite
       value: 
       objectReference: {fileID: -3368947314594817166, guid: 146106181316f4840b888eff730ebb50, type: 3}
