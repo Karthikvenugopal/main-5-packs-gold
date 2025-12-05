@@ -21,7 +21,7 @@ public class MazeBuilder_Level1 : MonoBehaviour
     private static readonly string[] Layout =
     {
         "####################",
-        "#F....##..I..fw...E#",
+        "#F....##..I...w...E#",
         "###.######w#####I###",
         "###f.H.###...H.w.###",
         "###.##...H.#####.###",
