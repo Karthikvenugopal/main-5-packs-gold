@@ -477,21 +477,21 @@ public class GameManagerTutorial : MonoBehaviour
         masterRect.anchorMax = new Vector2(1f, 1f);
         masterRect.pivot = new Vector2(1f, 1f);
         // Position it 40px in from the top-right corner of the bar
-        masterRect.anchoredPosition = new Vector2(-40f, -40f); 
+        masterRect.anchoredPosition = new Vector2(-40f, -20f); 
         masterRect.sizeDelta = new Vector2(360f, 200f); 
 
         // Create the "Life" Title
         GameObject titleLabelGO = new GameObject("TitleLabel");
         titleLabelGO.transform.SetParent(heartsMasterContainer.transform, false);
         TextMeshProUGUI titleLabel = titleLabelGO.AddComponent<TextMeshProUGUI>();
-        titleLabel.text = "Life";
+        titleLabel.text = "Lives";
         titleLabel.fontSize = 42f;
         titleLabel.fontStyle = FontStyles.Bold;
         titleLabel.color = Color.white;
-        titleLabel.alignment = TextAlignmentOptions.Right;
+        titleLabel.alignment = TextAlignmentOptions.Left;
 
         LayoutElement titleLayout = titleLabelGO.AddComponent<LayoutElement>();
-        titleLayout.preferredWidth = 360f; 
+        titleLayout.preferredWidth = 120f; 
         
         // Create Hearts Container for Ember
         GameObject emberHeartsGO = new GameObject("EmberHeartsContainer");

@@ -968,12 +968,13 @@ public class GameManager : MonoBehaviour
         instructionsRect.anchorMin = new Vector2(0.5f, 0.5f);
         instructionsRect.anchorMax = new Vector2(0.5f, 0.5f);
         instructionsRect.pivot = new Vector2(0.5f, 0.5f);
-        instructionsRect.sizeDelta = new Vector2(1900f, 50f);
+        instructionsRect.sizeDelta = new Vector2(1900f, 180f);
+        instructionsRect.anchoredPosition = new Vector2(0f, 180f);
 
         TextMeshProUGUI instructionsLabel = instructionsGO.AddComponent<TextMeshProUGUI>();
         // Reverted to default font for readability
         instructionsLabel.alignment = TextAlignmentOptions.Center;
-        instructionsLabel.fontSize = 60f;
+        instructionsLabel.fontSize = 80f;
         instructionsLabel.fontStyle = FontStyles.Bold;
         instructionsLabel.text = lines != null && lines.Length > 0
             ? string.Join("\n", lines)
