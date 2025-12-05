@@ -145,7 +145,7 @@ Transform:
   m_GameObject: {fileID: 38690079}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 18, y: -7.45, z: 0}
+  m_LocalPosition: {x: 18.54, y: -7.45, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -392,6 +392,10 @@ PrefabInstance:
       propertyPath: m_Layer
       value: 6
       objectReference: {fileID: 0}
+    - target: {fileID: 6349953291806104131, guid: 55dbc409933f0ce45ae632a39313ee5b, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -441,7 +445,7 @@ MonoBehaviour:
   cannonHitEffectPrefab: {fileID: 0}
   fireHitEffectPrefab: {fileID: 0}
   iceHitEffectPrefab: {fileID: 0}
-  fireCannonPositionOffset: {x: -0.5, y: 0}
+  fireCannonPositionOffset: {x: 0, y: 0}
   gameManager: {fileID: 1746984134}
   tokenPlacementManager: {fileID: 2110000000000000002}
   showSequenceOutlines: 1
@@ -490,7 +494,7 @@ Transform:
   m_GameObject: {fileID: 1672909859}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 1.05, y: -3.21, z: 0}
+  m_LocalPosition: {x: 1.59, y: -3.68, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -542,6 +546,7 @@ MonoBehaviour:
   playerPrefab: {fileID: 7307446650723487989, guid: 44964639595521e40aa2d28dda0ba7bd, type: 3}
   gameManager: {fileID: 1746984134}
   gameManagerTutorial: {fileID: 0}
+  playerVerticalOffset: 0
 --- !u!4 &1746984133
 Transform:
   m_ObjectHideFlags: 0
@@ -571,9 +576,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::GameManager
   isTutorialMode: 0
   messageBackground: {r: 0, g: 0, b: 0, a: 0.55}
+  upperUiFont: {fileID: 11400000, guid: 161475e7879c4f21ba9b32676fc849ae, type: 2}
+  instructionFont: {fileID: 0}
   levelIntroMessage: 
   levelStartMessage: 
-  levelVictoryMessage: Victory! Both heroes reached safety. Press R to play again.
+  levelVictoryMessage: 
   waitForPartnerMessage: '{0} made it. Wait for your partner!'
   exitReminderMessage: Both heroes must stand in the exit to finish.
   startingHearts: 3
@@ -583,6 +590,14 @@ MonoBehaviour:
   useVictoryPanel: 1
   victoryTitleText: Level Complete!
   victoryBodyText: Choose where to go next.
+  victorySlogans:
+  - No Cap, That Was Epic!
+  - Main Character Energy!
+  - Slayed It!
+  - Built Different!
+  - GOATed Behavior!
+  - 'Vibe Check: Passed!'
+  - Sheeeeeesh! You Did That!
   defeatTitleText: Out of Hearts
   defeatBodyText: You ran out of hearts. Try again?
   nextLevelButtonText: Next Level
@@ -599,6 +614,8 @@ MonoBehaviour:
   targetTimeSeconds: 60
   level2TargetTimeSeconds: 180
   level3TargetTimeSeconds: 120
+  level4TargetTimeSeconds: 150
+  level5TargetTimeSeconds: 0
   showInstructionPanel: 1
   instructionPanelSceneName: Level1Scene
   instructionLines:
@@ -623,6 +640,19 @@ MonoBehaviour:
   - 
   - Keep collecting tokens and avoid hazards!
   level3InstructionContinuePrompt: Press Space to start
+  level4InstructionSceneName: Level4Scene
+  level4InstructionLines:
+  - <b>Level 4</b>
+  - 
+  - Template ready. Drop in your maze layout and hazards.
+  level4InstructionContinuePrompt: Press Space to start
+  level5InstructionSceneName: Level5Scene
+  level5InstructionLines:
+  - <b>Level 5</b>
+  - 
+  - Use SPACE button to swap positions
+  - 'Can only Swap 4 times: Choose Wisely!'
+  level5InstructionContinuePrompt: Press Space to start
   emberHeartFullSprite: {fileID: 6341348101557482619, guid: 3b91ad87000d64526b2b182ed1ef4834, type: 3}
   emberHeartEmptySprite: {fileID: -4643077359141595314, guid: 3333514574fc144eb95cc807c8348464, type: 3}
   aquaHeartFullSprite: {fileID: -2880978766386009668, guid: 28fb0f56d13b04528a3ef03f381a909e, type: 3}
@@ -634,7 +664,18 @@ MonoBehaviour:
   heartIconSize: {x: 40, y: 40}
   tokenIconSize: {x: 40, y: 40}
   topUiBarHeight: 160
+  topUiBarWidth: 1320
   topUiBarColor: {r: 0, g: 0, b: 0, a: 0}
+  disableTopUiBar: 0
+  swapCounterContainerOverride: {fileID: 0}
+  swapCounterLabelOverride: {fileID: 0}
+  themeFont: {fileID: 11400000, guid: 5abeab07b85ff4624bbab4b405f329d8, type: 2}
+  themeButtonSprite: {fileID: 2530564911472380330, guid: f471c4e2950c6405c9e399cd725275be, type: 3}
+  themeButtonNormalColor: {r: 1, g: 1, b: 1, a: 1}
+  themeButtonHighlightedColor: {r: 0.8392157, g: 0.7607843, b: 1, a: 1}
+  themeButtonPressedColor: {r: 0.784, g: 0.784, b: 0.784, a: 1}
+  themeButtonSelectedColor: {r: 0.961, g: 0.961, b: 0.961, a: 1}
+  themeButtonTextColor: {r: 0.2, g: 0.2, b: 0.2, a: 1}
   heartLossSfx: {fileID: 0}
   heartLossSfxVolume: 0.9
   fireTokensCollected: 0
@@ -859,7 +900,7 @@ Transform:
   m_GameObject: {fileID: 2110000000000000100}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 22.08, y: -1.11, z: 0}
+  m_LocalPosition: {x: 23.43, y: -2.6, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -904,7 +945,7 @@ Transform:
   m_GameObject: {fileID: 2110000000000000200}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 11.97, y: -4.26, z: 0}
+  m_LocalPosition: {x: 12.51, y: -4.26, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -949,7 +990,7 @@ Transform:
   m_GameObject: {fileID: 2110000000000000300}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 12.45, y: -1.14, z: 0}
+  m_LocalPosition: {x: 13.4, y: -1.61, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -994,7 +1035,7 @@ Transform:
   m_GameObject: {fileID: 2110000000000000400}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 8.13, y: -1.14, z: 0}
+  m_LocalPosition: {x: 8.54, y: -1.82, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1039,7 +1080,7 @@ Transform:
   m_GameObject: {fileID: 2110000000000000500}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 15.99, y: -7.81, z: 0}
+  m_LocalPosition: {x: 16.6, y: -7.81, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1084,7 +1125,7 @@ Transform:
   m_GameObject: {fileID: 2110000000000000600}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 14.03, y: -4.39, z: 0}
+  m_LocalPosition: {x: 14.57, y: -5.34, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []

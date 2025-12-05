@@ -3,10 +3,10 @@ using UnityEngine;
 
 namespace Analytics
 {
-    /// <summary>
-    /// Persists token completion progress across scene transitions so analytics
-    /// data can be retrieved even after the level GameManager is destroyed.
-    /// </summary>
+    
+    
+    
+    
     public class TokenTracker : MonoBehaviour
     {
         private static TokenTracker _instance;
@@ -39,9 +39,9 @@ namespace Analytics
             return _instance;
         }
 
-        /// <summary>
-        /// Resets tracked data for the specified level (called when a level is about to begin).
-        /// </summary>
+        
+        
+        
         public void ResetForLevel(string levelId, int tokensAvailable, int tokensCollected)
         {
             _levelId = levelId ?? string.Empty;
@@ -50,9 +50,9 @@ namespace Analytics
             _hasData = _tokensAvailable > 0 || _tokensCollected > 0;
         }
 
-        /// <summary>
-        /// Updates the running totals for the active level.
-        /// </summary>
+        
+        
+        
         public void UpdateTotals(string levelId, int tokensCollected, int tokensAvailable)
         {
             if (string.IsNullOrWhiteSpace(levelId)) return;

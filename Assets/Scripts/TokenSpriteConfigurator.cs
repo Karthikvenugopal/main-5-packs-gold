@@ -1,9 +1,9 @@
 using UnityEngine;
 
-/// <summary>
-/// Assigns a procedurally generated sprite to the token at edit and play time.
-/// This keeps the project self-contained without relying on external art assets.
-/// </summary>
+
+
+
+
 [RequireComponent(typeof(SpriteRenderer))]
 public class TokenSpriteConfigurator : MonoBehaviour
 {
@@ -101,7 +101,7 @@ public class TokenSpriteConfigurator : MonoBehaviour
             return;
         }
 
-        // Use position-based hash in edit mode so each token keeps a stable phase without relying on Random state.
+        
         if (!Application.isPlaying)
         {
             int hash = transform.GetInstanceID();
@@ -174,9 +174,9 @@ public class TokenSpriteConfigurator : MonoBehaviour
     }
 }
 
-/// <summary>
-/// Generates simple triangle and droplet sprites procedurally so no image files are required.
-/// </summary>
+
+
+
 public static class TokenSpriteLibrary
 {
     private static Sprite _fireSprite;

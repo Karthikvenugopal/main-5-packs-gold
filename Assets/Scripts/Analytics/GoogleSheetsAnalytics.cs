@@ -10,22 +10,12 @@ namespace Analytics
 {
     public static class GoogleSheetsAnalytics
     {
-        private const string ConfigResourceName = "google_sheets_config"; // Resources/google_sheets_config.json
-
-        private static readonly HashSet<string> AllowedLevels = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-        {
-            "level1scene",
-            "level2scene",
-            "level3scene",
-            "level4scene",
-            "level1",
-            "level2",
-            "level3",
-            "level4"
-        };
+        private const string ConfigResourceName = "google_sheets_config"; 
+        
+        private const string DefaultSheetId = "";
 
         private static string _webAppUrl;
-        private static string _sheetId; // Optional spreadsheet id for standalone Apps Script
+        private static string _sheetId; 
         private static string _sessionId;
         private static bool _initialized;
 
@@ -33,7 +23,7 @@ namespace Analytics
         private class Config
         {
             public string webAppUrl;
-            public string sheetId; // optional
+            public string sheetId; 
         }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
@@ -60,6 +50,12 @@ namespace Analytics
             catch (Exception e)
             {
                 Debug.LogWarning($"[Analytics] Failed to load config: {e.Message}");
+            }
+
+            
+            if (string.IsNullOrWhiteSpace(_sheetId))
+            {
+                _sheetId = DefaultSheetId;
             }
 
             if (string.IsNullOrWhiteSpace(_webAppUrl))
@@ -94,7 +90,7 @@ namespace Analytics
             };
 
             TryAddSheetId(data);
-            // Single POST send; no coroutine wrapper required for this sender
+            
             SendFormUrlEncoded(_webAppUrl, data);
         }
 
@@ -165,7 +161,7 @@ namespace Analytics
             SendGetQuery(_webAppUrl, data);
         }
 
-        // Retry click analytics removed per request
+        
 
         public static void SendHeartLoss(
             string levelId,
@@ -234,9 +230,8 @@ namespace Analytics
 
         private static bool EnsureLevelAllowed(string levelId, string context)
         {
-            if (AllowedLevels.Contains(levelId ?? string.Empty)) return true;
-
-            Debug.Log($"[Analytics] Skipping {context} for scene '{levelId}'. Only Level1/Level2/Level3/Level4 allowed.");
+            if (!string.IsNullOrWhiteSpace(levelId)) return true;
+            Debug.Log($"[Analytics] Skipping {context}: level id is empty.");
             return false;
         }
 
@@ -245,6 +240,9 @@ namespace Analytics
             if (!string.IsNullOrWhiteSpace(_sheetId))
             {
                 data["sid"] = _sheetId;
+                #if UNITY_EDITOR || DEVELOPMENT_BUILD
+                Debug.Log($"[Analytics] Using sheet id '{_sheetId}'");
+                #endif
             }
         }
 
@@ -315,7 +313,14 @@ namespace Analytics
 
                 if (failed)
                 {
-                    Debug.LogWarning($"[Analytics] {(isGet ? "GET" : "POST")} failed: {errorSummary}");
+                    string body = request.downloadHandler != null ? request.downloadHandler.text : string.Empty;
+                    string snippet = string.Empty;
+                    if (!string.IsNullOrEmpty(body))
+                    {
+                        snippet = body.Length > 240 ? body.Substring(0, 240) + " …" : body;
+                    }
+
+                    Debug.LogWarning($"[Analytics] {(isGet ? "GET" : "POST")} failed: {errorSummary}. Body: {snippet}");
                 }
                 else
                 {

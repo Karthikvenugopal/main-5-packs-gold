@@ -2,9 +2,9 @@ using UnityEngine;
 
 namespace Analytics
 {
-    /// <summary>
-    /// Immutable snapshot of token-completion progress for analytics.
-    /// </summary>
+    
+    
+    
     public readonly struct TokenCompletionSnapshot
     {
         public readonly int tokensCollected;

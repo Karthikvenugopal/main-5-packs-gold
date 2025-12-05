@@ -10,16 +10,30 @@ public enum PlayerRole
 
 [RequireComponent(typeof(Rigidbody2D))]
 [RequireComponent(typeof(Collider2D))]
+[RequireComponent(typeof(Animator))]
 public class CoopPlayerController : MonoBehaviour
 {
     [Header("Movement")]
     [SerializeField] private float moveSpeed = 4.0f;
     [SerializeField] private LayerMask collisionMask;
     [SerializeField] private float collisionBoxScale = 0.75f;
+    [Header("Steam Animations")]
+    [SerializeField] private RuntimeAnimatorController emberSteamAnimatorController;
+    [SerializeField] private RuntimeAnimatorController aquaSteamAnimatorController;
+    [Tooltip("Scale applied to the circle collider when sampling collisions to keep movement away from corners.")]
+    [SerializeField, Range(0.5f, 1f)] private float circleCastScale = 0.85f;
 
     [Header("Visuals")]
     [SerializeField] private Color fireboyColor = new Color(0.93f, 0.39f, 0.18f);
     [SerializeField] private Color watergirlColor = new Color(0.2f, 0.45f, 0.95f);
+
+    [Header("Animations")]
+    [SerializeField] private RuntimeAnimatorController aquaAnimatorController;
+    [SerializeField] private RuntimeAnimatorController emberAnimatorController;
+
+    [Header("Ember Collider")]
+    [SerializeField] private Vector2 emberColliderSize = new Vector2(0.65f, 0.65f);
+    [SerializeField] private Vector2 emberColliderOffset = Vector2.zero;
 
     [Header("Hazard Damage")]
     [SerializeField] private float hazardDamageCooldown = 0.5f;
@@ -56,7 +70,6 @@ public class CoopPlayerController : MonoBehaviour
     [SerializeField, Range(0.5f, 5f)] private float hazardInputLockDuration = 1.5f;
 
     private Rigidbody2D _rigidbody;
-    private Collider2D _collider;
     private SpriteRenderer _spriteRenderer;
     private GameManager _gameManager;
     private GameManagerTutorial _gameManagerTutorial;
@@ -70,20 +83,45 @@ public class CoopPlayerController : MonoBehaviour
     private float _inputLockRemaining;
     private Coroutine _hurtScaleRoutine;
     private Vector3 _initialScale;
+    private Animator _animator;
+    private string _currentStateName;
+    private BoxCollider2D _boxCollider;
+    private Vector2 _defaultColliderSize;
+    private Vector2 _defaultColliderOffset;
+    private bool _isUsingSteamAnimator;
+    private CircleCollider2D _circleCollider;
+    private Collider2D _collider;
+    private Collider2D[] _allColliders;
+    private static readonly List<CoopPlayerController> s_Players = new();
 
     private readonly Dictionary<int, float> _lastHazardDamageTimes = new();
 
-    // 蒸汽状态引用
+    
     private PlayerSteamState _steamState;
     public bool IsInSteamMode => _steamState != null && _steamState.IsInSteamMode;
+    private bool _wasInSteamMode;
 
     public PlayerRole Role => _role;
 
     private void Awake()
     {
         _rigidbody = GetComponent<Rigidbody2D>();
-        _collider = GetComponent<Collider2D>();
+        _circleCollider = GetComponent<CircleCollider2D>();
+        _collider = _circleCollider ?? GetComponent<Collider2D>();
+        _allColliders = GetComponents<Collider2D>();
         _spriteRenderer = GetComponent<SpriteRenderer>();
+        _animator = GetComponent<Animator>();
+        _boxCollider = GetComponent<BoxCollider2D>();
+        if (_boxCollider != null)
+        {
+            _defaultColliderSize = _boxCollider.size;
+            _defaultColliderOffset = _boxCollider.offset;
+        }
+
+        if (_animator == null)
+        {
+            _animator = gameObject.AddComponent<Animator>();
+        }
 
         _rigidbody.gravityScale = 0f;
         _rigidbody.freezeRotation = true;
@@ -101,6 +139,23 @@ public class CoopPlayerController : MonoBehaviour
         {
             Debug.LogWarning($"[CoopPlayerController] {name} has NO PlayerSteamState component. Steam mode will never be on.");
         }
+        if (!s_Players.Contains(this))
+        {
+            s_Players.Add(this);
+        }
+    }
+
+    private void OnEnable()
+    {
+        if (!s_Players.Contains(this))
+        {
+            s_Players.Add(this);
+        }
+    }
+
+    private void OnDisable()
+    {
+        s_Players.Remove(this);
     }
 
     public void Initialize(PlayerRole role, GameManager manager)
@@ -111,6 +166,8 @@ public class CoopPlayerController : MonoBehaviour
         _movementEnabled = false;
 
         ApplyRoleVisuals();
+        ConfigureRoleAnimations(role);
+        ConfigureRoleCollider(role);
         ResetScaleImmediate();
         _gameManager?.RegisterPlayer(this);
     }
@@ -123,12 +180,116 @@ public class CoopPlayerController : MonoBehaviour
         _movementEnabled = false;
 
         ApplyRoleVisuals();
+        ConfigureRoleAnimations(role);
+        ConfigureRoleCollider(role);
         ResetScaleImmediate();
         _gameManagerTutorial?.RegisterPlayer(this);
     }
 
+    private void ConfigureRoleAnimations(PlayerRole role)
+    {
+        ApplyRoleAnimatorController(role);
+        _currentStateName = null;
+        UpdateMovementAnimation(Vector2.zero);
+        ConfigureRoleCollider(role);
+        _isUsingSteamAnimator = false;
+        RefreshSteamAnimator();
+    }
+
+    private void ApplyRoleAnimatorController(PlayerRole role)
+    {
+        if (_animator == null) return;
+        RuntimeAnimatorController controller = role == PlayerRole.Fireboy ? emberAnimatorController : aquaAnimatorController;
+        if (controller == null)
+        {
+            Debug.LogWarning($"[CoopPlayerController] {name} requires an AnimatorController for {role}.", this);
+            return;
+        }
+
+        _animator.runtimeAnimatorController = controller;
+    }
+
+    private void RefreshSteamAnimator()
+    {
+        if (_animator == null || _role == null) return;
+        bool shouldUseSteam = _steamState != null && _steamState.IsInSteamMode;
+        if (shouldUseSteam == _isUsingSteamAnimator) return;
+
+        _isUsingSteamAnimator = shouldUseSteam;
+        RuntimeAnimatorController controller = null;
+        if (shouldUseSteam)
+        {
+            controller = _role == PlayerRole.Fireboy ? emberSteamAnimatorController : aquaSteamAnimatorController;
+        }
+        else
+        {
+            controller = _role == PlayerRole.Fireboy ? emberAnimatorController : aquaAnimatorController;
+        }
+
+        if (controller == null)
+        {
+            controller = _role == PlayerRole.Fireboy ? emberAnimatorController : aquaAnimatorController;
+        }
+
+        if (controller != null)
+        {
+            _animator.runtimeAnimatorController = controller;
+        }
+
+        UpdateSteamCollision();
+    }
+
+    private void UpdateSteamCollision()
+    {
+        if (_allColliders == null || _allColliders.Length == 0) return;
+
+        foreach (CoopPlayerController other in s_Players)
+        {
+            if (other == null || other == this) continue;
+            if (other._allColliders == null || other._allColliders.Length == 0) continue;
+
+            bool ignore = IsInSteamMode || other.IsInSteamMode;
+            foreach (Collider2D ownCollider in _allColliders)
+            {
+                if (ownCollider == null) continue;
+                foreach (Collider2D otherCollider in other._allColliders)
+                {
+                    if (otherCollider == null) continue;
+                    Physics2D.IgnoreCollision(ownCollider, otherCollider, ignore);
+                }
+            }
+        }
+    }
+
+    private void ConfigureRoleCollider(PlayerRole role)
+    {
+        if (_boxCollider == null) return;
+
+        if (role == PlayerRole.Fireboy)
+        {
+            _boxCollider.size = emberColliderSize;
+            _boxCollider.offset = emberColliderOffset;
+        }
+        else
+        {
+            _boxCollider.size = _defaultColliderSize;
+            _boxCollider.offset = _defaultColliderOffset;
+        }
+    }
+
     private void Update()
     {
+        bool currentlyInSteam = IsInSteamMode;
+        if (currentlyInSteam && !_wasInSteamMode)
+        {
+            StopBounce();
+        }
+        if (currentlyInSteam != _wasInSteamMode)
+        {
+            _wasInSteamMode = currentlyInSteam;
+            RefreshSteamAnimator();
+        }
+
         if (!_movementEnabled)
         {
             _moveInput = Vector2.zero;
@@ -174,6 +335,8 @@ public class CoopPlayerController : MonoBehaviour
 
     private void FixedUpdate()
     {
+        UpdateMovementAnimation(_moveInput);
+
         if (_bounceTimeRemaining > 0f && _bounceVelocity.sqrMagnitude > 0.0001f)
         {
             SimulateBounce(Time.fixedDeltaTime);
@@ -187,26 +350,19 @@ public class CoopPlayerController : MonoBehaviour
         Vector2 targetPosition = _rigidbody.position + direction * distance;
 
         Vector2 boxSize = GetColliderSize() * collisionBoxScale;
+        bool useCircleCast = _circleCollider != null;
+        float castRadius = Mathf.Max(0.05f, GetCircleRadius() * circleCastScale);
+        float castDistance = distance + 0.01f;
 
-        RaycastHit2D hit = Physics2D.BoxCast(
-            _rigidbody.position,
-            boxSize,
-            0f,
-            direction,
-            distance + 0.01f,
-            collisionMask
-        );
+        RaycastHit2D hit = useCircleCast
+            ? Physics2D.CircleCast(_rigidbody.position, castRadius, direction, castDistance, collisionMask)
+            : Physics2D.BoxCast(_rigidbody.position, boxSize, 0f, direction, castDistance, collisionMask);
 
         if (hit.collider != null && TryHandleSpecialObstacle(hit.collider))
         {
-            hit = Physics2D.BoxCast(
-                _rigidbody.position,
-                boxSize,
-                0f,
-                direction,
-                distance + 0.01f,
-                collisionMask
-            );
+            hit = useCircleCast
+                ? Physics2D.CircleCast(_rigidbody.position, castRadius, direction, castDistance, collisionMask)
+                : Physics2D.BoxCast(_rigidbody.position, boxSize, 0f, direction, castDistance, collisionMask);
         }
 
         if (_pendingPushOverride)
@@ -225,22 +381,58 @@ public class CoopPlayerController : MonoBehaviour
         }
     }
 
+    private void UpdateMovementAnimation(Vector2 direction)
+    {
+        if (_animator == null) return;
+
+        string targetState = MapDirectionToState(direction);
+        if (string.IsNullOrEmpty(targetState)) return;
+
+        if (_currentStateName == targetState) return;
+
+        _animator.Play(targetState);
+        _currentStateName = targetState;
+    }
+
+    private static string MapDirectionToState(Vector2 direction)
+    {
+        if (direction.sqrMagnitude < 0.0001f) return "Idle";
+
+        Vector2 abs = new Vector2(Mathf.Abs(direction.x), Mathf.Abs(direction.y));
+
+        if (abs.x >= abs.y)
+        {
+            return direction.x >= 0f ? "Right" : "Left";
+        }
+
+        return direction.y >= 0f ? "Up" : "Down";
+    }
+
     private Vector2 GetColliderSize()
     {
+        if (_collider == null) return Vector2.one * 0.9f;
+
         return _collider switch
         {
-            BoxCollider2D box => box.size,
-            CircleCollider2D circle => Vector2.one * circle.radius * 2f,
-            CapsuleCollider2D capsule => capsule.size,
+            CircleCollider2D circle when circle != null => Vector2.one * GetCircleRadius() * 2f,
+            BoxCollider2D box when box != null => box.size,
+            CapsuleCollider2D capsule when capsule != null => capsule.size,
             _ => Vector2.one * 0.9f
         };
+    }
+
+    private float GetCircleRadius()
+    {
+        if (_circleCollider == null) return 0.45f;
+        float maxScale = Mathf.Max(Mathf.Abs(transform.lossyScale.x), Mathf.Abs(transform.lossyScale.y));
+        return _circleCollider.radius * maxScale;
     }
 
     private bool TryHandleSpecialObstacle(Collider2D collider)
     {
         if (collider == null) return false;
 
-        // 蒸汽模式：不触发任何特殊墙体逻辑
+        
         if (IsInSteamMode)
         {
             Debug.Log($"[CoopPlayerController] {name} is in STEAM MODE, ignore special obstacle: {collider.name}", this);
@@ -365,7 +557,7 @@ public class CoopPlayerController : MonoBehaviour
 
     private bool TryApplyHazardDamage(Collider2D hazard)
     {
-        // 蒸汽模式：完全免疫 Hazard 伤害
+        
         if (IsInSteamMode)
         {
             Debug.Log($"[CoopPlayerController] {name} in STEAM MODE, ignore hazard damage from {hazard.name}", this);
@@ -567,12 +759,12 @@ public class CoopPlayerController : MonoBehaviour
         transform.localScale = baseScale;
     }
 
-    /// <summary>
-    /// Allows non-wall enemies (like Wisp) to inflict damage on the player.
-    /// </summary>
+    
+    
+    
     public void TakeDamageFromEnemy(Collider2D enemyCollider, int damageAmount = 1)
     {
-        // 蒸汽模式：敌人也不能掉心
+        
         if (IsInSteamMode)
         {
             Debug.Log($"[CoopPlayerController] {name} in STEAM MODE, ignore enemy damage from {enemyCollider.name}", this);
@@ -613,5 +805,10 @@ public class CoopPlayerController : MonoBehaviour
     private static float EaseInQuad(float t)
     {
         return t * t;
+    }
+
+    private void OnDestroy()
+    {
+        s_Players.Remove(this);
     }
 }

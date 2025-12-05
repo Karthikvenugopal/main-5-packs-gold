@@ -2,7 +2,6 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using TMPro;
 
 public class Level3Manager : MonoBehaviour, ISequentialHazardManager
 {
@@ -42,13 +41,13 @@ public class Level3Manager : MonoBehaviour, ISequentialHazardManager
     private static readonly string[] Layout =
     {
         "#########################",
-        "##...#.#.#.............##",
-        "##...#.#.#.#.#.#.#.#....#",
+        "##...#.#.#..............#",
+        "#....#.#.#.#.#.#.#.#....#",
         "#....#...#.#.#.#.#.#...##",
-        "##.....#...#.#.#.#.#.#.##",
-        "##...#.#.#.#.#.#.#.#...##",
-        "##.#.#.###.#...#.#.#...F#",
-        "#W...#...#.#.#.#.#.#...##",
+        "##.....#...#.#.#.#.#....#",
+        "##...#.#.#.#.#.#.#.#.#..#",
+        "#....#.###.#...#.#.#...F#",
+        "#W.#.#...#.#.#.#.#.#...##",
         "#....#.#.#.#.#.#.#.#...##",
         "##...#.#.#.#.#...#.#...##",
         "##222#.#.....#.#...#111##",
@@ -62,7 +61,7 @@ public class Level3Manager : MonoBehaviour, ISequentialHazardManager
     private static readonly Vector2Int FireSpawnCell = FindSpawnCellInLayout('F');
     private static readonly Vector2Int WaterSpawnCell = FindSpawnCellInLayout('W');
 
-    private static readonly Vector2Int CenterExitCell = new Vector2Int(18, 10);
+    private static readonly Vector2Int CenterExitCell = new Vector2Int(17, 10);
     private static readonly Vector2Int[] CardinalDirections =
     {
         Vector2Int.right,
@@ -129,7 +128,7 @@ public class Level3Manager : MonoBehaviour, ISequentialHazardManager
         )
     };
 
-    private readonly Dictionary<Vector2Int, Vector2> _cellOrigins = new Dictionary<Vector2Int, Vector2>();
+    private readonly Dictionary<Vector2Int, Vector2> _cellCenters = new Dictionary<Vector2Int, Vector2>();
     private readonly HashSet<Vector2Int> _sequenceReservedCells = new HashSet<Vector2Int>();
     private readonly Dictionary<Vector2Int, SequenceActionType> _sequenceCellTypes = new Dictionary<Vector2Int, SequenceActionType>();
     private readonly Dictionary<Vector2Int, GameObject> _hazardOutlines = new Dictionary<Vector2Int, GameObject>();
@@ -225,7 +224,7 @@ public class Level3Manager : MonoBehaviour, ISequentialHazardManager
             {
                 Vector2Int gridPosition = new Vector2Int(x, y);
                 Vector2 cellPosition = GetCellPosition(gridPosition);
-                _cellOrigins[gridPosition] = cellPosition;
+                _cellCenters[gridPosition] = cellPosition;
 
                 bool reservedForSequence = _sequenceReservedCells.Contains(gridPosition);
                 char cell = row[x];
@@ -277,23 +276,23 @@ public class Level3Manager : MonoBehaviour, ISequentialHazardManager
                         }
                         break;
 
-                case '1':
-                    SpawnFloor(cellPosition);
-                    SpawnCannon(cellPosition, CannonVariant.Fire);
-                    break;
+                    case '1':
+                        SpawnFloor(cellPosition);
+                        SpawnCannon(cellPosition, CannonVariant.Fire);
+                        break;
 
-                case '2':
-                    SpawnFloor(cellPosition);
-                    bool snapToCeiling = ShouldSnapIceCannonToCeiling(gridPosition);
-                    SpawnCannon(cellPosition, CannonVariant.Ice, snapToCeiling);
-                    break;
+                    case '2':
+                        SpawnFloor(cellPosition);
+                        bool snapToCeiling = ShouldSnapIceCannonToCeiling(gridPosition);
+                        SpawnCannon(cellPosition, CannonVariant.Ice, snapToCeiling);
+                        break;
 
                     default:
                         SpawnFloor(cellPosition);
                         break;
                 }
 
-                // Additional spawn marker for Fireboy if the layout cell is the chosen coordinate.
+                
                 if (gridPosition == FireSpawnCell && GameObject.Find(FireSpawnName) == null)
                 {
                     CreateSpawnMarker(cellPosition, FireSpawnName);
@@ -309,14 +308,14 @@ public class Level3Manager : MonoBehaviour, ISequentialHazardManager
 
     private void CreateAdditionalSpawnMarkers()
     {
-        if (IsValidCell(FireSpawnCell) && GameObject.Find(FireSpawnName) == null && _cellOrigins.TryGetValue(FireSpawnCell, out Vector2 fireOrigin))
+        if (IsValidCell(FireSpawnCell) && GameObject.Find(FireSpawnName) == null && _cellCenters.TryGetValue(FireSpawnCell, out Vector2 fireCenter))
         {
-            CreateSpawnMarker(fireOrigin, FireSpawnName);
+            CreateSpawnMarker(fireCenter, FireSpawnName);
         }
 
-        if (IsValidCell(WaterSpawnCell) && GameObject.Find(WaterSpawnName) == null && _cellOrigins.TryGetValue(WaterSpawnCell, out Vector2 waterOrigin))
+        if (IsValidCell(WaterSpawnCell) && GameObject.Find(WaterSpawnName) == null && _cellCenters.TryGetValue(WaterSpawnCell, out Vector2 waterCenter))
         {
-            CreateSpawnMarker(waterOrigin, WaterSpawnName);
+            CreateSpawnMarker(waterCenter, WaterSpawnName);
         }
     }
 
@@ -406,9 +405,9 @@ public class Level3Manager : MonoBehaviour, ISequentialHazardManager
     {
         if (_exitPlaced) return;
 
-        if (_cellOrigins.TryGetValue(CenterExitCell, out Vector2 origin))
+        if (_cellCenters.TryGetValue(CenterExitCell, out Vector2 center))
         {
-            SpawnExit(origin);
+            SpawnExit(center);
         }
         else
         {
@@ -448,7 +447,7 @@ public class Level3Manager : MonoBehaviour, ISequentialHazardManager
 
             SequenceStep step = state.Definition.Steps[state.CurrentIndex];
 
-            if (!_cellOrigins.TryGetValue(step.Cell, out Vector2 origin))
+            if (!_cellCenters.TryGetValue(step.Cell, out Vector2 origin))
             {
                 Debug.LogWarning($"Level3Manager: Missing cell origin for sequence step at {step.Cell}.", this);
                 SetHazardOutlineVisible(step.Cell, true);
@@ -527,7 +526,7 @@ public class Level3Manager : MonoBehaviour, ISequentialHazardManager
     {
         while (!_tearingDown)
         {
-            if (!_cellOrigins.TryGetValue(cell, out Vector2 origin))
+            if (!_cellCenters.TryGetValue(cell, out Vector2 origin))
             {
                 break;
             }
@@ -557,15 +556,10 @@ public class Level3Manager : MonoBehaviour, ISequentialHazardManager
         }
     }
 
-    private bool IsPlayerBlockingCell(Vector2 origin)
+    private bool IsPlayerBlockingCell(Vector2 cellCenter)
     {
-        Vector2 center = new Vector2(
-            origin.x + 0.5f * cellSize,
-            origin.y - 0.5f * cellSize
-        );
-
         Vector2 size = new Vector2(cellSize * 0.8f, cellSize * 0.8f);
-        Collider2D[] overlaps = Physics2D.OverlapBoxAll(center, size, 0f);
+        Collider2D[] overlaps = Physics2D.OverlapBoxAll(cellCenter, size, 0f);
 
         foreach (Collider2D collider in overlaps)
         {
@@ -580,7 +574,7 @@ public class Level3Manager : MonoBehaviour, ISequentialHazardManager
 
     private bool TryDisplaceBlockingPlayers(Vector2Int blockingCell, SequenceActionType? actionType = null)
     {
-        if (!_cellOrigins.ContainsKey(blockingCell))
+        if (!_cellCenters.ContainsKey(blockingCell))
         {
             return false;
         }
@@ -742,12 +736,8 @@ public class Level3Manager : MonoBehaviour, ISequentialHazardManager
 
     private Vector3 GetCellCenter(Vector2Int cell)
     {
-        Vector2 origin = GetCellPosition(cell);
-        return new Vector3(
-            origin.x + 0.5f * cellSize,
-            origin.y - 0.5f * cellSize,
-            0f
-        );
+        Vector2 center2D = GetCellPosition(cell);
+        return new Vector3(center2D.x, center2D.y, 0f);
     }
 
     private void TeleportPlayer(CoopPlayerController player, Vector3 destination)
@@ -808,7 +798,9 @@ public class Level3Manager : MonoBehaviour, ISequentialHazardManager
 
     private Vector2 GetCellPosition(Vector2Int gridPosition)
     {
-        return new Vector2(gridPosition.x * cellSize, -gridPosition.y * cellSize);
+        float worldX = (gridPosition.x + 0.5f) * cellSize;
+        float worldY = -(gridPosition.y + 0.5f) * cellSize;
+        return new Vector2(worldX, worldY);
     }
 
     private void SpawnWall(Vector2 position)
@@ -855,76 +847,43 @@ public class Level3Manager : MonoBehaviour, ISequentialHazardManager
 
     private GameObject SpawnExit(Vector2 position)
     {
-        Vector3 center = new Vector3(
-            position.x + 0.5f * cellSize,
-            position.y - 0.5f * cellSize,
-            0f
-        );
+        Vector3 center = new Vector3(position.x + 0.5f * cellSize, position.y, 0f);
 
         if (_exitPlaced)
         {
             return null;
         }
 
-        GameObject exit = exitPrefab != null
-            ? Instantiate(exitPrefab, center, Quaternion.identity, transform)
-            : CreateFallbackExit(center);
-
-        if (exit.TryGetComponent(out ExitZone exitZone))
+        GameObject exit;
+        if (exitPrefab != null)
         {
+            exit = Instantiate(exitPrefab, center, Quaternion.identity, transform);
+            if (!exit.TryGetComponent(out ExitZone exitZone))
+            {
+                exitZone = exit.AddComponent<ExitZone>();
+            }
             exitZone.Initialize(gameManager);
         }
         else
         {
-            exitZone = exit.AddComponent<ExitZone>();
-            exitZone.Initialize(gameManager);
+            exit = ExitPortalFactory.CreateExitPortal(
+                transform,
+                center,
+                cellSize,
+                zone => zone.Initialize(gameManager)
+            );
         }
 
         _exitPlaced = true;
         return exit;
     }
 
-    private GameObject CreateFallbackExit(Vector3 center)
-    {
-        GameObject exit = new GameObject("Exit");
-        exit.transform.SetParent(transform);
-        exit.transform.position = center;
-
-        BoxCollider2D trigger = exit.AddComponent<BoxCollider2D>();
-        trigger.isTrigger = true;
-        trigger.size = new Vector2(cellSize * 1.8f, cellSize * 1.4f);
-        trigger.offset = Vector2.zero;
-
-        SpriteRenderer renderer = exit.AddComponent<SpriteRenderer>();
-        renderer.color = new Color(0.9f, 0.8f, 0.2f, 0.85f);
-        renderer.sortingOrder = 4;
-
-        GameObject label = new GameObject("Label");
-        label.transform.SetParent(exit.transform);
-        label.transform.localPosition = new Vector3(0f, 0.85f * cellSize, -0.1f);
-
-        TextMeshPro tmp = label.AddComponent<TextMeshPro>();
-        tmp.text = "EXIT";
-        tmp.color = new Color(238f / 255f, 221f / 255f, 130f / 255f, 150f / 255f);
-        tmp.fontSize = 6;
-        tmp.alignment = TextAlignmentOptions.Center;
-        tmp.fontStyle = FontStyles.Bold;
-        tmp.enableWordWrapping = false;
-
-        ExitZone exitZone = exit.AddComponent<ExitZone>();
-        exitZone.Initialize(gameManager);
-
-        return exit;
-    }
-
     private void SpawnCannon(Vector2 position, CannonVariant variant, bool snapToCeiling = false)
     {
-        Vector3 worldPosition = new Vector3(
-            position.x + 0.5f * cellSize,
-            position.y - 0.5f * cellSize,
-            0f
-        );
-        Vector2 offsetUnits = fireCannonPositionOffset;
+        Vector3 worldPosition = new Vector3(position.x, position.y, 0f);
+        float verticalOffsetCells = snapToCeiling ? 0.5f : -0.5f;
+        worldPosition.y += verticalOffsetCells * cellSize;
+        Vector2 offsetUnits = variant == CannonVariant.Fire ? fireCannonPositionOffset : Vector2.zero;
         if (offsetUnits.sqrMagnitude > 0f)
         {
             worldPosition += new Vector3(offsetUnits.x * cellSize, offsetUnits.y * cellSize, 0f);
@@ -973,11 +932,7 @@ public class Level3Manager : MonoBehaviour, ISequentialHazardManager
     private void CreateSpawnMarker(Vector2 position, string name)
     {
         GameObject marker = new GameObject(name);
-        marker.transform.position = new Vector3(
-            position.x + 0.5f * cellSize,
-            position.y - 0.5f * cellSize,
-            0f
-        );
+        marker.transform.position = new Vector3(position.x, position.y, 0f);
         marker.transform.SetParent(transform);
     }
 

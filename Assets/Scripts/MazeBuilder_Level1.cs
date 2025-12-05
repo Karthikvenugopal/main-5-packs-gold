@@ -20,18 +20,20 @@ public class MazeBuilder_Level1 : MonoBehaviour
 
     private static readonly string[] Layout =
     {
-        "###################",
-        "#F........H......E#",
-        "###.######.########",
-        "###.######.########",
-        "###.##...#.########",
-        "###I##...#.########",
-        "###.##...#I########",
-        "#W.........########",
-        "###################"
+        "####################",
+        "#F....##..I...w...E#",
+        "###.######w#####I###",
+        "###f.H.###...H.w.###",
+        "###.##...H.#####.###",
+        "###I##.f.#...f..H.##",
+        "###.##...#I#########",
+        "#W.i.......#########",
+        "####################"
     };
 
     private const float CameraVerticalPadding = 0.4f;
+    [SerializeField, Tooltip("Additional downward offset applied to the camera after centering the maze.")]
+    private float mazeCameraVerticalOffset = 0.45f;
 
     private const string FireboySpawnName = "FireboySpawn";
     private const string WatergirlSpawnName = "WatergirlSpawn";
@@ -55,45 +57,55 @@ public class MazeBuilder_Level1 : MonoBehaviour
             for (int x = 0; x < row.Length; x++)
             {
                 char cell = row[x];
-                Vector2 cellPosition = new Vector2(x * cellSize, -y * cellSize);
+                Vector2 cellCenter = GetCellCenterPosition(x, y);
 
                 switch (cell)
                 {
                     case '#':
-                        SpawnWall(cellPosition);
+                        SpawnWall(cellCenter);
                         break;
 
                     case '.':
-                        SpawnFloor(cellPosition);
+                        SpawnFloor(cellCenter);
                         break;
 
                     case 'F':
-                        SpawnFloor(cellPosition);
-                        CreateSpawnMarker(cellPosition, FireboySpawnName);
+                        SpawnFloor(cellCenter);
+                        CreateSpawnMarker(cellCenter, FireboySpawnName);
                         break;
 
                     case 'W':
-                        SpawnFloor(cellPosition);
-                        CreateSpawnMarker(cellPosition, WatergirlSpawnName);
+                        SpawnFloor(cellCenter);
+                        CreateSpawnMarker(cellCenter, WatergirlSpawnName);
                         break;
 
                     case 'I':
-                        SpawnFloor(cellPosition);
-                        SpawnIceWall(cellPosition);
+                        SpawnFloor(cellCenter);
+                        SpawnIceWall(cellCenter);
                         break;
 
                     case 'H':
-                        SpawnFloor(cellPosition);
-                        SpawnFireWall(cellPosition);
+                        SpawnFloor(cellCenter);
+                        SpawnFireWall(cellCenter);
                         break;
 
                     case 'E':
-                        SpawnFloor(cellPosition);
-                        SpawnExit(cellPosition);
+                        SpawnFloor(cellCenter);
+                        SpawnExit(cellCenter);
+                        break;
+
+                    case 'w':
+                        SpawnFloor(cellCenter);
+                        CreateTokenAnchor(cellCenter, TokenSpriteConfigurator.TokenType.Water);
+                        break;
+
+                    case 'f':
+                        SpawnFloor(cellCenter);
+                        CreateTokenAnchor(cellCenter, TokenSpriteConfigurator.TokenType.Fire);
                         break;
 
                     default:
-                        SpawnFloor(cellPosition);
+                        SpawnFloor(cellCenter);
                         break;
                 }
             }
@@ -141,52 +153,51 @@ public class MazeBuilder_Level1 : MonoBehaviour
 
     private void SpawnExit(Vector2 position)
     {
-        GameObject exit = new GameObject("Exit");
-        exit.transform.position = position + new Vector2(0.5f * cellSize, -0.5f * cellSize);
-        exit.transform.SetParent(transform);
-
-        BoxCollider2D trigger = exit.AddComponent<BoxCollider2D>();
-        trigger.isTrigger = true;
-        trigger.size = new Vector2(cellSize * 1.8f, cellSize * 1.4f);
-        trigger.offset = Vector2.zero;
-
-        ExitZone exitZone = exit.AddComponent<ExitZone>();
-        exitZone.Initialize(gameManager);
-
-        SpriteRenderer renderer = exit.AddComponent<SpriteRenderer>();
-        renderer.color = new Color(0.9f, 0.8f, 0.2f, 0.85f);
-        renderer.sortingOrder = 4;
-
-        GameObject text = new GameObject("Label");
-        text.transform.SetParent(exit.transform);
-        text.transform.localPosition = new Vector3(0f, 0.85f * cellSize, -0.1f);
-
-        TextMeshPro tmp = text.AddComponent<TextMeshPro>();
-        tmp.text = "EXIT";
-        tmp.color = new Color(238f / 255f, 221f / 255f, 130f / 255f, 150f / 255f);
-        tmp.fontSize = 6;
-        tmp.alignment = TextAlignmentOptions.Center;
-        tmp.fontStyle = FontStyles.Bold;
-        tmp.enableWordWrapping = false;
+        
+        
+        Vector3 worldCenter = new Vector3(position.x - 0.5f * cellSize, position.y, 0f);
+        
+        ExitPortalFactory.CreateExitPortal(
+            transform,
+            worldCenter,
+            cellSize,
+            exitZone => exitZone.Initialize(gameManager)
+        );
     }
 
     private void CreateSpawnMarker(Vector2 position, string name)
     {
         GameObject marker = new GameObject(name);
-        marker.transform.position = position + new Vector2(0.5f * cellSize, -0.5f * cellSize);
+        marker.transform.position = position;
         marker.transform.SetParent(transform);
+    }
+
+    private void CreateTokenAnchor(Vector2 position, TokenSpriteConfigurator.TokenType tokenType)
+    {
+        if (tokenPlacementManager == null)
+        {
+            Debug.LogWarning("TokenPlacementManager is not assigned. Cannot create token anchor.");
+            return;
+        }
+
+        GameObject anchorObject = new GameObject($"TokenAnchor_{tokenType}_{position.x}_{position.y}");
+        anchorObject.transform.position = position;
+        anchorObject.transform.SetParent(tokenPlacementManager.transform);
+
+        TokenAnchor anchor = anchorObject.AddComponent<TokenAnchor>();
+        anchor.SetTokenType(tokenType);
     }
 
     private IEnumerator SpawnDialogueTriggerDelayed()
     {
-        // Wait 5 seconds before spawning the dialogue trigger
+        
         yield return new WaitForSeconds(3f);
         SpawnDialogueTrigger();
     }
 
     private void SpawnDialogueTrigger()
     {
-        // Place dialogue trigger early in the level, at row 1 (index 1), column 2
+        
         int targetRow = 1;
         int targetCol = 2;
 
@@ -196,36 +207,35 @@ public class MazeBuilder_Level1 : MonoBehaviour
             return;
         }
 
-        // Calculate world position (same as BuildMaze uses)
-        Vector2 cellPosition = new Vector2(targetCol * cellSize, -targetRow * cellSize);
-        Vector2 worldPosition = cellPosition + new Vector2(0.5f * cellSize, -0.5f * cellSize);
+        
+        Vector2 worldPosition = GetCellCenterPosition(targetCol, targetRow);
 
-        // Create trigger zone GameObject
+        
         GameObject triggerZone = new GameObject("DialogueTriggerZone");
         triggerZone.transform.position = worldPosition;
         triggerZone.transform.SetParent(transform);
 
-        // Add BoxCollider2D for trigger
+        
         BoxCollider2D trigger = triggerZone.AddComponent<BoxCollider2D>();
         trigger.isTrigger = true;
         trigger.size = new Vector2(cellSize * 0.9f, cellSize * 0.9f);
         trigger.offset = Vector2.zero;
 
-        // Add DialogueTriggerZone component with custom text, position, and font size
+        
         DialogueTriggerZone dialogueTrigger = triggerZone.AddComponent<DialogueTriggerZone>();
         dialogueTrigger.SetDialogueText("Collect tokens to boost your score");
         dialogueTrigger.SetFontSize(3.0f);
 
-        // Set fixed dialogue position near the maze center (approximate coordinates)
-        Vector2 fixedDialoguePosition = new Vector2(6.5f * cellSize, -3.0f * cellSize);
+        
+        Vector2 fixedDialoguePosition = new Vector2(6.8f * cellSize, -2.5f * cellSize);
         dialogueTrigger.SetFixedPosition(fixedDialoguePosition);
-        // Immediately trigger the dialogue so it appears even if players moved away from the trigger zone
+        
         dialogueTrigger.TriggerFixedDialogue();
     }
 
     private void SpawnEmberControlsDialogue()
     {
-        // Place dialogue trigger near the Fireboy spawn point (row 1, column 1)
+        
         int targetRow = 1;
         int targetCol = 1;
 
@@ -235,35 +245,37 @@ public class MazeBuilder_Level1 : MonoBehaviour
             return;
         }
 
-        // Calculate trigger world position (same as BuildMaze uses)
-        Vector2 cellPosition = new Vector2(targetCol * cellSize, -targetRow * cellSize);
-        Vector2 triggerWorldPosition = cellPosition + new Vector2(1.5f * cellSize, -0.5f * cellSize);
+        
+        Vector2 triggerWorldPosition = GetCellCenterPosition(targetCol, targetRow) + new Vector2(1f * cellSize, 0f);
 
-        // Calculate fixed position (slightly right and higher near the top-left corner)
-        Vector2 fixedDialoguePosition = new Vector2(1.5f * cellSize, -0.3f * cellSize);
+        
+        
+        Vector2 fixedDialoguePosition = new Vector2(2.2f * cellSize, -0.6f * cellSize);
 
-        // Create trigger zone GameObject
+        
         GameObject triggerZone = new GameObject("EmberControlsDialogueTrigger");
         triggerZone.transform.position = triggerWorldPosition;
         triggerZone.transform.SetParent(transform);
 
-        // Add BoxCollider2D for trigger
+        
         BoxCollider2D trigger = triggerZone.AddComponent<BoxCollider2D>();
         trigger.isTrigger = true;
         trigger.size = new Vector2(cellSize * 0.9f, cellSize * 0.9f);
         trigger.offset = Vector2.zero;
 
-        // Add DialogueTriggerZone component with custom text and settings
+        
         DialogueTriggerZone dialogueTrigger = triggerZone.AddComponent<DialogueTriggerZone>();
         dialogueTrigger.SetDialogueText("W/A/S/D Moves Ember");
         dialogueTrigger.SetFontSize(3f);
-        // Set fixed position mode - dialogue will appear at fixed position when player enters trigger
+        
         dialogueTrigger.SetFixedPosition(fixedDialoguePosition);
+        
+        dialogueTrigger.TriggerFixedDialogue();
     }
 
     private void SpawnAquaControlsDialogue()
     {
-        // Place dialogue trigger near the Watergirl spawn point (row 7, column 1)
+        
         int targetRow = 7;
         int targetCol = 1;
 
@@ -273,30 +285,39 @@ public class MazeBuilder_Level1 : MonoBehaviour
             return;
         }
 
-        // Calculate trigger world position (same as BuildMaze uses)
-        Vector2 cellPosition = new Vector2(targetCol * cellSize, -targetRow * cellSize);
-        Vector2 triggerWorldPosition = cellPosition + new Vector2(1.5f * cellSize, -0.5f * cellSize);
+        
+        Vector2 triggerWorldPosition = GetCellCenterPosition(targetCol, targetRow) + new Vector2(1f * cellSize, 0f);
 
-        // Calculate fixed position for dialogue at bottom left corner of maze
-        Vector2 fixedDialoguePosition = new Vector2(1.5f * cellSize, -8.0f * cellSize);
+        
+        
+        Vector2 fixedDialoguePosition = new Vector2(2.0f * cellSize, -8.5f * cellSize);
 
-        // Create trigger zone GameObject
+        
         GameObject triggerZone = new GameObject("AquaControlsDialogueTrigger");
         triggerZone.transform.position = triggerWorldPosition;
         triggerZone.transform.SetParent(transform);
 
-        // Add BoxCollider2D for trigger
+        
         BoxCollider2D trigger = triggerZone.AddComponent<BoxCollider2D>();
         trigger.isTrigger = true;
         trigger.size = new Vector2(cellSize * 0.9f, cellSize * 0.9f);
         trigger.offset = Vector2.zero;
 
-        // Add DialogueTriggerZone component with custom text and settings
+        
         DialogueTriggerZone dialogueTrigger = triggerZone.AddComponent<DialogueTriggerZone>();
         dialogueTrigger.SetDialogueText("↑ ← ↓ → moved Aqua");
         dialogueTrigger.SetFontSize(3f);
-        // Set fixed position mode - dialogue will appear at fixed position when player enters trigger
+        
         dialogueTrigger.SetFixedPosition(fixedDialoguePosition);
+        
+        dialogueTrigger.TriggerFixedDialogue();
+    }
+
+    private Vector2 GetCellCenterPosition(int x, int y)
+    {
+        float worldX = (x + 0.5f) * cellSize;
+        float worldY = -(y + 0.5f) * cellSize;
+        return new Vector2(worldX, worldY);
     }
 
     private void CenterMaze(string[] layout)
@@ -312,6 +333,7 @@ public class MazeBuilder_Level1 : MonoBehaviour
             -10f
         );
         center.y += CameraVerticalPadding;
+        center.y -= Mathf.Max(0f, mazeCameraVerticalOffset);
 
         if (Camera.main != null)
         {
