@@ -1,9 +1,9 @@
 using UnityEngine;
 using System.Collections;
 
-/// <summary>
-/// Adds a glowing/highlight effect to a player sprite. Can be controlled externally.
-/// </summary>
+
+
+
 [RequireComponent(typeof(SpriteRenderer))]
 public class PlayerGlowEffect : MonoBehaviour
 {
@@ -44,7 +44,7 @@ public class PlayerGlowEffect : MonoBehaviour
         _originalColor = _spriteRenderer.color;
         _originalScale = transform.localScale;
 
-        // Auto-detect player role and set glow values
+        
         if (autoDetectRole)
         {
             SetupGlowByRole();
@@ -56,7 +56,7 @@ public class PlayerGlowEffect : MonoBehaviour
         CoopPlayerController playerController = GetComponent<CoopPlayerController>();
         if (playerController == null)
         {
-            // Try parent if not on this GameObject
+            
             playerController = GetComponentInParent<CoopPlayerController>();
         }
 
@@ -64,14 +64,14 @@ public class PlayerGlowEffect : MonoBehaviour
         {
             if (playerController.Role == PlayerRole.Fireboy)
             {
-                // Fireboy: #FFEB79 (255, 235, 121)
+                
                 glowColor = new Color(1f, 0.922f, 0.475f, 1f);
                 glowSpeed = 1.5f;
                 minGlowIntensity = 0.2f;
             }
             else if (playerController.Role == PlayerRole.Watergirl)
             {
-                // Watergirl: #41FF2C (65, 255, 44)
+                
                 glowColor = new Color(0.255f, 1f, 0.173f, 1f);
                 glowSpeed = 1.5f;
                 minGlowIntensity = 0.2f;
@@ -79,9 +79,9 @@ public class PlayerGlowEffect : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Start the glow effect
-    /// </summary>
+    
+    
+    
     public void StartGlow()
     {
         if (_isGlowing || _spriteRenderer == null) return;
@@ -94,9 +94,9 @@ public class PlayerGlowEffect : MonoBehaviour
         _glowCoroutine = StartCoroutine(GlowEffect());
     }
 
-    /// <summary>
-    /// Stop the glow effect
-    /// </summary>
+    
+    
+    
     public void StopGlow()
     {
         if (!_isGlowing || _spriteRenderer == null) return;
@@ -108,7 +108,7 @@ public class PlayerGlowEffect : MonoBehaviour
             _glowCoroutine = null;
         }
 
-        // Reset to original appearance
+        
         _spriteRenderer.color = _originalColor;
         transform.localScale = _originalScale;
     }
@@ -117,17 +117,17 @@ public class PlayerGlowEffect : MonoBehaviour
     {
         while (_isGlowing)
         {
-            // Calculate pulse value using PingPong (oscillates between 0 and 1)
+            
             float pulse = Mathf.PingPong(Time.time * glowSpeed, 1f);
 
-            // Interpolate between min and max intensity
+            
             float intensity = Mathf.Lerp(minGlowIntensity, maxGlowIntensity, pulse);
 
-            // Blend the original color with the glow color based on intensity
+            
             Color blendedColor = Color.Lerp(_originalColor, glowColor, intensity);
             _spriteRenderer.color = blendedColor;
 
-            // Scale effect (subtle pulsing size)
+            
             float sizePulse = 1f + (intensity * 0.1f * (glowSizeMultiplier - 1f));
             transform.localScale = _originalScale * sizePulse;
 

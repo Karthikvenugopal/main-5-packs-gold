@@ -19,7 +19,7 @@ public class LevelSelectUI : MonoBehaviour
 
     [Header("Style (matches Main Menu)")]
     [SerializeField] private TMP_FontAsset buttonFont;
-    [SerializeField] private Sprite buttonSprite; // Added to match GameManager theme
+    [SerializeField] private Sprite buttonSprite; 
     [SerializeField] private Color buttonTextColor = new Color(0.2f, 0.2f, 0.2f, 1f);
     [SerializeField] private int buttonFontSize = 32;
     [SerializeField] private FontStyles buttonFontStyle = FontStyles.Bold;
@@ -36,7 +36,7 @@ public class LevelSelectUI : MonoBehaviour
     public void LoadLevel2() => LoadScene(level2Scene);
     public void LoadLevel3() => LoadScene(level3Scene);
     public void LoadLevel4() => LoadScene(level4Scene);
-    public void LoadLevel5() => LoadScene(level5Scene); // Temporarily commented out
+    public void LoadLevel5() => LoadScene(level5Scene); 
 
     private void Awake()
     {
@@ -49,18 +49,18 @@ public class LevelSelectUI : MonoBehaviour
 
     private void EnforceButtonSpacing()
     {
-        // Find buttons by name to ensure we are working with the correct ones
+        
         Button btn1 = FindButtonByName("Level1Button");
         Button btn2 = FindButtonByName("Level2Button");
         Button btn3 = FindButtonByName("Level3Button");
         Button btn4 = FindButtonByName("Level4Button");
         Button btn5 = FindButtonByName("Level5Button");
 
-        // We need at least the first two buttons to establish a pattern
+        
         if (btn1 != null && btn2 != null)
         {
-            // Calculate the spacing vector based on the first two buttons
-            // Using anchoredPosition to respect UI layout relative to parent
+            
+            
             RectTransform rt1 = btn1.GetComponent<RectTransform>();
             RectTransform rt2 = btn2.GetComponent<RectTransform>();
             
@@ -69,7 +69,7 @@ public class LevelSelectUI : MonoBehaviour
                 Vector2 startPos = rt1.anchoredPosition;
                 Vector2 spacing = rt2.anchoredPosition - rt1.anchoredPosition;
 
-                // Apply spacing to subsequent buttons
+                
                 ApplySpacingToButton(btn3, rt2.anchoredPosition + spacing);
                 ApplySpacingToButton(btn4, rt2.anchoredPosition + (spacing * 2));
                 ApplySpacingToButton(btn5, rt2.anchoredPosition + (spacing * 3));
@@ -120,7 +120,7 @@ public class LevelSelectUI : MonoBehaviour
 
     private void CaptureButtonsFromChildren()
     {
-        // Always refresh to pick up new buttons (e.g., Level5) without relying on serialized order.
+        
         levelButtons = GetComponentsInChildren<Button>(true);
     }
 
@@ -155,7 +155,7 @@ public class LevelSelectUI : MonoBehaviour
                 image.sprite = buttonSprite;
                 image.type = Image.Type.Sliced;
                 image.pixelsPerUnitMultiplier = 1f;
-                image.color = Color.white; // Reset color to white to show sprite
+                image.color = Color.white; 
             }
             else
             {
@@ -185,7 +185,7 @@ public class LevelSelectUI : MonoBehaviour
     {
         if (levelButtons == null) return;
 
-        // Prefer name-based wiring to avoid mis-ordered button arrays in the scene.
+        
         AssignButtonByName("Level1Button", LoadLevel1);
         AssignButtonByName("Level2Button", LoadLevel2);
         AssignButtonByName("Level3Button", LoadLevel3);
@@ -219,12 +219,12 @@ public class LevelSelectUI : MonoBehaviour
     private void CreateBackButton()
     {
         string btnName = "BackToMainMenuButton";
-        // Check globally if button exists to avoid duplicates if we reparented it out of this transform
+        
         if (GameObject.Find(btnName) != null) return;
 
         GameObject buttonGO = new GameObject(btnName);
         
-        // Find the root Canvas to ensure the button is on the screen and not clipped/hidden by parent rects
+        
         Canvas canvas = GetComponentInParent<Canvas>();
         if (canvas == null)
         {
@@ -234,7 +234,7 @@ public class LevelSelectUI : MonoBehaviour
         if (canvas != null)
         {
             buttonGO.transform.SetParent(canvas.transform, false);
-            buttonGO.transform.SetAsLastSibling(); // Ensure it renders on top of everything
+            buttonGO.transform.SetAsLastSibling(); 
         }
         else
         {
@@ -242,21 +242,21 @@ public class LevelSelectUI : MonoBehaviour
             Debug.LogWarning("LevelSelectUI: Could not find a Canvas. Back button might not be visible.");
         }
 
-        // Add Image component first so Button can find it as target graphic
+        
         Image image = buttonGO.AddComponent<Image>();
         
         Button button = buttonGO.AddComponent<Button>();
         
-        // RectTransform setup - Bottom Right
+        
         RectTransform rect = buttonGO.GetComponent<RectTransform>();
         rect.anchorMin = new Vector2(1f, 0f);
         rect.anchorMax = new Vector2(1f, 0f);
         rect.pivot = new Vector2(1f, 0f);
         rect.sizeDelta = new Vector2(280f, 80f);
-        // Position with safe padding from the corner
+        
         rect.anchoredPosition = new Vector2(-50f, 50f); 
 
-        // Add Text
+        
         GameObject textGO = new GameObject("Text");
         textGO.transform.SetParent(buttonGO.transform, false);
         RectTransform textRect = textGO.AddComponent<RectTransform>();
@@ -272,18 +272,18 @@ public class LevelSelectUI : MonoBehaviour
         text.fontSizeMin = 18f;
         text.fontSizeMax = buttonFontSize;
 
-        // Apply Theme from GameManager to match Options button
+        
         if (GameManager.Instance != null)
         {
             ApplyGameManagerTheme(button, text, image);
         }
         else
         {
-            // Fallback to local style if GM is missing
+            
             ApplyStyleToButton(button);
         }
 
-        // Add Listener
+        
         button.onClick.AddListener(LoadMainMenu);
         
         Debug.Log($"Back button created on Canvas: {(canvas != null ? canvas.name : "null")}");
@@ -293,14 +293,14 @@ public class LevelSelectUI : MonoBehaviour
     {
         if (GameManager.Instance == null) return;
 
-        // Font
+        
         var font = GameManager.Instance.GetUpperUiFont();
         if (font != null) text.font = font;
 
-        // Text Color
+        
         text.color = GameManager.Instance.ThemeButtonTextColor;
 
-        // Sprite
+        
         if (GameManager.Instance.ThemeButtonSprite != null)
         {
             image.sprite = GameManager.Instance.ThemeButtonSprite;
@@ -313,7 +313,7 @@ public class LevelSelectUI : MonoBehaviour
             image.color = buttonImageColor;
         }
 
-        // Colors
+        
         var colors = button.colors;
         colors.normalColor = GameManager.Instance.ThemeButtonNormalColor;
         colors.highlightedColor = GameManager.Instance.ThemeButtonHighlightedColor;

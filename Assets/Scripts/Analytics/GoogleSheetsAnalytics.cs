@@ -10,12 +10,12 @@ namespace Analytics
 {
     public static class GoogleSheetsAnalytics
     {
-        private const string ConfigResourceName = "google_sheets_config"; // Resources/google_sheets_config.json
-        // Leave empty by default; use ScriptProperty SHEET_ID or set in Resources/google_sheets_config.json when needed.
+        private const string ConfigResourceName = "google_sheets_config"; 
+        
         private const string DefaultSheetId = "";
 
         private static string _webAppUrl;
-        private static string _sheetId; // Optional spreadsheet id for standalone Apps Script
+        private static string _sheetId; 
         private static string _sessionId;
         private static bool _initialized;
 
@@ -23,7 +23,7 @@ namespace Analytics
         private class Config
         {
             public string webAppUrl;
-            public string sheetId; // optional
+            public string sheetId; 
         }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
@@ -52,7 +52,7 @@ namespace Analytics
                 Debug.LogWarning($"[Analytics] Failed to load config: {e.Message}");
             }
 
-            // Fallback to the default sheet if one is not provided in config
+            
             if (string.IsNullOrWhiteSpace(_sheetId))
             {
                 _sheetId = DefaultSheetId;
@@ -90,7 +90,7 @@ namespace Analytics
             };
 
             TryAddSheetId(data);
-            // Single POST send; no coroutine wrapper required for this sender
+            
             SendFormUrlEncoded(_webAppUrl, data);
         }
 
@@ -161,7 +161,7 @@ namespace Analytics
             SendGetQuery(_webAppUrl, data);
         }
 
-        // Retry click analytics removed per request
+        
 
         public static void SendHeartLoss(
             string levelId,

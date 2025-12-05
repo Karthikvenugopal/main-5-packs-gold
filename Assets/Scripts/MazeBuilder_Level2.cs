@@ -233,7 +233,7 @@ public class MazeBuilder_Level2 : MonoBehaviour
 
     private void SpawnDialogueTrigger()
     {
-        // Row 42 is at index 11 (0-indexed), first dot is at x=1
+        
         int targetRow = 11;
         int targetCol = 1;
 
@@ -243,23 +243,23 @@ public class MazeBuilder_Level2 : MonoBehaviour
             return;
         }
 
-        // Calculate world position (same as BuildMaze uses)
+        
         Vector2 worldPosition = GetCellCenterPosition(targetCol, targetRow);
 
-        // Create trigger zone GameObject
+        
         GameObject triggerZone = new GameObject("DialogueTriggerZone");
         triggerZone.transform.position = worldPosition;
         triggerZone.transform.SetParent(transform);
 
-        // Add BoxCollider2D for trigger
+        
         BoxCollider2D trigger = triggerZone.AddComponent<BoxCollider2D>();
         trigger.isTrigger = true;
         trigger.size = new Vector2(cellSize * 0.9f, cellSize * 0.9f);
         trigger.offset = Vector2.zero;
 
-        // Add DialogueTriggerZone component
+        
         DialogueTriggerZone dialogueTrigger = triggerZone.AddComponent<DialogueTriggerZone>();
-        // Lower the text relative to the player (default is 0.8f Y offset, setting to 0.3f)
+        
         dialogueTrigger.SetOffsetFromPlayer(new Vector2(5f, 0.3f));
     }
 

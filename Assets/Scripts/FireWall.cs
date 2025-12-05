@@ -8,7 +8,7 @@ public class FireWall : MonoBehaviour
 
     private bool _extinguished;
 
-    // Event fired when Watergirl crosses/extinguishes this firewall
+    
     public static event Action<FireWall> OnWatergirlCrossed;
 
     private void Awake()
@@ -22,7 +22,7 @@ public class FireWall : MonoBehaviour
     {
         if (_extinguished || role != PlayerRole.Watergirl) return false;
         
-        // Fire event before extinguishing
+        
         OnWatergirlCrossed?.Invoke(this);
         
         Extinguish();

@@ -7,14 +7,14 @@ using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
-/// <summary>
-/// Tutorial-specific GameManager. Similar to GameManager but designed for tutorial customization.
-/// Can be extended with dynamic tutorial instructions and tutorial-specific behavior.
-/// </summary>
+
+
+
+
 public class GameManagerTutorial : MonoBehaviour
 {
     public static GameManagerTutorial Instance { get; private set; }
-    // Event fired when any player enters the exit
+    
     public static event System.Action<CoopPlayerController> OnPlayerEnteredExitEvent;
     [SerializeField] private Color messageBackground = new Color(0f, 0f, 0f, 0.55f);
     [Header("UI Messages")]
@@ -49,9 +49,9 @@ public class GameManagerTutorial : MonoBehaviour
     [SerializeField] private Color themeButtonHighlightedColor = new Color(0.953f, 0.859f, 0.526f, 1f);
     [SerializeField] private Color themeButtonPressedColor = new Color(0.784f, 0.784f, 0.784f, 1f);
     [SerializeField] private Color themeButtonSelectedColor = new Color(0.961f, 0.961f, 0.961f, 1f);
-    [SerializeField] private Color themeButtonTextColor = new Color(0.2f, 0.2f, 0.2f, 1f); // Dark text for light buttons
+    [SerializeField] private Color themeButtonTextColor = new Color(0.2f, 0.2f, 0.2f, 1f); 
 
-    // Public Accessors for Theme
+    
     public Sprite ThemeButtonSprite => themeButtonSprite;
     public Color ThemeButtonNormalColor => themeButtonNormalColor;
     public Color ThemeButtonHighlightedColor => themeButtonHighlightedColor;
@@ -84,7 +84,7 @@ public class GameManagerTutorial : MonoBehaviour
     [SerializeField] private bool useVictoryPanel = true;
     [SerializeField] private string victoryTitleText = "Tutorial Complete";
     [SerializeField] private string victoryBodyText = "Ready for the real challenge?";
-    // --- MODIFICATION START ---
+    
     [SerializeField] private string[] victorySlogans = new[]
     {
         "No Cap, That Was Epic!",
@@ -95,7 +95,7 @@ public class GameManagerTutorial : MonoBehaviour
         "Vibe Check: Passed!",
         "Sheeeeeesh! You Did That!"
     };
-    // --- MODIFICATION END ---
+    
     [SerializeField] private string defeatTitleText = "Out of Hearts";
     [SerializeField] private string defeatBodyText = "Don't worry! Try again.";
     [SerializeField] private string nextLevelButtonText = "Continue to Level 1";
@@ -103,10 +103,10 @@ public class GameManagerTutorial : MonoBehaviour
     [SerializeField] private string mainMenuButtonText = "Main Menu";
     [SerializeField] private string levelDefeatMessage = "Out of hearts! Try again?";
 
-    // Keeps a visible record of how many fire tokens the team has picked up.
+    
     public int fireTokensCollected = 0;
 
-    // Keeps a visible record of how many water tokens the team has picked up.
+    
     public int waterTokensCollected = 0;
 
     private static int s_totalFireTokensCollected;
@@ -138,7 +138,7 @@ public class GameManagerTutorial : MonoBehaviour
     private readonly List<CoopPlayerController> _players = new();
     private readonly HashSet<CoopPlayerController> _playersAtExit = new();
 
-    // analytics code
+    
     [Header("Analytics")]
     [SerializeField] private Analytics.LevelTimer levelTimer;
 
@@ -161,7 +161,7 @@ public class GameManagerTutorial : MonoBehaviour
         }
         EnsureHudCanvas();
         CreateHeartsUI();
-        // CreateTokensUI(); // Removed: Tutorial scene doesn't have tokens
+        
         CreateVictoryPanel();
         CreateStatusUI();
         ResetTokenTracking();
@@ -242,7 +242,7 @@ public class GameManagerTutorial : MonoBehaviour
 
         _playersAtExit.Add(player);
 
-        // Fire event for other scripts to listen to
+        
         OnPlayerEnteredExitEvent?.Invoke(player);
 
         if (!_gameActive || _gameFinished) return;
@@ -310,9 +310,9 @@ public class GameManagerTutorial : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Updates the status message. Can be overridden or extended for tutorial-specific instructions.
-    /// </summary>
+    
+    
+    
     protected virtual void UpdateStatus(string message)
     {
         if (_statusLabel != null)
@@ -325,7 +325,7 @@ public class GameManagerTutorial : MonoBehaviour
 
     public TMP_FontAsset GetUpperUiFont()
     {
-        // Prioritize the Theme Font if set
+        
         if (themeFont != null)
         {
             return themeFont;
@@ -368,22 +368,22 @@ public class GameManagerTutorial : MonoBehaviour
         if (_hudCanvas == null) return;
 
         GameObject background = new GameObject("MessageBackground");
-        // Parent to the Top UI Bar instead of canvas
+        
         background.transform.SetParent(_topUiBar, false);
 
         RectTransform bgRect = background.AddComponent<RectTransform>();
-        // Anchor to the top-center of the bar
+        
         bgRect.anchorMin = new Vector2(0.5f, 1f);
         bgRect.anchorMax = new Vector2(0.5f, 1f);
         bgRect.pivot = new Vector2(0.5f, 1f);
         bgRect.sizeDelta = new Vector2(680f, 120f);
-        // Position it further down from the top-center of the bar for clarity
+        
         bgRect.anchoredPosition = new Vector2(0f, -100f);
 
         Image image = background.AddComponent<Image>();
         image.color = messageBackground;
 
-        // Store reference to background for hiding later
+        
         _statusBackground = background;
 
         GameObject textGO = new GameObject("StatusLabel");
@@ -419,10 +419,10 @@ public class GameManagerTutorial : MonoBehaviour
 
         canvasGO.AddComponent<GraphicRaycaster>();
         
-        // Ensure EventSystem exists for UI interactions
+        
         EnsureEventSystem();
         
-        // Create the Top UI Bar
+        
         GameObject topBarGO = new GameObject("TopUI_Bar_Background");
         topBarGO.transform.SetParent(canvasGO.transform, false);
         Image topBarImg = topBarGO.AddComponent<Image>();
@@ -430,22 +430,22 @@ public class GameManagerTutorial : MonoBehaviour
 
         _topUiBar = topBarGO.GetComponent<RectTransform>();
         
-        // Anchor it to the top edge and stretch 100% wide
+        
         _topUiBar.anchorMin = new Vector2(0f, 1f); 
         _topUiBar.anchorMax = new Vector2(1f, 1f); 
         _topUiBar.pivot = new Vector2(0.5f, 1f);
         
-        // Set its height using the variable
+        
         _topUiBar.sizeDelta = new Vector2(0f, topUiBarHeight);
         _topUiBar.anchoredPosition = Vector2.zero;
     }
 
     private void EnsureEventSystem()
     {
-        // Check if EventSystem already exists in the scene
+        
         if (FindFirstObjectByType<EventSystem>() != null) return;
 
-        // Create EventSystem if it doesn't exist
+        
         GameObject eventSystemGO = new GameObject("EventSystem");
         eventSystemGO.AddComponent<EventSystem>();
         eventSystemGO.AddComponent<StandaloneInputModule>();
@@ -455,10 +455,10 @@ public class GameManagerTutorial : MonoBehaviour
     {
         if (_hudCanvas == null) return;
         
-        // Create the Master Container for all "Life" UI
+        
         GameObject heartsMasterContainer = new GameObject("HeartsMasterContainer");
         
-        // Parent to the Top UI Bar
+        
         heartsMasterContainer.transform.SetParent(_topUiBar, false);
 
         VerticalLayoutGroup masterLayout = heartsMasterContainer.AddComponent<VerticalLayoutGroup>();
@@ -472,15 +472,15 @@ public class GameManagerTutorial : MonoBehaviour
 
         RectTransform masterRect = heartsMasterContainer.GetComponent<RectTransform>();
         
-        // Anchor to the top-right of the bar
+        
         masterRect.anchorMin = new Vector2(1f, 1f); 
         masterRect.anchorMax = new Vector2(1f, 1f);
         masterRect.pivot = new Vector2(1f, 1f);
-        // Position it 40px in from the top-right corner of the bar
+        
         masterRect.anchoredPosition = new Vector2(-40f, -20f); 
         masterRect.sizeDelta = new Vector2(360f, 200f); 
 
-        // Create the "Life" Title
+        
         GameObject titleLabelGO = new GameObject("TitleLabel");
         titleLabelGO.transform.SetParent(heartsMasterContainer.transform, false);
         TextMeshProUGUI titleLabel = titleLabelGO.AddComponent<TextMeshProUGUI>();
@@ -493,7 +493,7 @@ public class GameManagerTutorial : MonoBehaviour
         LayoutElement titleLayout = titleLabelGO.AddComponent<LayoutElement>();
         titleLayout.preferredWidth = 120f; 
         
-        // Create Hearts Container for Ember
+        
         GameObject emberHeartsGO = new GameObject("EmberHeartsContainer");
         emberHeartsGO.transform.SetParent(heartsMasterContainer.transform, false); 
         
@@ -536,7 +536,7 @@ public class GameManagerTutorial : MonoBehaviour
             _emberHeartImages.Add(heartImg);
         }
 
-        // Create Hearts Container for Aqua
+        
         GameObject aquaHeartsGO = new GameObject("AquaHeartsContainer");
         aquaHeartsGO.transform.SetParent(heartsMasterContainer.transform, false); 
 
@@ -648,7 +648,7 @@ public class GameManagerTutorial : MonoBehaviour
         _victoryTitleLabel.text = victoryTitleText;
         ApplyEndPanelFont(_victoryTitleLabel);
 
-        // Create Trophy Image (between title and body/score text)
+        
         GameObject trophyContainer = new GameObject("TrophyContainer");
         trophyContainer.transform.SetParent(content.transform, false);
         RectTransform trophyContainerRect = trophyContainer.AddComponent<RectTransform>();
@@ -660,7 +660,7 @@ public class GameManagerTutorial : MonoBehaviour
         trophyContainerLayout.flexibleWidth = 0f;
         trophyContainerLayout.flexibleHeight = 0f;
 
-        // Add horizontal layout to center the trophy
+        
         HorizontalLayoutGroup trophyContainerLayoutGroup = trophyContainer.AddComponent<HorizontalLayoutGroup>();
         trophyContainerLayoutGroup.childAlignment = TextAnchor.MiddleCenter;
         trophyContainerLayoutGroup.childControlWidth = false;
@@ -813,7 +813,7 @@ public class GameManagerTutorial : MonoBehaviour
         label.fontStyle = FontStyles.Bold;
         ApplyEndPanelFont(label);
 
-        // Apply Theme Sprite and Colors
+        
         if (themeButtonSprite != null)
         {
             bg.sprite = themeButtonSprite;
@@ -821,7 +821,7 @@ public class GameManagerTutorial : MonoBehaviour
             bg.pixelsPerUnitMultiplier = 1f;
         }
         
-        // Reset color to white so the sprite color shows through, or use the theme normal color if no sprite
+        
         bg.color = Color.white; 
 
         ColorBlock colors = button.colors;
@@ -891,7 +891,7 @@ public class GameManagerTutorial : MonoBehaviour
             }
         }
 
-        // Show/hide trophy based on victory state
+        
         if (_victoryTrophyImage != null)
         {
             GameObject trophyContainer = _victoryTrophyImage.transform.parent?.gameObject;
@@ -906,7 +906,7 @@ public class GameManagerTutorial : MonoBehaviour
             _victoryBodyLabel.text = isVictory ? victoryBodyText : defeatBodyText;
         }
 
-        // Hide token summary displays
+        
         if (_fireSummaryRoot != null)
         {
             _fireSummaryRoot.SetActive(false);
@@ -926,7 +926,7 @@ public class GameManagerTutorial : MonoBehaviour
         SetButtonLabel(_victoryRestartButton, restartButtonText);
         SetButtonLabel(_victoryMainMenuButton, mainMenuButtonText);
 
-        // For tutorial, always allow advancing to Level 1 on victory
+        
         bool canAdvance = isVictory;
 
         if (_victoryNextLevelButton != null)
@@ -987,7 +987,7 @@ public class GameManagerTutorial : MonoBehaviour
 
     private void UpdateHeartsUI()
     {
-        // Loop through all of Ember's heart images
+        
         for (int i = 0; i < _emberHeartImages.Count; i++)
         {
             var heartImage = _emberHeartImages[i];
@@ -1014,7 +1014,7 @@ public class GameManagerTutorial : MonoBehaviour
             }
         }
 
-        // Loop through all of Aqua's heart images
+        
         for (int i = 0; i < _aquaHeartImages.Count; i++)
         {
             var heartImage = _aquaHeartImages[i];
@@ -1174,11 +1174,11 @@ public class GameManagerTutorial : MonoBehaviour
 
         _gameFinished = true;
         _gameActive = false;
-        // analytics code
+        
         EnsureLevelTimer();
         (levelTimer ?? FindAnyObjectByType<Analytics.LevelTimer>())?.MarkSuccess();
         
-        // Hide the status UI instead of showing victory message
+        
         if (_statusBackground != null)
         {
             _statusBackground.SetActive(false);
@@ -1189,7 +1189,7 @@ public class GameManagerTutorial : MonoBehaviour
         ShowEndPanel(EndGameState.Victory);
     }
 
-    // analytics code
+    
     private void EnsureLevelTimer()
     {
         if (levelTimer != null) return;

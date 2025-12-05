@@ -4,10 +4,10 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 
-/// <summary>
-/// Lightweight level controller that simply builds the maze layout defined below.
-/// This mirrors the behaviour of the Level1 builder so the layout can be iterated quickly.
-/// </summary>
+
+
+
+
 public class Level5Manager : MonoBehaviour, ISequentialHazardManager
 {
     [Header("Maze Settings")]
@@ -49,30 +49,30 @@ public class Level5Manager : MonoBehaviour, ISequentialHazardManager
 
     private static readonly string[] Layout =
     {
-        // "############################",
-        // "# S....#.....I......#####E1#",
-        // "###.##.#.###.###.#.#.....#.#",
-        // "#...##.#...#...#.#.#.F.T.#.#",
-        // "#.#####.###.#.#.#.#.###.#.##",
-        // "#.....#.....#.#.#.#...#.#..#",
-        // "###.#.#######.#.#.###.#.####",
-        // "#W..#.....F...#.#.....#E2..#",
-        // "###.###########.#######.####",
-        // "############################"
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
 
-        // "########################",
-        // "#S...#MF..........LLLLE#",
-        // "#.##.#F##I##I###########",
-        // "#.##.#I##F##F###########",
-        // "#.##.#........I.......##",
-        // "#.##F################.##",
-        // "#F##.#.............##.##",
-        // "#..................##F##",
-        // "##.....#I#####.....##.##",
-        // "##2222.#.....I........##",
-        // "########.######....##.##",
-        // "#W.F.....######111.##.##",
-        // "########################"
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
 
         "##################",
         "#f..I.4###f..wF.W#",
@@ -126,7 +126,7 @@ public class Level5Manager : MonoBehaviour, ISequentialHazardManager
     private Vector2 _iceOutlineSize = Vector2.one;
     private bool _exitPlaced;
     private float _swapCooldown = 0f;
-    private const float SwapCooldownDuration = 0.5f; // Prevent rapid swapping
+    private const float SwapCooldownDuration = 0.5f; 
     private int _swapCount = 0;
     private const int MaxSwaps = 3;
 
@@ -136,11 +136,11 @@ public class Level5Manager : MonoBehaviour, ISequentialHazardManager
         CacheSequenceReservedCells();
         BuildMaze(Layout);
         CenterMaze(Layout);
-        // InitializeSequences(); // Temporarily disabled
-        // tokenPlacementManager?.SpawnTokens(); // Disabled during Level 5 maze design pass
         
-        // Recount tokens after maze is built to update the UI counter
-        // Use a coroutine to ensure all tokens are fully instantiated
+        
+        
+        
+        
         StartCoroutine(RecountTokensAfterBuild());
         
         gameManager?.OnLevelReady();
@@ -149,10 +149,10 @@ public class Level5Manager : MonoBehaviour, ISequentialHazardManager
 
     private IEnumerator RecountTokensAfterBuild()
     {
-        // Wait one frame to ensure all tokens are fully instantiated
+        
         yield return null;
         
-        // Recount tokens so the UI counter shows the correct total
+        
         if (gameManager != null)
         {
             gameManager.RecountTokensInScene();
@@ -161,26 +161,26 @@ public class Level5Manager : MonoBehaviour, ISequentialHazardManager
 
     private void Update()
     {
-        // Only allow position swapping in Level 5
+        
         if (!IsLevel5())
         {
             return;
         }
 
-        // Don't process swap input if instruction screen is still showing
-        // This prevents the first spacebar press (used to dismiss instructions) from counting as a swap
+        
+        
         if (gameManager != null && gameManager.IsWaitingForInstructionAck())
         {
             return;
         }
 
-        // Update cooldown timer
+        
         if (_swapCooldown > 0f)
         {
             _swapCooldown -= Time.deltaTime;
         }
 
-        // Check for space bar press
+        
         if (Input.GetKeyDown(KeyCode.Space) && _swapCooldown <= 0f)
         {
             if (_swapCount < MaxSwaps)
@@ -205,7 +205,7 @@ public class Level5Manager : MonoBehaviour, ISequentialHazardManager
 
     private void SwapPlayerPositions()
     {
-        // Find both players
+        
         CoopPlayerController fireboy = null;
         CoopPlayerController watergirl = null;
 
@@ -225,18 +225,18 @@ public class Level5Manager : MonoBehaviour, ISequentialHazardManager
             }
         }
 
-        // Only swap if both players are found
+        
         if (fireboy == null || watergirl == null)
         {
             Debug.LogWarning("Level5Manager: Cannot swap positions - one or both players not found.");
             return;
         }
 
-        // Store positions
+        
         Vector3 fireboyPosition = fireboy.transform.position;
         Vector3 watergirlPosition = watergirl.transform.position;
 
-        // Swap positions
+        
         fireboy.transform.position = watergirlPosition;
         watergirl.transform.position = fireboyPosition;
 
@@ -349,7 +349,7 @@ public class Level5Manager : MonoBehaviour, ISequentialHazardManager
 
                     case 'F':
                         SpawnFloor(cellPosition);
-                        // Always spawn static firewalls in the layout, sequences are currently disabled
+                        
                         GameObject fireWall = SpawnFireWall(cellPosition);
                         if (fireWall == null)
                         {
@@ -377,22 +377,22 @@ public class Level5Manager : MonoBehaviour, ISequentialHazardManager
                         SpawnExit(cellPosition);
                         break;
 
-                    case 'M':       // steam area
+                    case 'M':       
                         SpawnFloor(cellPosition);
                         SpawnSteamArea(cellPosition);
                         break;
 
-                    case 'L':       // steam wall
+                    case 'L':       
                         SpawnFloor(cellPosition);
                         SpawnSteamWall(cellPosition);
                         break;
 
-                    case 'f':       // fire token
+                    case 'f':       
                         SpawnFloor(cellPosition);
                         SpawnFireToken(cellPosition);
                         break;
 
-                    case 'w':       // water token
+                    case 'w':       
                         SpawnFloor(cellPosition);
                         SpawnWaterToken(cellPosition);
                         break;
@@ -402,10 +402,10 @@ public class Level5Manager : MonoBehaviour, ISequentialHazardManager
                         break;
                 }
 
-                // if (reservedForSequence)
-                // {
-                //     EnsureHazardOutline(gridPosition, cellPosition);
-                // }
+                
+                
+                
+                
             }
         }
     }
@@ -508,11 +508,11 @@ public class Level5Manager : MonoBehaviour, ISequentialHazardManager
 
     private void SpawnCannon(Vector2 position, CannonVariant variant)
     {
-        // Position cannon at the bottom of the cell (center - 0.5 * cellSize) so it fires upward
-        // This aligns it properly with the row and allows projectiles to travel up the column
+        
+        
         Vector3 worldPosition = new(
             position.x,
-            position.y - 0.5f * cellSize,  // Move down to bottom of cell for upward firing
+            position.y - 0.5f * cellSize,  
             0f
         );
 
@@ -555,12 +555,12 @@ public class Level5Manager : MonoBehaviour, ISequentialHazardManager
 
     private void SpawnLevel4Cannon(Vector2 position, CannonVariant variant)
     {
-        // Move half a tile up: position.y is top of cell, -0.5 is center. 
-        // "Half a tile up" from center (-0.5) is 0.0 (top of cell).
-        // Or simply add 0.5f * cellSize to the previous center calculation.
+        
+        
+        
         Vector3 worldPosition = new Vector3(
             position.x + 0.5f * cellSize,
-            position.y, // Was position.y - 0.5f * cellSize
+            position.y, 
             0f
         );
 
@@ -570,7 +570,7 @@ public class Level5Manager : MonoBehaviour, ISequentialHazardManager
             selectedPrefab = cannonPrefab;
         }
 
-        // Rotate 90 degrees to the left (Counter-Clockwise)
+        
         Quaternion rotation = Quaternion.Euler(0, 0, 90);
 
         GameObject cannon = selectedPrefab != null
@@ -632,12 +632,12 @@ public class Level5Manager : MonoBehaviour, ISequentialHazardManager
 
         GameObject area = Instantiate(steamAreaPrefab, worldPosition, Quaternion.identity, transform);
 
-        // Scale down the steam area to fit better within the cell size
+        
         area.transform.localScale = new Vector3(cellSize * 0.75f, cellSize * 0.75f, 1f);
 
         if (area.TryGetComponent(out SpriteRenderer renderer))
         {
-            renderer.sortingOrder = 2;          // Above walls
+            renderer.sortingOrder = 2;          
             renderer.color = new Color(0.85f, 0.65f, 0.95f, 0.45f);
         }
     }
@@ -651,11 +651,11 @@ public class Level5Manager : MonoBehaviour, ISequentialHazardManager
         }
 
         GameObject wall = Instantiate(steamWallPrefab, position, Quaternion.identity, transform);
-        wall.layer = LayerMask.NameToLayer("Wall");   // Make it block like a normal wall
+        wall.layer = LayerMask.NameToLayer("Wall");   
 
         if (wall.TryGetComponent(out SpriteRenderer renderer))
         {
-            renderer.sortingOrder = 1;                // Same layer as normal walls
+            renderer.sortingOrder = 1;                
         }
 
         return wall;
@@ -838,7 +838,7 @@ public class Level5Manager : MonoBehaviour, ISequentialHazardManager
                 continue;
             }
 
-            // Hide outline before attaching member to prevent visual glitch
+            
             SetHazardOutlineVisible(step.Cell, false);
             AttachSequenceMember(spawned, sequenceId);
             state.ActiveObject = spawned;
@@ -847,7 +847,7 @@ public class Level5Manager : MonoBehaviour, ISequentialHazardManager
             return;
         }
 
-        // Save state if we exit the loop
+        
         _sequenceStates[sequenceId] = state;
     }
 
@@ -856,13 +856,13 @@ public class Level5Manager : MonoBehaviour, ISequentialHazardManager
         if (_tearingDown) return;
         if (!_sequenceStates.TryGetValue(sequenceId, out SequenceState state)) return;
 
-        // Don't process if we're already waiting for a cell to clear
+        
         if (_pendingSpawnCoroutines.ContainsKey(sequenceId))
         {
             return;
         }
 
-        // Ensure we have a valid active object before clearing
+        
         if (state.ActiveObject == null)
         {
             return;

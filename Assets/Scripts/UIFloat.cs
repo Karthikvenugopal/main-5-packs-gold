@@ -2,8 +2,8 @@ using UnityEngine;
 
 public class UIFloat : MonoBehaviour
 {
-    public float amplitude = 10f;   // 上下浮动的幅度（像素）
-    public float frequency = 1f;    // 速度（每秒几次往返）
+    public float amplitude = 10f;   
+    public float frequency = 1f;    
 
     private RectTransform rectTransform;
     private Vector2 startPos;
