@@ -88,11 +88,12 @@ public class CannonHazard : MonoBehaviour
 
         if (_projectilePrefabToUse != null)
         {
-            projectileGO = Instantiate(_projectilePrefabToUse, transform.position, Quaternion.identity, transform.parent);
+            projectileGO = Instantiate(_projectilePrefabToUse, transform.position, transform.rotation, transform.parent);
         }
         else
         {
             projectileGO = CreateFallbackProjectile();
+            projectileGO.transform.rotation = transform.rotation;
         }
 
         projectileGO.transform.SetParent(transform.parent, true);
@@ -252,5 +253,28 @@ public class CannonHazard : MonoBehaviour
         );
 
         return _fallbackSprite;
+    }
+
+    public void OverrideTheme(Color body, Color barrel, Color projectile, Color impact)
+    {
+        if (_variant == CannonVariant.Fire)
+        {
+            fireBodyColor = body;
+            fireBarrelColor = barrel;
+            fireProjectileColor = projectile;
+            fireImpactColor = impact;
+        }
+        else
+        {
+            iceBodyColor = body;
+            iceBarrelColor = barrel;
+            iceProjectileColor = projectile;
+            iceImpactColor = impact;
+        }
+
+        _projectileColor = projectile;
+        _impactColor = impact;
+
+        ApplyVariantStyling();
     }
 }

@@ -15,6 +15,7 @@ GameObject:
   - component: {fileID: -2899828019193919791}
   - component: {fileID: 2348213408170307117}
   - component: {fileID: 398678040470151851}
+  - component: {fileID: 8979078197135327755}
   m_Layer: 0
   m_Name: Player
   m_TagString: Player
@@ -221,8 +222,15 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 0
   collisionBoxScale: 0.75
-  fireboyColor: {r: 0.93, g: 0.39, b: 0.18, a: 1}
-  watergirlColor: {r: 0.2, g: 0.45, b: 0.95, a: 1}
+  emberSteamAnimatorController: {fileID: 9101000, guid: 2fa6129e65f84a6ab8be981d33b3d9a7, type: 2}
+  aquaSteamAnimatorController: {fileID: 9101001, guid: 9d4b2d0d1238457f84cba1e7271bc12a, type: 2}
+  circleCastScale: 0.85
+  fireboyColor: {r: 0.9528302, g: 0.8968899, b: 0.876424, a: 1}
+  watergirlColor: {r: 0.81434673, g: 0.8573632, b: 0.9433962, a: 1}
+  aquaAnimatorController: {fileID: 9100000, guid: 8bd899fc3bfc41aab4876e6cc3b4ee3c, type: 2}
+  emberAnimatorController: {fileID: 9100000, guid: e295648235b1e4a1681f46c40a8b8196, type: 2}
+  emberColliderSize: {x: 0.8, y: 0.8}
+  emberColliderOffset: {x: 0, y: 0}
   hazardDamageCooldown: 0.5
   hurtFlashCount: 3
   hurtFlashOnDuration: 0.25
@@ -252,3 +260,25 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerSteamState
   defaultSteamDuration: 10
+--- !u!95 &8979078197135327755
+Animator:
+  serializedVersion: 7
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7307446650723487989}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: 8bd899fc3bfc41aab4876e6cc3b4ee3c, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_AnimatePhysics: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0

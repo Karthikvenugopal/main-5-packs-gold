@@ -26,6 +26,8 @@ function ensureAllAnalyticsSheets_(ss, opts) {
   ensureAvgTimeFailureSheet_(ss, opts);
   ensureRetryDensitySheet_(ss, opts);
   ensureTokenCompletionSheet_(ss, opts);
+  ensureCompletionFunnelSheet_(ss, opts);
+  ensureFailHotspotHeatmapSheet_(ss, opts);
   if (opts && opts.prune) {
     pruneAnalyticsSheets_(ss);
   }
@@ -36,7 +38,7 @@ function ensureAvgTimeSuccessSheet_(ss, opts) {
   if (!sh) sh = ss.insertSheet('AvgTime_Success');
   else if (opts && opts.reset) sh.clear();
 
-  const formula = `=QUERY(Data!A2:E, "select C, avg(E) where D = TRUE and (C='Level1Scene' or C='Level1' or C='Level2Scene' or C='Level2' or C='Level3Scene' or C='Level3') group by C label C 'level_id', avg(E) 'avg_time_success_s'", 0)`;
+  const formula = `=QUERY(Data!A2:E, "select C, avg(E) where D = TRUE group by C label C 'level_id', avg(E) 'avg_time_success_s'", 0)`;
   sh.getRange('A1').setValue(formula);
 
   if (opts && opts.reset) sh.getCharts().forEach(c => sh.removeChart(c));
@@ -59,7 +61,7 @@ function ensureAvgTimeFailureSheet_(ss, opts) {
   if (!sh) sh = ss.insertSheet('AvgTime_Failure');
   else if (opts && opts.reset) sh.clear();
 
-  const formula = `=QUERY(Data!A2:E, "select C, avg(E) where D = FALSE and (C='Level1Scene' or C='Level1' or C='Level2Scene' or C='Level2' or C='Level3Scene' or C='Level3') group by C label C 'level_id', avg(E) 'avg_time_failure_s'", 0)`;
+  const formula = `=QUERY(Data!A2:E, "select C, avg(E) where D = FALSE group by C label C 'level_id', avg(E) 'avg_time_failure_s'", 0)`;
   sh.getRange('A1').setValue(formula);
 
   if (opts && opts.reset) sh.getCharts().forEach(c => sh.removeChart(c));
@@ -87,12 +89,10 @@ function ensureRetryDensitySheet_(ss, opts) {
   const last = dataSh.getLastRow();
   const rows = last > 1 ? dataSh.getRange(2, 1, last - 1, 5).getValues() : [];
 
-  const allowed = new Set(['level1','level1scene','level2','level2scene','level3','level3scene']);
   const stats = new Map(); // level -> { total, fail }
   rows.forEach(r => {
     const level = String(r[2] || '').trim();
-    const lvlLower = level.toLowerCase();
-    if (!allowed.has(lvlLower)) return;
+    if (!level) return;
     let success = r[3];
     if (typeof success !== 'boolean') success = /^(1|true|yes|y)$/i.test(String(success || ''));
     const s = stats.get(level) || { total: 0, fail: 0 };
@@ -150,6 +150,27 @@ function ensureTokenCompletionSheet_(ss, opts) {
   ]]);
   sh.getRange('G:G').setNumberFormat('0');
   sh.getRange('D:D').setNumberFormat('0%');
+
+  // Only manage charts when explicitly requested (e.g., from the menu action).
+  if (opts && opts.buildCharts) {
+    if (opts.reset) {
+      safeGetCharts_(sh).forEach(function(chart) {
+        sh.removeChart(chart);
+      });
+    }
+    if (safeGetCharts_(sh).length === 0) {
+      const chart = sh.newChart()
+        .asColumnChart()
+        .addRange(sh.getRange('A:B'))
+        .setPosition(1, 3, 0, 0)
+        .setOption('title', 'Token Completion Rate')
+        .setOption('legend', { position: 'none' })
+        .setOption('hAxis', { title: 'Level' })
+        .setOption('vAxis', { title: 'Rate' })
+        .build();
+      sh.insertChart(chart);
+    }
+  }
   return sh;
 }
 
@@ -165,12 +186,202 @@ function safeGetCharts_(sh) {
 
 function buildTokenCompletionCharts() {
   const ss = SpreadsheetApp.getActive();
-  ensureTokenCompletionSheet_(ss, { reset: true });
+  ensureTokenCompletionSheet_(ss, { reset: true, buildCharts: true });
+}
+
+function buildCompletionFunnel() {
+  const ss = SpreadsheetApp.getActive();
+  ensureCompletionFunnelSheet_(ss, { reset: true });
+}
+
+function buildFailHotspotHeatmap() {
+  const ss = SpreadsheetApp.getActive();
+  ensureFailHotspotHeatmapSheet_(ss, { reset: true });
+}
+
+function ensureFailHotspotsSheet_(ss) {
+  let sh = ss.getSheetByName('FailHotspots');
+  if (!sh) {
+    sh = ss.insertSheet('FailHotspots');
+    sh.getRange('A1:J1').setValues([[
+      'timestamp', 'session_id', 'level_id', 'grid_x', 'grid_y', 'hearts_remaining', 'fire_tokens', 'water_tokens', 'time_spent_s', 'cause'
+    ]]);
+  }
+  return sh;
+}
+
+// Aggregated heatmap counts per level / grid cell for failure hotspots.
+// Sheet: FailHotspotHeatmap
+// Columns: level_id, grid_x, grid_y, fail_count
+function ensureFailHotspotHeatmapSheet_(ss, opts) {
+  let sh = ss.getSheetByName('FailHotspotHeatmap');
+  if (!sh) {
+    sh = ss.insertSheet('FailHotspotHeatmap');
+  }
+  if (opts && opts.reset) {
+    sh.clear();
+    safeGetCharts_(sh).forEach(function(c){ sh.removeChart(c); });
+  }
+
+  const raw = ensureFailHotspotsSheet_(ss);
+  const last = raw.getLastRow();
+  const rows = last > 1 ? raw.getRange(2, 1, last - 1, 10).getValues() : [];
+
+  const counts = new Map(); // key: level|gx|gy -> count
+  rows.forEach(r => {
+    const level = String(r[2] || '').trim();
+    const gx = Number(r[3]);
+    const gy = Number(r[4]);
+    if (!level || !isFinite(gx) || !isFinite(gy)) return;
+    const key = `${level}|${gx}|${gy}`;
+    counts.set(key, (counts.get(key) || 0) + 1);
+  });
+
+  const out = [['level_id','grid_x','grid_y','fail_count']];
+  Array.from(counts.entries()).sort().forEach(([key, count]) => {
+    const parts = key.split('|');
+    out.push([parts[0], Number(parts[1]), Number(parts[2]), count]);
+  });
+
+  sh.clear();
+  sh.getRange(1, 1, out.length, out[0].length).setValues(out);
+  sh.getRange('D:D').setNumberFormat('0');
+
+  if (opts && opts.reset) safeGetCharts_(sh).forEach(function(c){ sh.removeChart(c); });
+  if (sh.getCharts().length === 0 && out.length > 1) {
+    // Scatter chart by grid position. Filter the sheet by level_id to isolate a level; fail_count is visible in column D.
+    const chart = sh.newChart()
+      .asScatterChart()
+      .addRange(sh.getRange(1, 2, out.length, 2)) // grid_x, grid_y
+      .setPosition(1, 6, 0, 0)
+      .setOption('title', 'Fail Hotspots (filter sheet by level_id to isolate)')
+      .setOption('legend', { position: 'none' })
+      .setOption('hAxis', { title: 'Grid X' })
+      .setOption('vAxis', { title: 'Grid Y' })
+      .setOption('pointSize', 6)
+      .build();
+    sh.insertChart(chart);
+  }
+}
+
+// ---------- Completion Funnel & Quit Rate ----------
+// Sheet: CompletionFunnel
+// Columns: level_id, starts, completions, avg_attempts_per_completion
+function ensureCompletionFunnelSheet_(ss, opts) {
+  let sh = ss.getSheetByName('CompletionFunnel');
+  if (!sh) {
+    sh = ss.insertSheet('CompletionFunnel');
+  }
+  if (opts && opts.reset) {
+    sh.clear();
+    safeGetCharts_(sh).forEach(function(c){ sh.removeChart(c); });
+  }
+
+  const dataSh = ss.getSheetByName('Data') || ensureDataSheet_(ss);
+  const last = dataSh.getLastRow();
+  const rows = last > 1 ? dataSh.getRange(2, 1, last - 1, 5).getValues() : [];
+
+  const starts = new Map();     // level -> Set(session)
+  const successes = new Map();  // level -> Set(session)
+  const attempts = new Map();   // level -> Map(session -> { tries, succeeded })
+
+  const getSet = (map, key) => {
+    let s = map.get(key);
+    if (!s) { s = new Set(); map.set(key, s); }
+    return s;
+  };
+  const getAttempts = (level, session) => {
+    let m = attempts.get(level);
+    if (!m) { m = new Map(); attempts.set(level, m); }
+    let rec = m.get(session);
+    if (!rec) { rec = { tries: 0, succeeded: false }; m.set(session, rec); }
+    return rec;
+  };
+
+  rows.forEach(r => {
+    const session = String(r[1] || '').trim();
+    const level = String(r[2] || '').trim();
+    if (!level || !session) return;
+    const success = (typeof r[3] === 'boolean') ? r[3] : (/^(1|true|yes|y)$/i.test(String(r[3] || '')));
+
+    getSet(starts, level).add(session);
+    if (success) getSet(successes, level).add(session);
+
+    const rec = getAttempts(level, session);
+    if (!rec.succeeded) {
+      rec.tries += 1;
+      if (success) rec.succeeded = true;
+    }
+  });
+
+  const allLevels = new Set([
+    ...starts.keys(),
+    ...successes.keys(),
+    ...attempts.keys()
+  ]);
+
+  const out = [['level_id','starts','completions','avg_attempts_per_completion']];
+  Array.from(allLevels).sort().forEach(level => {
+    const startCount = starts.has(level) ? starts.get(level).size : 0;
+    const successCount = successes.has(level) ? successes.get(level).size : 0;
+
+    let avgAttempts = '';
+    if (attempts.has(level)) {
+      let total = 0;
+      let completed = 0;
+      attempts.get(level).forEach(rec => {
+        if (rec.succeeded) {
+          total += rec.tries;
+          completed += 1;
+        }
+      });
+      if (completed > 0) {
+        avgAttempts = total / completed;
+      }
+    }
+
+    out.push([level, startCount, successCount, avgAttempts]);
+  });
+
+  sh.clear();
+  sh.getRange(1, 1, out.length, out[0].length).setValues(out);
+  sh.getRange('D:D').setNumberFormat('0.00');
+
+  if (opts && opts.reset) safeGetCharts_(sh).forEach(function(c){ sh.removeChart(c); });
+  if (sh.getCharts().length === 0) {
+    // Funnel bar chart (starts vs completions)
+    const chart1 = sh.newChart()
+      .asColumnChart()
+      .addRange(sh.getRange('A:B')) // level, starts
+      .addRange(sh.getRange('C:C')) // completions
+      .setNumHeaders(1)
+      .setPosition(1, 7, 0, 0)
+      .setOption('title', 'Level Funnel: Started vs Completed')
+      .setOption('legend', { position: 'right' })
+      .setOption('hAxis', { title: 'Level' })
+      .setOption('vAxis', { title: 'Players' })
+      .build();
+    sh.insertChart(chart1);
+
+    // Attempts per completion line chart
+    const chart2 = sh.newChart()
+      .asLineChart()
+      .addRange(sh.getRange('A:A')) // level
+      .addRange(sh.getRange('D:D')) // avg attempts
+      .setNumHeaders(1)
+      .setPosition(20, 7, 0, 0)
+      .setOption('title', 'Avg Attempts per Completed Level')
+      .setOption('legend', { position: 'none' })
+      .setOption('hAxis', { title: 'Level' })
+      .setOption('vAxis', { title: 'Attempts' })
+      .build();
+    sh.insertChart(chart2);
+  }
 }
 
 function pruneAnalyticsSheets_(ss, opts) {
   const essentials = new Set(['Data']);
-  const withAverages = new Set(['Data', 'AvgTime_Success', 'AvgTime_Failure', 'RetryDensity', 'HeartLoss', 'TokenCompletion']);
+  const withAverages = new Set(['Data', 'AvgTime_Success', 'AvgTime_Failure', 'RetryDensity', 'HeartLoss', 'TokenCompletion', 'CompletionFunnel', 'FailHotspots', 'FailHotspotHeatmap']);
   const keep = (opts && opts.essentialsOnly) ? essentials : withAverages;
   ss.getSheets().forEach(sheet => {
     const name = sheet.getName();
@@ -197,6 +408,8 @@ function onOpen() {
     .addItem('Repair Average Formulas', 'repairAverageTimeSheets')
     .addItem('Build Heart Loss Chart', 'buildHeartLossCharts')
     .addItem('Build Token Completion Chart', 'buildTokenCompletionCharts')
+    .addItem('Build Completion Funnel', 'buildCompletionFunnel')
+    .addItem('Build Fail Hotspot Heatmap', 'buildFailHotspotHeatmap')
     .addToUi();
 }
 
@@ -259,13 +472,6 @@ function extractTokenCompletionStats_(data) {
 
 function processEvent_(ss, data) {
   const level = String(data.level_id || '').trim();
-  const lvlLower = level.toLowerCase();
-  const allowed = new Set(['level1', 'level1scene', 'level2', 'level2scene', 'level3', 'level3scene']);
-  if (!allowed.has(lvlLower)) {
-    return ContentService.createTextOutput(JSON.stringify({ ok: true, ignored: true }))
-      .setMimeType(ContentService.MimeType.JSON);
-  }
-
   const evt = String(data.event || '').trim().toLowerCase();
 
   if (evt === 'fail' || /^restart/.test(evt) || evt === 'retry') {
@@ -278,7 +484,35 @@ function processEvent_(ss, data) {
       false, 
       tSinceFail
     ]);
+    // Capture failure hotspots (grid position) if provided
+    if (data.grid_x !== undefined && data.grid_y !== undefined) {
+      const gx = Number(data.grid_x);
+      const gy = Number(data.grid_y);
+      if (isFinite(gx) && isFinite(gy)) {
+        const shHotspots = ensureFailHotspotsSheet_(ss);
+        const hearts = toNumberOrBlank_(data.hearts_remaining);
+        const fireTokens = toNumberOrBlank_(data.fire_tokens);
+        const waterTokens = toNumberOrBlank_(data.water_tokens);
+        const cause = String(data.cause || '');
+        shHotspots.appendRow([
+          new Date(),
+          data.session_id || '',
+          level,
+          gx,
+          gy,
+          hearts,
+          fireTokens,
+          waterTokens,
+          tSinceFail,
+          cause
+        ]);
+        try { ensureFailHotspotHeatmapSheet_(ss, { reset: false }); } catch (e) { Logger.log(e); }
+      }
+    }
     try { ensureRetryDensitySheet_(ss, { reset: false }); } catch (e) { Logger.log(e); }
+    try { ensureCompletionFunnelSheet_(ss, { reset: false }); } catch (e) { Logger.log(e); }
+    try { ensureAvgTimeSuccessSheet_(ss, { reset: false }); } catch (e) { Logger.log(e); }
+    try { ensureAvgTimeFailureSheet_(ss, { reset: false }); } catch (e) { Logger.log(e); }
     return ContentService.createTextOutput(JSON.stringify({ ok: true, type: 'result', recorded: 'failure', reason: evt }))
       .setMimeType(ContentService.MimeType.JSON);
   }
@@ -294,7 +528,7 @@ function processEvent_(ss, data) {
     return ContentService.createTextOutput(JSON.stringify({ ok: true, type: 'heart_loss' }))
       .setMimeType(ContentService.MimeType.JSON);
   }
-  
+
   if (evt === 'token_completion') {
     const shTokens = ensureTokenCompletionSheet_(ss);
     const [tokenCompletionRate, tokensCollected, tokensAvailable] = extractTokenCompletionStats_(data);
@@ -329,6 +563,9 @@ function processEvent_(ss, data) {
     timeSpent
   ]);
   try { ensureRetryDensitySheet_(ss, { reset: false }); } catch (e) { Logger.log(e); }
+  try { ensureCompletionFunnelSheet_(ss, { reset: false }); } catch (e) { Logger.log(e); }
+  try { ensureAvgTimeSuccessSheet_(ss, { reset: false }); } catch (e) { Logger.log(e); }
+  try { ensureAvgTimeFailureSheet_(ss, { reset: false }); } catch (e) { Logger.log(e); }
 
   return ContentService.createTextOutput(JSON.stringify({ ok: true, type: 'result' }))
     .setMimeType(ContentService.MimeType.JSON);
@@ -354,7 +591,7 @@ function ensureDataSheet_(ss) {
 
 function purgeNonWhitelistedRows() {
   const ss = SpreadsheetApp.getActive();
-  const allowed = new Set(['level1', 'level1scene', 'level2', 'level2scene', 'level3', 'level3scene']);
+  const allowed = null; // allow all levels; keep rows untouched
 
   const purgeSheet = (name, levelCol) => {
     const sh = ss.getSheetByName(name);
@@ -365,7 +602,7 @@ function purgeNonWhitelistedRows() {
     const toDelete = [];
     for (let i = 0; i < rng.length; i++) {
       const v = String(rng[i][0] || '').toLowerCase();
-      if (!allowed.has(v)) toDelete.push(i + 2);
+      if (allowed && !allowed.has(v)) toDelete.push(i + 2);
     }
     for (let j = toDelete.length - 1; j >= 0; j--) {
       sh.deleteRow(toDelete[j]);
@@ -380,7 +617,6 @@ function purgeNonWhitelistedRows() {
 // Force the AvgTime_* formulas to only include Level1/Level2
 function repairAverageTimeSheets() {
   const ss = SpreadsheetApp.getActive();
-  const where = "(C='Level1Scene' or C='Level1' or C='Level2Scene' or C='Level2' or C='Level3Scene' or C='Level3')";
 
   const setFormula = (name, f) => {
     let sh = ss.getSheetByName(name);
@@ -389,8 +625,8 @@ function repairAverageTimeSheets() {
     sh.getRange('A1').setValue(f);
   };
 
-  setFormula('AvgTime_Success', `=QUERY(Data!A2:E, "select C, avg(E) where D = TRUE and ${where} group by C label C 'level_id', avg(E) 'avg_time_success_s'", 0)`);
-  setFormula('AvgTime_Failure', `=QUERY(Data!A2:E, "select C, avg(E) where D = FALSE and ${where} group by C label C 'level_id', avg(E) 'avg_time_failure_s'", 0)`);
+  setFormula('AvgTime_Success', `=QUERY(Data!A2:E, "select C, avg(E) where D = TRUE group by C label C 'level_id', avg(E) 'avg_time_success_s'", 0)`);
+  setFormula('AvgTime_Failure', `=QUERY(Data!A2:E, "select C, avg(E) where D = FALSE group by C label C 'level_id', avg(E) 'avg_time_failure_s'", 0)`);
 }
 
 // ---------- Heart Loss Metrics ----------
@@ -410,12 +646,18 @@ function ensureHeartLossChartsOnSheet_(ss, opts) {
   const l1Where = "(C='Level1Scene' or C='Level1')";
   const l2Where = "(C='Level2Scene' or C='Level2')";
   const l3Where = "(C='Level3Scene' or C='Level3')";
+  const l4Where = "(C='Level4Scene' or C='Level4')";
+  const l5Where = "(C='Level5Scene' or C='Level5')";
   const f1 = `=QUERY(HeartLoss!A2:F, "select E, count(A) where ${l1Where} group by E label E 'cause', count(A) 'loss_count'", 0)`;
   const f2 = `=QUERY(HeartLoss!A2:F, "select E, count(A) where ${l2Where} group by E label E 'cause', count(A) 'loss_count'", 0)`;
   const f3 = `=QUERY(HeartLoss!A2:F, "select E, count(A) where ${l3Where} group by E label E 'cause', count(A) 'loss_count'", 0)`;
+  const f4 = `=QUERY(HeartLoss!A2:F, "select E, count(A) where ${l4Where} group by E label E 'cause', count(A) 'loss_count'", 0)`;
+  const f5 = `=QUERY(HeartLoss!A2:F, "select E, count(A) where ${l5Where} group by E label E 'cause', count(A) 'loss_count'", 0)`;
   sh.getRange('H1').setValue(f1);
   sh.getRange('K1').setValue(f2);
   sh.getRange('N1').setValue(f3);
+  sh.getRange('Q1').setValue(f4);
+  sh.getRange('T1').setValue(f5);
 
   if (opts && opts.reset) sh.getCharts().forEach(c => sh.removeChart(c));
   if (sh.getCharts().length < 1) {
@@ -451,6 +693,28 @@ function ensureHeartLossChartsOnSheet_(ss, opts) {
       .setOption('vAxis', { title: 'Loss Count' })
       .build();
     sh.insertChart(c3);
+
+    const c4 = sh.newChart()
+      .asColumnChart()
+      .addRange(sh.getRange('Q:R'))
+      .setPosition(46, 8, 0, 0)
+      .setOption('title', 'Heart Losses by Cause - Level 4')
+      .setOption('legend', { position: 'none' })
+      .setOption('hAxis', { title: 'Cause' })
+      .setOption('vAxis', { title: 'Loss Count' })
+      .build();
+    sh.insertChart(c4);
+
+    const c5 = sh.newChart()
+      .asColumnChart()
+      .addRange(sh.getRange('T:U'))
+      .setPosition(61, 8, 0, 0)
+      .setOption('title', 'Heart Losses by Cause - Level 5')
+      .setOption('legend', { position: 'none' })
+      .setOption('hAxis', { title: 'Cause' })
+      .setOption('vAxis', { title: 'Loss Count' })
+      .build();
+    sh.insertChart(c5);
   }
 }
 

@@ -151,8 +151,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SteamArea
   steamDuration: 10
-  touchDistance: 3
-  audioSource: {fileID: 0}
-  steamActivateClip: {fileID: 0}
+  touchDistance: 1
   debugLogs: 1
   debugDistances: 1

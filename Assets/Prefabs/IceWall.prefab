@@ -150,4 +150,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d44c3f78b8fd4c988f8458b4d13fa5c6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::IceWall
-  meltEffect: {fileID: 0}
+  meltEffect: {fileID: 419916789162399846, guid: cc088708a1db34ec2a768bc2ead1ae42, type: 3}

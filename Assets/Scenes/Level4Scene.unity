@@ -442,6 +442,90 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 55dbc409933f0ce45ae632a39313ee5b, type: 3}
+--- !u!1 &841152555
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 841152557}
+  - component: {fileID: 841152556}
+  m_Layer: 0
+  m_Name: Global Light 2D
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &841152556
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 841152555}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 073797afb82c5a1438f328866b10b3f0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.2D.Runtime::UnityEngine.Rendering.Universal.Light2D
+  m_ComponentVersion: 2
+  m_LightType: 4
+  m_BlendStyleIndex: 0
+  m_FalloffIntensity: 0.5
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Intensity: 1
+  m_LightVolumeIntensity: 1
+  m_LightVolumeEnabled: 0
+  m_ApplyToSortingLayers: 00000000
+  m_LightCookieSprite: {fileID: 0}
+  m_DeprecatedPointLightCookieSprite: {fileID: 0}
+  m_LightOrder: 0
+  m_AlphaBlendOnOverlap: 0
+  m_OverlapOperation: 0
+  m_NormalMapDistance: 3
+  m_NormalMapQuality: 2
+  m_UseNormalMap: 0
+  m_ShadowsEnabled: 1
+  m_ShadowIntensity: 0.75
+  m_ShadowSoftness: 0.3
+  m_ShadowSoftnessFalloffIntensity: 0.5
+  m_ShadowVolumeIntensityEnabled: 0
+  m_ShadowVolumeIntensity: 0.75
+  m_LocalBounds:
+    m_Center: {x: 0, y: -0.00000011920929, z: 0}
+    m_Extent: {x: 0.9985302, y: 0.99853027, z: 0}
+  m_PointLightInnerAngle: 360
+  m_PointLightOuterAngle: 360
+  m_PointLightInnerRadius: 0
+  m_PointLightOuterRadius: 1
+  m_ShapeLightParametricSides: 5
+  m_ShapeLightParametricAngleOffset: 0
+  m_ShapeLightParametricRadius: 1
+  m_ShapeLightFalloffSize: 0.5
+  m_ShapeLightFalloffOffset: {x: 0, y: 0}
+  m_ShapePath:
+  - {x: -0.5, y: -0.5, z: 0}
+  - {x: 0.5, y: -0.5, z: 0}
+  - {x: 0.5, y: 0.5, z: 0}
+  - {x: -0.5, y: 0.5, z: 0}
+--- !u!4 &841152557
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 841152555}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -0.032351635, y: -6.9824443, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &920500691
 GameObject:
   m_ObjectHideFlags: 0
@@ -511,6 +595,51 @@ Transform:
   - {fileID: 2110000000000000001}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1022539986
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1022539987}
+  - component: {fileID: 1022539988}
+  m_Layer: 0
+  m_Name: FireTokenAnchor5
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1022539987
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1022539986}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 24.52, y: -9.24, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2110000000000000001}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1022539988
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1022539986}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4d67bbb986cc445f8c08c1cd97eb1ef2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  tokenType: 0
 --- !u!1 &1746984131
 GameObject:
   m_ObjectHideFlags: 0
@@ -544,6 +673,7 @@ MonoBehaviour:
   playerPrefab: {fileID: 7307446650723487989, guid: 44964639595521e40aa2d28dda0ba7bd, type: 3}
   gameManager: {fileID: 1746984134}
   gameManagerTutorial: {fileID: 0}
+  playerVerticalOffset: 0
 --- !u!4 &1746984133
 Transform:
   m_ObjectHideFlags: 0
@@ -573,10 +703,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::GameManager
   isTutorialMode: 0
   messageBackground: {r: 0, g: 0, b: 0, a: 0}
-  upperUiFont: {fileID: 0}
+  upperUiFont: {fileID: 11400000, guid: 161475e7879c4f21ba9b32676fc849ae, type: 2}
+  instructionFont: {fileID: 0}
   levelIntroMessage: 
   levelStartMessage: 
-  levelVictoryMessage: Victory! Both heroes reached safety. Press R to play again.
+  levelVictoryMessage: 
   waitForPartnerMessage: '{0} made it. Wait for your partner!'
   exitReminderMessage: Both heroes must stand in the exit to finish.
   startingHearts: 3
@@ -586,6 +717,14 @@ MonoBehaviour:
   useVictoryPanel: 1
   victoryTitleText: Level Complete!
   victoryBodyText: Choose where to go next.
+  victorySlogans:
+  - No Cap, That Was Epic!
+  - Main Character Energy!
+  - Slayed It!
+  - Built Different!
+  - GOATed Behavior!
+  - 'Vibe Check: Passed!'
+  - Sheeeeeesh! You Did That!
   defeatTitleText: Out of Hearts
   defeatBodyText: You ran out of hearts. Try again?
   nextLevelButtonText: Next Level
@@ -603,8 +742,9 @@ MonoBehaviour:
   level2TargetTimeSeconds: 180
   level3TargetTimeSeconds: 120
   level4TargetTimeSeconds: 150
-  showInstructionPanel: 0
-  instructionPanelSceneName: Level1Scene
+  level5TargetTimeSeconds: 0
+  showInstructionPanel: 1
+  instructionPanelSceneName: 
   instructionLines:
   - <b>Heads up</b>
   - Melt ice.
@@ -631,8 +771,17 @@ MonoBehaviour:
   level4InstructionLines:
   - <b>Level 4</b>
   - 
-  - Template ready. Drop in your maze layout and hazards.
+  - Beware of the green wisp!
+  - Touch the purple spiral together to activate Steam Mode.
+  - Act fast, Steam Mode is timed!
   level4InstructionContinuePrompt: Press Space to start
+  level5InstructionSceneName: Level5Scene
+  level5InstructionLines:
+  - <b>Level 5</b>
+  - 
+  - Use SPACE button to swap positions
+  - 'Can only Swap 4 times: Choose Wisely!'
+  level5InstructionContinuePrompt: Press Space to start
   emberHeartFullSprite: {fileID: 6341348101557482619, guid: 3b91ad87000d64526b2b182ed1ef4834, type: 3}
   emberHeartEmptySprite: {fileID: -4643077359141595314, guid: 3333514574fc144eb95cc807c8348464, type: 3}
   aquaHeartFullSprite: {fileID: -2880978766386009668, guid: 28fb0f56d13b04528a3ef03f381a909e, type: 3}
@@ -646,6 +795,16 @@ MonoBehaviour:
   topUiBarHeight: 160
   topUiBarWidth: 0
   topUiBarColor: {r: 0.12941177, g: 0.101960786, b: 0.16078432, a: 1}
+  disableTopUiBar: 0
+  swapCounterContainerOverride: {fileID: 0}
+  swapCounterLabelOverride: {fileID: 0}
+  themeFont: {fileID: 11400000, guid: 5abeab07b85ff4624bbab4b405f329d8, type: 2}
+  themeButtonSprite: {fileID: 2530564911472380330, guid: f471c4e2950c6405c9e399cd725275be, type: 3}
+  themeButtonNormalColor: {r: 1, g: 1, b: 1, a: 1}
+  themeButtonHighlightedColor: {r: 0.8392157, g: 0.7607843, b: 1, a: 1}
+  themeButtonPressedColor: {r: 0.784, g: 0.784, b: 0.784, a: 1}
+  themeButtonSelectedColor: {r: 0.961, g: 0.961, b: 0.961, a: 1}
+  themeButtonTextColor: {r: 0.2, g: 0.2, b: 0.2, a: 1}
   heartLossSfx: {fileID: 0}
   heartLossSfxVolume: 0.9
   fireTokensCollected: 0
@@ -835,6 +994,51 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1985815534}
   m_CullTransparentMesh: 1
+--- !u!1 &2040625994
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2040625995}
+  - component: {fileID: 2040625996}
+  m_Layer: 0
+  m_Name: WaterTokenAnchor5
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2040625995
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2040625994}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 20.05, y: -5.38, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2110000000000000001}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2040625996
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2040625994}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4d67bbb986cc445f8c08c1cd97eb1ef2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  tokenType: 1
 --- !u!1 &2116882473
 GameObject:
   m_ObjectHideFlags: 0
@@ -914,9 +1118,11 @@ Transform:
   - {fileID: 2110000000000000201}
   - {fileID: 527546595}
   - {fileID: 2116882474}
+  - {fileID: 1022539987}
   - {fileID: 2110000000000000401}
   - {fileID: 2110000000000000501}
   - {fileID: 1946298541}
+  - {fileID: 2040625995}
   - {fileID: 2110000000000000601}
   m_Father: {fileID: 920500693}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -1005,7 +1211,7 @@ Transform:
   m_GameObject: {fileID: 2110000000000000200}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 26.36, y: -3.31, z: 0}
+  m_LocalPosition: {x: 29.96, y: -5.7, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1140,7 +1346,7 @@ Transform:
   m_GameObject: {fileID: 2110000000000000600}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 24.67, y: -1.17, z: 0}
+  m_LocalPosition: {x: 29.99, y: -10.43, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1169,3 +1375,4 @@ SceneRoots:
   - {fileID: 1746984133}
   - {fileID: 265964374}
   - {fileID: 1985815535}
+  - {fileID: 841152557}

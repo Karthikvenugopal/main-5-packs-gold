@@ -2,7 +2,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
-// Ensures every Button in the scene receives the ButtonHoverScaler behaviour.
+
 internal sealed class ButtonHoverInstaller : MonoBehaviour
 {
     private const float RescanInterval = 0.5f;

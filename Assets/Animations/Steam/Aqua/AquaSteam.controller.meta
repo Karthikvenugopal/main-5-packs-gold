@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: 9d4b2d0d1238457f84cba1e7271bc12a
+AnimatorController:
+  serializedVersion: 3
+  m_AnimatorLayers:
+  - serializedVersion: 4
+    m_Mask: {fileID: 0}
+    m_Controller: {fileID: 9101001}
+  m_AnimatorParameters: []
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 9101001
+  serializedVersion: 2
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

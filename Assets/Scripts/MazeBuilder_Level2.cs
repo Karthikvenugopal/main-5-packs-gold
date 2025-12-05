@@ -42,7 +42,7 @@ public class MazeBuilder_Level2 : MonoBehaviour
         "#.........................#",
         "#.........................#",
         "#.........................#",
-        "#.1111..2222..1111..2222.E#",
+        "#...111..222..111..222..E.#",
         "###########################"
     };
 
@@ -66,60 +66,60 @@ public class MazeBuilder_Level2 : MonoBehaviour
             for (int x = 0; x < row.Length; x++)
             {
                 char cell = row[x];
-                Vector2 cellPosition = new Vector2(x * cellSize, -y * cellSize);
+                Vector2 cellCenter = GetCellCenterPosition(x, y);
 
                 switch (cell)
                 {
                     case '#':
-                        SpawnWall(cellPosition);
+                        SpawnWall(cellCenter);
                         break;
 
                     case '.':
-                        SpawnFloor(cellPosition);
+                        SpawnFloor(cellCenter);
                         break;
 
                     case 'F':
-                        SpawnFloor(cellPosition);
-                        CreateSpawnMarker(cellPosition, FireboySpawnName);
+                        SpawnFloor(cellCenter);
+                        CreateSpawnMarker(cellCenter, FireboySpawnName);
                         break;
 
                     case 'W':
-                        SpawnFloor(cellPosition);
-                        CreateSpawnMarker(cellPosition, WatergirlSpawnName);
+                        SpawnFloor(cellCenter);
+                        CreateSpawnMarker(cellCenter, WatergirlSpawnName);
                         break;
 
                     case 'I':
-                        SpawnFloor(cellPosition);
-                        SpawnIceWall(cellPosition);
+                        SpawnFloor(cellCenter);
+                        SpawnIceWall(cellCenter);
                         break;
 
                     case 'H':
-                        SpawnFloor(cellPosition);
-                        SpawnFireWall(cellPosition);
+                        SpawnFloor(cellCenter);
+                        SpawnFireWall(cellCenter);
                         break;
 
                     case 'C':
-                        SpawnFloor(cellPosition);
-                        SpawnCannon(cellPosition, CannonVariant.Fire);
+                        SpawnFloor(cellCenter);
+                        SpawnCannon(cellCenter, CannonVariant.Fire);
                         break;
 
                     case '1':
-                        SpawnFloor(cellPosition);
-                        SpawnCannon(cellPosition, CannonVariant.Fire);
+                        SpawnFloor(cellCenter);
+                        SpawnCannon(cellCenter, CannonVariant.Fire);
                         break;
 
                     case '2':
-                        SpawnFloor(cellPosition);
-                        SpawnCannon(cellPosition, CannonVariant.Ice);
+                        SpawnFloor(cellCenter);
+                        SpawnCannon(cellCenter, CannonVariant.Ice);
                         break;
 
                     case 'E':
-                        SpawnFloor(cellPosition);
-                        SpawnExit(cellPosition);
+                        SpawnFloor(cellCenter);
+                        SpawnExit(cellCenter);
                         break;
 
                     default:
-                        SpawnFloor(cellPosition);
+                        SpawnFloor(cellCenter);
                         break;
                 }
             }
@@ -167,11 +167,7 @@ public class MazeBuilder_Level2 : MonoBehaviour
 
     private void SpawnCannon(Vector2 position, CannonVariant variant)
     {
-        Vector3 worldPosition = new Vector3(
-            position.x + 0.5f * cellSize,
-            position.y - 0.5f * cellSize,
-            0f
-        );
+        Vector3 worldPosition = new Vector3(position.x, position.y - (0.5f * cellSize), 0f);
 
         GameObject selectedPrefab = variant == CannonVariant.Fire ? fireCannonPrefab : iceCannonPrefab;
         if (selectedPrefab == null)
@@ -212,45 +208,32 @@ public class MazeBuilder_Level2 : MonoBehaviour
 
     private void SpawnExit(Vector2 position)
     {
-        GameObject exit = new GameObject("Exit");
-        exit.transform.position = position + new Vector2(0.5f * cellSize, -0.5f * cellSize);
-        exit.transform.SetParent(transform);
-
-        BoxCollider2D trigger = exit.AddComponent<BoxCollider2D>();
-        trigger.isTrigger = true;
-        trigger.size = new Vector2(cellSize * 2.6f, cellSize * 1.8f);
-        trigger.offset = Vector2.zero;
-
-        ExitZone exitZone = exit.AddComponent<ExitZone>();
-        exitZone.Initialize(gameManager);
-
-        SpriteRenderer renderer = exit.AddComponent<SpriteRenderer>();
-        renderer.color = new Color(0.9f, 0.8f, 0.2f, 0.85f);
-        renderer.sortingOrder = 4;
-
-        GameObject text = new GameObject("Label");
-        text.transform.SetParent(exit.transform);
-        text.transform.localPosition = new Vector3(0f, 1f * cellSize, -0.1f);
-
-        TextMeshPro tmp = text.AddComponent<TextMeshPro>();
-        tmp.text = "EXIT";
-        tmp.color = new Color(238f / 255f, 221f / 255f, 130f / 255f, 150f / 255f);
-        tmp.fontSize = 6;
-        tmp.alignment = TextAlignmentOptions.Center;
-        tmp.fontStyle = FontStyles.Bold;
-        tmp.enableWordWrapping = false;
+        Vector3 worldCenter = new Vector3(position.x + 0.5f * cellSize, position.y, 0f);
+        ExitPortalFactory.CreateExitPortal(
+            transform,
+            worldCenter,
+            cellSize,
+            exitZone => exitZone.Initialize(gameManager)
+        );
     }
 
     private void CreateSpawnMarker(Vector2 position, string name)
     {
         GameObject marker = new GameObject(name);
-        marker.transform.position = position + new Vector2(0.5f * cellSize, -0.5f * cellSize);
+        marker.transform.position = position;
         marker.transform.SetParent(transform);
+    }
+
+    private Vector2 GetCellCenterPosition(int x, int y)
+    {
+        float worldX = (x + 0.5f) * cellSize;
+        float worldY = -(y + 0.5f) * cellSize;
+        return new Vector2(worldX, worldY);
     }
 
     private void SpawnDialogueTrigger()
     {
-        // Row 42 is at index 11 (0-indexed), first dot is at x=1
+        
         int targetRow = 11;
         int targetCol = 1;
 
@@ -260,23 +243,24 @@ public class MazeBuilder_Level2 : MonoBehaviour
             return;
         }
 
-        // Calculate world position (same as BuildMaze uses)
-        Vector2 cellPosition = new Vector2(targetCol * cellSize, -targetRow * cellSize);
-        Vector2 worldPosition = cellPosition + new Vector2(0.5f * cellSize, -0.5f * cellSize);
+        
+        Vector2 worldPosition = GetCellCenterPosition(targetCol, targetRow);
 
-        // Create trigger zone GameObject
+        
         GameObject triggerZone = new GameObject("DialogueTriggerZone");
         triggerZone.transform.position = worldPosition;
         triggerZone.transform.SetParent(transform);
 
-        // Add BoxCollider2D for trigger
+        
         BoxCollider2D trigger = triggerZone.AddComponent<BoxCollider2D>();
         trigger.isTrigger = true;
         trigger.size = new Vector2(cellSize * 0.9f, cellSize * 0.9f);
         trigger.offset = Vector2.zero;
 
-        // Add DialogueTriggerZone component
+        
         DialogueTriggerZone dialogueTrigger = triggerZone.AddComponent<DialogueTriggerZone>();
+        
+        dialogueTrigger.SetOffsetFromPlayer(new Vector2(5f, 0.3f));
     }
 
     private const float CameraVerticalPadding = 0.8f;
