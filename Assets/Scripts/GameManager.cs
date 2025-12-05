@@ -1031,6 +1031,15 @@ public class GameManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Returns true if the instruction panel is currently waiting for player acknowledgment.
+    /// This can be used by other scripts (like Level5Manager) to prevent input conflicts.
+    /// </summary>
+    public bool IsWaitingForInstructionAck()
+    {
+        return _waitingForInstructionAck;
+    }
+
     // --- MODIFICATION START ---
     // This function is modified to create the _topUiBar.
     private void EnsureHudCanvas()

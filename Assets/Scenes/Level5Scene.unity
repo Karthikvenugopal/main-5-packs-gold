@@ -579,7 +579,7 @@ MonoBehaviour:
   instructionFont: {fileID: 0}
   levelIntroMessage: 
   levelStartMessage: 
-  levelVictoryMessage: Victory! Both heroes reached safety. Press R to play again.
+  levelVictoryMessage: 
   waitForPartnerMessage: '{0} made it. Wait for your partner!'
   exitReminderMessage: Both heroes must stand in the exit to finish.
   startingHearts: 3
