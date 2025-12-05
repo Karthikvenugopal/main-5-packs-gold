@@ -307,6 +307,7 @@ public class GameManager : MonoBehaviour
     private Button _victoryNextLevelButton;
     private Image _victoryTrophyImage;
 
+    private int _unlockedBonusHeartSlots;
     private readonly List<CoopPlayerController> _players = new();
     private readonly HashSet<CoopPlayerController> _playersAtExit = new();
 
@@ -2225,6 +2226,7 @@ public class GameManager : MonoBehaviour
     {
         int clampedHearts = Mathf.Max(0, startingHearts);
         int bonusHearts = ConsumePendingHeartBonusForCurrentScene();
+        _unlockedBonusHeartSlots = Mathf.Clamp(bonusHearts, 0, MaxBonusHeartReward);
         int totalHearts = Mathf.Clamp(clampedHearts + bonusHearts, 0, startingHearts + MaxBonusHeartReward);
         _fireHearts = totalHearts;
         _waterHearts = totalHearts;
@@ -2275,7 +2277,7 @@ public class GameManager : MonoBehaviour
                 continue;
             }
 
-            if (ShouldHideBonusSlot(i, _fireHearts))
+            if (ShouldHideBonusSlot(i))
             {
                 heartImage.gameObject.SetActive(false);
                 continue;
@@ -2313,7 +2315,7 @@ public class GameManager : MonoBehaviour
                 continue;
             }
 
-            if (ShouldHideBonusSlot(i, _waterHearts))
+            if (ShouldHideBonusSlot(i))
             {
                 heartImage.gameObject.SetActive(false);
                 continue;
@@ -2338,7 +2340,7 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    private bool ShouldHideBonusSlot(int heartIndex, int currentHearts)
+    private bool ShouldHideBonusSlot(int heartIndex)
     {
         if (!hideBonusHeartSlotUntilEarned)
         {
@@ -2350,7 +2352,13 @@ public class GameManager : MonoBehaviour
             return false;
         }
 
-        return currentHearts <= startingHearts;
+        if (_unlockedBonusHeartSlots <= 0)
+        {
+            return true;
+        }
+
+        int maxVisibleIndex = startingHearts + _unlockedBonusHeartSlots;
+        return heartIndex >= maxVisibleIndex;
     }
 
     private void TriggerHeartLossAnimations(bool isEmber, int previousHeartCount, int heartsLost)
