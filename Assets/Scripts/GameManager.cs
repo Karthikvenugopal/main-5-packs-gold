@@ -119,10 +119,10 @@ public class GameManager : MonoBehaviour
     [SerializeField] private string[] level3InstructionLines = new[]
     {
         "",
-        "",
         "Dynamic obstacles: Stay Sharp", 
-        "Destroying one obstacle can lead to the creation of a new one",
-        "",
+        "Destroying one obstacle can",
+        "lead to the creation",
+        "of a new one",
         "Keep collecting tokens and avoid hazards!",
         "Pull 1200+ and enjoy extra hearts on the next round."
     };
@@ -988,7 +988,7 @@ public class GameManager : MonoBehaviour
         TextMeshProUGUI instructionsLabel = instructionsGO.AddComponent<TextMeshProUGUI>();
         
         instructionsLabel.alignment = TextAlignmentOptions.Center;
-        instructionsLabel.fontSize = 60f;
+        instructionsLabel.fontSize = 54f;
         instructionsLabel.fontStyle = FontStyles.Bold;
         instructionsLabel.text = lines != null && lines.Length > 0
             ? string.Join("\n", lines)
