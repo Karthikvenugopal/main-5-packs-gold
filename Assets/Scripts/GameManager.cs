@@ -2596,7 +2596,7 @@ public class GameManager : MonoBehaviour
             levelTimer?.MarkFailure();
             FreezePlayers();
             CancelNextSceneLoad();
-            UpdateStatus(levelDefeatMessage);
+            UpdateStatus("");
             ShowEndPanel(EndGameState.Defeat);
             SendAnalyticsForDamage(PlayerRole.Fireboy, DamageCause.Unknown, null); // fallback hotspot on defeat
             SendAnalyticsForDamage(PlayerRole.Watergirl, DamageCause.Unknown, null);
