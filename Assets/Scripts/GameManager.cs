@@ -43,7 +43,7 @@ public class GameManager : MonoBehaviour
     [Header("Player Hearts")]
     [SerializeField] private int startingHearts = 3;
     [Tooltip("Hide the bonus heart slot until players have actually earned it.")]
-    [SerializeField] private bool hideBonusHeartSlotUntilEarned = false;
+    [SerializeField] private bool hideBonusHeartSlotUntilEarned = true;
     private const int MaxBonusHeartReward = 1;
     [Header("Progression")]
     [SerializeField] private string nextSceneName;
@@ -239,7 +239,7 @@ public class GameManager : MonoBehaviour
     private static readonly Dictionary<string, int> s_levelScoreThresholds = new(StringComparer.OrdinalIgnoreCase)
     {
         { "Level1Scene", 2100 },
-        { "Level2Scene", 5500 },
+        { "Level2Scene", 1300 },
         { "Level3Scene", 1200 },
         { "Level4Scene", 1800 }
     };

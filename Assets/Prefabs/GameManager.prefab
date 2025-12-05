@@ -68,6 +68,7 @@ MonoBehaviour:
   waitForPartnerMessage: '{0} made it. Wait for your partner!'
   exitReminderMessage: Both heroes must stand in the exit to finish.
   startingHearts: 3
+  hideBonusHeartSlotUntilEarned: 1
   nextSceneName: Level2Scene
   nextSceneDelaySeconds: 2
   useVictoryPanel: 0
