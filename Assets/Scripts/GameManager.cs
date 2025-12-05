@@ -96,7 +96,7 @@ public class GameManager : MonoBehaviour
     [SerializeField] private string instructionPanelSceneName = "Level1Scene";
     [SerializeField] private string[] instructionLines = new[]
     {
-        "<b>Level 1</b>",
+        "",
         "",
         "Collect maximum number of tokens and exit",
         "",
@@ -109,7 +109,7 @@ public class GameManager : MonoBehaviour
     [SerializeField] private string level2InstructionSceneName = "Level2Scene";
     [SerializeField] private string[] level2InstructionLines = new[]
     {
-        "<b>Level 2</b>",
+        "",
         "",
         "Tip: Opposites protect. Shield your partner from danger.",
         "Hit 1300+ and we'll drop bonus hearts for you."
@@ -118,7 +118,7 @@ public class GameManager : MonoBehaviour
     [SerializeField] private string level3InstructionSceneName = "Level3Scene";
     [SerializeField] private string[] level3InstructionLines = new[]
     {
-        "<b>Level 3</b>",
+        "",
         "",
         "Dynamic obstacles: Stay Sharp", 
         "Destroying one obstacle can lead to the creation of a new one",
@@ -130,7 +130,7 @@ public class GameManager : MonoBehaviour
     [SerializeField] private string level4InstructionSceneName = "Level4Scene";
     [SerializeField] private string[] level4InstructionLines = new[]
     {
-        "<b>Level 4</b>",
+        "",
         "",
         "Beware of the green wisp!",
         "Touch the purple spiral together to activate Steam Mode.",
@@ -141,7 +141,7 @@ public class GameManager : MonoBehaviour
     [SerializeField] private string level5InstructionSceneName = "Level5Scene";
     [SerializeField] private string[] level5InstructionLines = new[]
     {
-        "<b>Level 5</b>",
+        "",
         "",
         "Use SPACE button to swap positions",
         "Can only swap 3 times: choose wisely!"
@@ -1320,6 +1320,24 @@ public class GameManager : MonoBehaviour
     
     
     
+    private bool IsCurrentSceneLevel2()
+    {
+        string currentScene = SceneManager.GetActiveScene().name;
+        if (string.IsNullOrEmpty(currentScene))
+        {
+            return false;
+        }
+
+        if (!string.IsNullOrEmpty(level2InstructionSceneName) &&
+            string.Equals(currentScene, level2InstructionSceneName, StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        return string.Equals(currentScene, "Level2Scene", StringComparison.OrdinalIgnoreCase) ||
+               string.Equals(currentScene, "Level2", StringComparison.OrdinalIgnoreCase);
+    }
+
     private void CreateLiveScoreBoard(RectTransform heartsRect)
     {
         if (!showLiveScoreBoard)
@@ -1340,6 +1358,7 @@ public class GameManager : MonoBehaviour
         Vector2 anchorMin = heartsRect != null ? heartsRect.anchorMin : new Vector2(1f, 0.5f);
         Vector2 anchorMax = heartsRect != null ? heartsRect.anchorMax : new Vector2(1f, 0.5f);
         Vector2 pivot = heartsRect != null ? heartsRect.pivot : new Vector2(1f, 0.5f);
+        
         _liveScoreContainer.anchorMin = anchorMin;
         _liveScoreContainer.anchorMax = anchorMax;
         _liveScoreContainer.pivot = pivot;
@@ -1351,7 +1370,15 @@ public class GameManager : MonoBehaviour
         float heartsCenterY = heartsRect != null ? heartsRect.anchoredPosition.y : 0f;
         float heartsHeight = heartsRect != null ? heartsRect.sizeDelta.y : 200f;
         float offsetX = heartsRect != null ? heartsRect.anchoredPosition.x : 0f;
+        
+        // Default Y: below the hearts
         float offsetY = heartsCenterY - (heartsHeight * 0.5f) - (height * 0.5f) - 24f + (heartsHeight * 0.1f);
+
+        if (IsCurrentSceneLevel2() || IsCurrentSceneLevel5())
+        {
+            offsetX += (heartIconSize.x * 0.5f);
+        }
+
         _liveScoreContainer.anchoredPosition = new Vector2(offsetX, offsetY);
 
         Image bg = scoreGO.AddComponent<Image>();
@@ -2514,7 +2541,14 @@ public class GameManager : MonoBehaviour
         }
 
         string total = FormatNumber(score.TotalScore);
-        _liveScoreLabel.text = $"Score: {total}";
+        if (IsCurrentSceneLevel2() || IsCurrentSceneLevel5())
+        {
+            _liveScoreLabel.text = $"Score:\n{total}";
+        }
+        else
+        {
+            _liveScoreLabel.text = $"Score: {total}";
+        }
     }
 
     private AudioClip GetHeartLossClip()
