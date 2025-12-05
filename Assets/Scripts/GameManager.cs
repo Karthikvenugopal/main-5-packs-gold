@@ -845,7 +845,7 @@ public class GameManager : MonoBehaviour
         bgRect.anchorMin = new Vector2(0.5f, 1f); // Top-Center
         bgRect.anchorMax = new Vector2(0.5f, 1f); // Top-Center
         bgRect.pivot = new Vector2(0.5f, 1f);
-        bgRect.sizeDelta = new Vector2(680f, 120f);
+        bgRect.sizeDelta = new Vector2(1000f, 120f);
         // Position it further down from the top-center of the bar for clarity
         bgRect.anchoredPosition = new Vector2(0f, -100f); 
 
@@ -2794,12 +2794,9 @@ public class GameManager : MonoBehaviour
             return true;
         }
 
-        // Explicit Level4 -> Level5 handoff so the Next Level button appears even without build index wiring.
-        if (!string.IsNullOrEmpty(level4InstructionSceneName) &&
-            !string.IsNullOrEmpty(level5InstructionSceneName) &&
-            activeScene.name == level4InstructionSceneName)
+        if (string.Equals(activeScene.name, "Level4Scene", StringComparison.OrdinalIgnoreCase))
         {
-            sceneName = level5InstructionSceneName;
+            sceneName = !string.IsNullOrEmpty(level5InstructionSceneName) ? level5InstructionSceneName : "Level5Scene";
             return true;
         }
 
@@ -2904,18 +2901,8 @@ public class GameManager : MonoBehaviour
 
     private bool IsFinalLevelScene(string sceneName)
     {
-        // Treat the highest configured level as the final one (Level 5 if present, otherwise Level 4)
-        if (!string.IsNullOrEmpty(level5InstructionSceneName))
-        {
-            return sceneName == level5InstructionSceneName;
-        }
-
-        if (!string.IsNullOrEmpty(level4InstructionSceneName))
-        {
-            return sceneName == level4InstructionSceneName;
-        }
-
-        return false;
+        return !string.IsNullOrEmpty(level5InstructionSceneName) &&
+               sceneName == level5InstructionSceneName;
     }
 
     private bool IsScoredLevel()
