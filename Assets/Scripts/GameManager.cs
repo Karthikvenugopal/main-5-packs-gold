@@ -339,12 +339,13 @@ public class GameManager : MonoBehaviour
     private bool _waitingForInstructionAck;
     private bool _instructionPausedTime;
     private float _previousTimeScale = 1f;
-    
-    
     private bool _scoringTimerStarted;
     private float _scoringStartTime;
-    private bool _scoringTimerFrozen;
-    private float _scoringFrozenElapsed;
+    private bool _scoringTimerPaused;
+    private float _scoringPauseStartTime;
+    private float _scoringPausedDuration;
+    private bool _scoringTimerFinalized;
+    private float _scoringFinalElapsed;
     
     
     private AudioClip _generatedHeartLossClip;
@@ -401,8 +402,11 @@ public class GameManager : MonoBehaviour
         
         _scoringTimerStarted = false;
         _scoringStartTime = 0f;
-        _scoringTimerFrozen = false;
-        _scoringFrozenElapsed = 0f;
+        _scoringTimerPaused = false;
+        _scoringPauseStartTime = 0f;
+        _scoringPausedDuration = 0f;
+        _scoringTimerFinalized = false;
+        _scoringFinalElapsed = 0f;
     }
 
     
@@ -530,8 +534,11 @@ public class GameManager : MonoBehaviour
         _gameFinished = false;
         _playersAtExit.Clear();
 
-        _scoringTimerFrozen = false;
-        _scoringFrozenElapsed = 0f;
+        _scoringTimerFinalized = false;
+        _scoringTimerPaused = false;
+        _scoringPauseStartTime = 0f;
+        _scoringPausedDuration = 0f;
+        _scoringFinalElapsed = 0f;
         _scoringStartTime = Time.realtimeSinceStartup;
         _scoringTimerStarted = true;
 
@@ -547,6 +554,18 @@ public class GameManager : MonoBehaviour
         }
     }
 
+    public void SetOptionsMenuVisible(bool visible)
+    {
+        if (visible)
+        {
+            PauseScoringTimer();
+        }
+        else
+        {
+            ResumeScoringTimer();
+        }
+    }
+    
     
 
     
@@ -2955,7 +2974,7 @@ public class GameManager : MonoBehaviour
         {
             if (_gameFinished) return;
 
-            FreezeScoringTimer();
+            FinalizeScoringTimer();
             _gameFinished = true;
             _gameActive = false;
             EnsureLevelTimer();
@@ -3044,7 +3063,7 @@ public class GameManager : MonoBehaviour
         {
             if (_gameFinished) return;
 
-            FreezeScoringTimer();
+            FinalizeScoringTimer();
             _gameFinished = true;
             _gameActive = false;
             
@@ -3386,7 +3405,7 @@ public class GameManager : MonoBehaviour
         }
 
         float elapsedSecondsRaw = _scoringTimerStarted
-            ? Mathf.Max(0f, GetFrozenOrLiveElapsedSeconds())
+            ? Mathf.Max(0f, GetCurrentElapsedSeconds())
             : 0f;
         float elapsedSeconds = Mathf.Floor(elapsedSecondsRaw);
         float levelTargetTime = GetTargetTimeForCurrentLevel();
@@ -3410,30 +3429,58 @@ public class GameManager : MonoBehaviour
         };
     }
 
-    private float GetFrozenOrLiveElapsedSeconds()
+    private float GetCurrentElapsedSeconds()
     {
         if (!_scoringTimerStarted)
         {
             return 0f;
         }
 
-        if (_scoringTimerFrozen)
+        if (_scoringTimerFinalized)
         {
-            return _scoringFrozenElapsed;
+            return _scoringFinalElapsed;
         }
 
-        return Mathf.Max(0f, Time.realtimeSinceStartup - _scoringStartTime);
+        float referenceTime = _scoringTimerPaused ? _scoringPauseStartTime : Time.realtimeSinceStartup;
+        float elapsed = referenceTime - _scoringStartTime - _scoringPausedDuration;
+        return Mathf.Max(0f, elapsed);
     }
 
-    private void FreezeScoringTimer()
+    private void PauseScoringTimer()
     {
-        if (!_scoringTimerStarted || _scoringTimerFrozen)
+        if (!_scoringTimerStarted || _scoringTimerFinalized || _scoringTimerPaused)
         {
             return;
         }
 
-        _scoringFrozenElapsed = Mathf.Max(0f, Time.realtimeSinceStartup - _scoringStartTime);
-        _scoringTimerFrozen = true;
+        _scoringTimerPaused = true;
+        _scoringPauseStartTime = Time.realtimeSinceStartup;
+    }
+
+    private void ResumeScoringTimer()
+    {
+        if (!_scoringTimerStarted || _scoringTimerFinalized || !_scoringTimerPaused)
+        {
+            return;
+        }
+
+        float pauseDuration = Mathf.Max(0f, Time.realtimeSinceStartup - _scoringPauseStartTime);
+        _scoringPausedDuration += pauseDuration;
+        _scoringTimerPaused = false;
+        _scoringPauseStartTime = 0f;
+    }
+
+    private void FinalizeScoringTimer()
+    {
+        if (!_scoringTimerStarted || _scoringTimerFinalized)
+        {
+            return;
+        }
+
+        _scoringFinalElapsed = GetCurrentElapsedSeconds();
+        _scoringTimerFinalized = true;
+        _scoringTimerPaused = false;
+        _scoringPauseStartTime = 0f;
     }
 
     private string BuildScoreDisplayText()

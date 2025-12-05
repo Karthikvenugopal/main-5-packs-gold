@@ -318,6 +318,10 @@ public class RetryHud : MonoBehaviour
         _modalPanel.SetActive(show);
         _paused = show;
         Time.timeScale = show ? 0f : 1f;
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.SetOptionsMenuVisible(show);
+        }
     }
 
     private void ContinueGame()
