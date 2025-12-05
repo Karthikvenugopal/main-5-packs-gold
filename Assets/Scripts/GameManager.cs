@@ -42,6 +42,8 @@ public class GameManager : MonoBehaviour
     [SerializeField] private string exitReminderMessage = "Both heroes must stand in the exit to finish.";
     [Header("Player Hearts")]
     [SerializeField] private int startingHearts = 3;
+    [Tooltip("Hide the bonus heart slot until players have actually earned it.")]
+    [SerializeField] private bool hideBonusHeartSlotUntilEarned = true;
     private const int MaxBonusHeartReward = 1;
     [Header("Progression")]
     [SerializeField] private string nextSceneName;
@@ -100,7 +102,8 @@ public class GameManager : MonoBehaviour
         "",
         "Caution: Touch each other? lose a heart.",
         "Caution: Touch wrong obstacle? lose a heart.",
-        "Work together but never collide!"
+        "Work together but never collide!",
+        "Score 2100+ to snag bonus hearts next level."
     };
     [SerializeField] private string instructionContinuePrompt = "Press Space to start";
     [SerializeField] private string level2InstructionSceneName = "Level2Scene";
@@ -108,7 +111,8 @@ public class GameManager : MonoBehaviour
     {
         "<b>Level 2</b>",
         "",
-        "Tip: Opposites protect. Shield your partner from danger."
+        "Tip: Opposites protect. Shield your partner from danger.",
+        "Hit 1300+ and we'll drop bonus hearts for you."
     };
     [SerializeField] private string level2InstructionContinuePrompt = "Press Space to start";
     [SerializeField] private string level3InstructionSceneName = "Level3Scene";
@@ -119,7 +123,8 @@ public class GameManager : MonoBehaviour
         "Dynamic obstacles: Stay Sharp", 
         "Destroying one obstacle can lead to the creation of a new one",
         "",
-        "Keep collecting tokens and avoid hazards!"
+        "Keep collecting tokens and avoid hazards!",
+        "Pull 1200+ and enjoy extra hearts on the next round."
     };
     [SerializeField] private string level3InstructionContinuePrompt = "Press Space to start";
     [SerializeField] private string level4InstructionSceneName = "Level4Scene";
@@ -129,7 +134,8 @@ public class GameManager : MonoBehaviour
         "",
         "Beware of the green wisp!",
         "Touch the purple spiral together to activate Steam Mode.",
-        "Act fast—Steam Mode is timed!"
+        "Act fast—Steam Mode is timed!",
+        "Beat 1800+ and boom, bonus hearts unlocked."
     };
     [SerializeField] private string level4InstructionContinuePrompt = "Press Space to start";
     [SerializeField] private string level5InstructionSceneName = "Level5Scene";
@@ -237,7 +243,7 @@ public class GameManager : MonoBehaviour
     private static readonly Dictionary<string, int> s_levelScoreThresholds = new(StringComparer.OrdinalIgnoreCase)
     {
         { "Level1Scene", 2100 },
-        { "Level2Scene", 5500 },
+        { "Level2Scene", 1300 },
         { "Level3Scene", 1200 },
         { "Level4Scene", 1800 }
     };
@@ -296,6 +302,7 @@ public class GameManager : MonoBehaviour
     private TextMeshProUGUI _victoryBodyLabel;
     private TextMeshProUGUI _fireVictoryLabel;
     private TextMeshProUGUI _waterVictoryLabel;
+    private TextMeshProUGUI _bonusHeartMessageLabel;
     private GameObject _fireSummaryRoot;
     private GameObject _waterSummaryRoot;
     private VerticalLayoutGroup _victoryContentLayout;
@@ -304,6 +311,7 @@ public class GameManager : MonoBehaviour
     private Button _victoryNextLevelButton;
     private Image _victoryTrophyImage;
 
+    private int _unlockedBonusHeartSlots;
     private readonly List<CoopPlayerController> _players = new();
     private readonly HashSet<CoopPlayerController> _playersAtExit = new();
 
@@ -1965,6 +1973,22 @@ public class GameManager : MonoBehaviour
         _waterVictoryLabel.text = string.Empty;
         ApplyEndPanelFont(_waterVictoryLabel);
 
+        GameObject bonusMessageGO = new GameObject("BonusHeartMessage");
+        bonusMessageGO.transform.SetParent(content.transform, false);
+        RectTransform bonusRect = bonusMessageGO.AddComponent<RectTransform>();
+        bonusRect.anchorMin = new Vector2(0f, 0.5f);
+        bonusRect.anchorMax = new Vector2(1f, 0.5f);
+        bonusRect.sizeDelta = new Vector2(0f, 60f);
+        LayoutElement bonusLayout = bonusMessageGO.AddComponent<LayoutElement>();
+        bonusLayout.preferredHeight = 60f;
+
+        _bonusHeartMessageLabel = bonusMessageGO.AddComponent<TextMeshProUGUI>();
+        _bonusHeartMessageLabel.alignment = TextAlignmentOptions.Center;
+        _bonusHeartMessageLabel.fontSize = 38f;
+        _bonusHeartMessageLabel.text = string.Empty;
+        ApplyEndPanelFont(_bonusHeartMessageLabel);
+        bonusMessageGO.SetActive(false);
+
         GameObject buttonRow = new GameObject("Buttons");
         buttonRow.transform.SetParent(content.transform, false);
         RectTransform buttonRowRect = buttonRow.AddComponent<RectTransform>();
@@ -2183,6 +2207,16 @@ public class GameManager : MonoBehaviour
             _victoryMainMenuButton.gameObject.SetActive(showMainMenu);
         }
 
+        if (_bonusHeartMessageLabel != null)
+        {
+            bool showBonus = isVictory && ShouldShowBonusHeartMessage();
+            _bonusHeartMessageLabel.gameObject.SetActive(showBonus);
+            if (showBonus)
+            {
+                _bonusHeartMessageLabel.text = "Bonus Hearts Earned for Ember and Aqua";
+            }
+        }
+
         _victoryPanel.SetActive(true);
     }
 
@@ -2196,6 +2230,7 @@ public class GameManager : MonoBehaviour
     {
         int clampedHearts = Mathf.Max(0, startingHearts);
         int bonusHearts = ConsumePendingHeartBonusForCurrentScene();
+        _unlockedBonusHeartSlots = Mathf.Clamp(bonusHearts, 0, MaxBonusHeartReward);
         int totalHearts = Mathf.Clamp(clampedHearts + bonusHearts, 0, startingHearts + MaxBonusHeartReward);
         _fireHearts = totalHearts;
         _waterHearts = totalHearts;
@@ -2233,8 +2268,6 @@ public class GameManager : MonoBehaviour
 
     private void UpdateHeartsUI()
     {
-        
-        
         for (int i = 0; i < _emberHeartImages.Count; i++)
         {
             var heartImage = _emberHeartImages[i];
@@ -2245,6 +2278,12 @@ public class GameManager : MonoBehaviour
 
             if (_heartLossAnimator != null && _heartLossAnimator.IsAnimatingHeart(heartImage.gameObject))
             {
+                continue;
+            }
+
+            if (ShouldHideBonusSlot(i))
+            {
+                heartImage.gameObject.SetActive(false);
                 continue;
             }
 
@@ -2280,6 +2319,12 @@ public class GameManager : MonoBehaviour
                 continue;
             }
 
+            if (ShouldHideBonusSlot(i))
+            {
+                heartImage.gameObject.SetActive(false);
+                continue;
+            }
+
             heartImage.gameObject.SetActive(true);
 
             if (i < _waterHearts)
@@ -2297,6 +2342,27 @@ public class GameManager : MonoBehaviour
                 heartImage.enabled = false;
             }
         }
+    }
+
+    private bool ShouldHideBonusSlot(int heartIndex)
+    {
+        if (!hideBonusHeartSlotUntilEarned)
+        {
+            return false;
+        }
+
+        if (heartIndex < startingHearts)
+        {
+            return false;
+        }
+
+        if (_unlockedBonusHeartSlots <= 0)
+        {
+            return true;
+        }
+
+        int maxVisibleIndex = startingHearts + _unlockedBonusHeartSlots;
+        return heartIndex >= maxVisibleIndex;
     }
 
     private void TriggerHeartLossAnimations(bool isEmber, int previousHeartCount, int heartsLost)
@@ -2838,6 +2904,21 @@ public class GameManager : MonoBehaviour
             s_pendingHeartBonusScene = null;
             s_pendingHeartBonusAmount = 0;
         }
+    }
+
+    private bool ShouldShowBonusHeartMessage()
+    {
+        if (s_pendingHeartBonusAmount <= 0 || string.IsNullOrEmpty(s_pendingHeartBonusScene))
+        {
+            return false;
+        }
+
+        if (!TryGetNextSceneName(out string nextScene) || string.IsNullOrEmpty(nextScene))
+        {
+            return false;
+        }
+
+        return string.Equals(s_pendingHeartBonusScene, nextScene, StringComparison.OrdinalIgnoreCase);
     }
 
     
