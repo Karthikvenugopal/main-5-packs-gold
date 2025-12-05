@@ -311,6 +311,7 @@ public class GameManager : MonoBehaviour
     private bool _levelReady;
     private bool _gameActive;
     private bool _gameFinished;
+    public bool GameFinished => _gameFinished;
     private Coroutine _loadNextSceneRoutine;
     private GameObject _instructionPanel;
     private bool _waitingForInstructionAck;
@@ -2625,7 +2626,7 @@ public class GameManager : MonoBehaviour
             levelTimer?.MarkFailure();
             FreezePlayers();
             CancelNextSceneLoad();
-            UpdateStatus(levelDefeatMessage);
+            UpdateStatus("");
             ShowEndPanel(EndGameState.Defeat);
             SendAnalyticsForDamage(PlayerRole.Fireboy, DamageCause.Unknown, null); // fallback hotspot on defeat
             SendAnalyticsForDamage(PlayerRole.Watergirl, DamageCause.Unknown, null);

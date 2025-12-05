@@ -66,6 +66,21 @@ public class RetryHud : MonoBehaviour
     private Button _menuButton;
     private bool _paused;
 
+    private void Update()
+    {
+        if (_optionsButton == null) return;
+
+        if (GameManager.Instance != null)
+        {
+            // Hide the button completely when the game is finished
+            _optionsButton.gameObject.SetActive(!GameManager.Instance.GameFinished);
+        }
+        else
+        {
+            _optionsButton.gameObject.SetActive(true);
+        }
+    }
+
     private void CreateUI()
     {
         var canvasGO = new GameObject("RetryCanvas");
