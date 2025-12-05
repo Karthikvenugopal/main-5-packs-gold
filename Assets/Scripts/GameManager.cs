@@ -397,11 +397,7 @@ public class GameManager : MonoBehaviour
             return;
         }
 
-        if (_gameFinished && Input.GetKeyDown(KeyCode.R))
-        {
-            CancelNextSceneLoad();
-            SceneManager.LoadScene(SceneManager.GetActiveScene().name);
-        }
+
 
         if (_gameActive && !_gameFinished && AreAllPlayersAtExit())
         {
@@ -2722,7 +2718,7 @@ public class GameManager : MonoBehaviour
             // analytics code
             EnsureLevelTimer();
             (levelTimer ?? FindAnyObjectByType<Analytics.LevelTimer>())?.MarkSuccess();
-            UpdateStatus(levelVictoryMessage);
+            UpdateStatus("");
             FreezePlayers();
             CancelNextSceneLoad();
             EvaluateBonusHeartReward();

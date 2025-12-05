@@ -43,7 +43,61 @@ public class LevelSelectUI : MonoBehaviour
         CaptureButtonsFromChildren();
         ApplyButtonStyle();
         WireButtonCallbacks();
+        EnforceButtonSpacing();
         CreateBackButton();
+    }
+
+    private void EnforceButtonSpacing()
+    {
+        // Find buttons by name to ensure we are working with the correct ones
+        Button btn1 = FindButtonByName("Level1Button");
+        Button btn2 = FindButtonByName("Level2Button");
+        Button btn3 = FindButtonByName("Level3Button");
+        Button btn4 = FindButtonByName("Level4Button");
+        Button btn5 = FindButtonByName("Level5Button");
+
+        // We need at least the first two buttons to establish a pattern
+        if (btn1 != null && btn2 != null)
+        {
+            // Calculate the spacing vector based on the first two buttons
+            // Using anchoredPosition to respect UI layout relative to parent
+            RectTransform rt1 = btn1.GetComponent<RectTransform>();
+            RectTransform rt2 = btn2.GetComponent<RectTransform>();
+            
+            if (rt1 != null && rt2 != null)
+            {
+                Vector2 startPos = rt1.anchoredPosition;
+                Vector2 spacing = rt2.anchoredPosition - rt1.anchoredPosition;
+
+                // Apply spacing to subsequent buttons
+                ApplySpacingToButton(btn3, rt2.anchoredPosition + spacing);
+                ApplySpacingToButton(btn4, rt2.anchoredPosition + (spacing * 2));
+                ApplySpacingToButton(btn5, rt2.anchoredPosition + (spacing * 3));
+            }
+        }
+    }
+
+    private void ApplySpacingToButton(Button btn, Vector2 newPos)
+    {
+        if (btn != null)
+        {
+            RectTransform rt = btn.GetComponent<RectTransform>();
+            if (rt != null)
+            {
+                rt.anchoredPosition = newPos;
+            }
+        }
+    }
+
+    private Button FindButtonByName(string name)
+    {
+        if (levelButtons == null) return null;
+        foreach (var btn in levelButtons)
+        {
+            if (btn == null) continue;
+            if (btn.name.Equals(name, StringComparison.OrdinalIgnoreCase)) return btn;
+        }
+        return null;
     }
 
 #if UNITY_EDITOR
