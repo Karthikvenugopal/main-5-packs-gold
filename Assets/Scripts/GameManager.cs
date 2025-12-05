@@ -172,6 +172,9 @@ public class GameManager : MonoBehaviour
     [SerializeField] private Vector2 heartIconSize = new Vector2(50f, 50f);
     [Tooltip("The size (Width, Height) for the token icons.")]
     [SerializeField] private Vector2 tokenIconSize = new Vector2(45f, 45f);
+    [Header("Score Display")]
+    [SerializeField] private bool showLiveScoreBoard = true;
+    [SerializeField] private Color liveScoreBackground = new Color(0f, 0f, 0f, 0.35f);
 
     
     
@@ -303,6 +306,8 @@ public class GameManager : MonoBehaviour
     private TextMeshProUGUI _fireVictoryLabel;
     private TextMeshProUGUI _waterVictoryLabel;
     private TextMeshProUGUI _bonusHeartMessageLabel;
+    private TextMeshProUGUI _liveScoreLabel;
+    private RectTransform _liveScoreContainer;
     private GameObject _fireSummaryRoot;
     private GameObject _waterSummaryRoot;
     private VerticalLayoutGroup _victoryContentLayout;
@@ -403,6 +408,7 @@ public class GameManager : MonoBehaviour
     {
         UpdateSteamTimer();
         UpdateTokenBreathing();
+        UpdateLiveScoreDisplay();
         if (_waitingForInstructionAck)
         {
             if (Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.Return))
@@ -1307,6 +1313,66 @@ public class GameManager : MonoBehaviour
 
         _heartLossAnimator.ConfigureAudio(GetHeartLossClip(), heartLossAudioSource, heartLossSfxVolume);
         _heartLossAnimator.HeartAnimationFinished += UpdateHeartsUI;
+
+        CreateLiveScoreBoard(masterRect);
+    }
+    
+    
+    
+    
+    private void CreateLiveScoreBoard(RectTransform heartsRect)
+    {
+        if (!showLiveScoreBoard)
+        {
+            return;
+        }
+
+        Transform parent = heartsRect != null ? heartsRect.parent : (_topUiContentRoot != null ? _topUiContentRoot : _topUiBar);
+        if (parent == null)
+        {
+            return;
+        }
+
+        GameObject scoreGO = new GameObject("LiveScoreBoard", typeof(RectTransform));
+        scoreGO.transform.SetParent(parent, false);
+        _liveScoreContainer = scoreGO.GetComponent<RectTransform>();
+
+        Vector2 anchorMin = heartsRect != null ? heartsRect.anchorMin : new Vector2(1f, 0.5f);
+        Vector2 anchorMax = heartsRect != null ? heartsRect.anchorMax : new Vector2(1f, 0.5f);
+        Vector2 pivot = heartsRect != null ? heartsRect.pivot : new Vector2(1f, 0.5f);
+        _liveScoreContainer.anchorMin = anchorMin;
+        _liveScoreContainer.anchorMax = anchorMax;
+        _liveScoreContainer.pivot = pivot;
+
+        float width = heartsRect != null ? heartsRect.sizeDelta.x : 360f;
+        float height = 70f;
+        _liveScoreContainer.sizeDelta = new Vector2(width, height);
+
+        float heartsCenterY = heartsRect != null ? heartsRect.anchoredPosition.y : 0f;
+        float heartsHeight = heartsRect != null ? heartsRect.sizeDelta.y : 200f;
+        float offsetX = heartsRect != null ? heartsRect.anchoredPosition.x : 0f;
+        float offsetY = heartsCenterY - (heartsHeight * 0.5f) - (height * 0.5f) - 24f;
+        _liveScoreContainer.anchoredPosition = new Vector2(offsetX, offsetY);
+
+        Image bg = scoreGO.AddComponent<Image>();
+        bg.color = liveScoreBackground;
+
+        GameObject labelGO = new GameObject("Label", typeof(RectTransform));
+        labelGO.transform.SetParent(scoreGO.transform, false);
+        RectTransform labelRect = labelGO.GetComponent<RectTransform>();
+        labelRect.anchorMin = Vector2.zero;
+        labelRect.anchorMax = Vector2.one;
+        labelRect.offsetMin = new Vector2(16f, 10f);
+        labelRect.offsetMax = new Vector2(-16f, -10f);
+
+        _liveScoreLabel = labelGO.AddComponent<TextMeshProUGUI>();
+        ApplyUpperUiFont(_liveScoreLabel);
+        _liveScoreLabel.alignment = TextAlignmentOptions.Right;
+        _liveScoreLabel.fontSize = 38f;
+        _liveScoreLabel.text = "Score: --";
+        _liveScoreLabel.color = Color.white;
+
+        UpdateLiveScoreDisplay();
     }
     
     
@@ -2425,6 +2491,30 @@ public class GameManager : MonoBehaviour
 
         _tokenBreathTimer += Time.unscaledDeltaTime;
         ApplyTokenBreathToImages(CalculateTokenBreathMultiplier());
+    }
+
+    private void UpdateLiveScoreDisplay()
+    {
+        if (_liveScoreLabel == null)
+        {
+            return;
+        }
+
+        if (!enableScoring || !IsScoredLevel())
+        {
+            _liveScoreLabel.text = "Score: --";
+            return;
+        }
+
+        LevelScoreResult score = CalculateCurrentLevelScore();
+        if (!score.HasScore)
+        {
+            _liveScoreLabel.text = "Score: --";
+            return;
+        }
+
+        string total = FormatNumber(score.TotalScore);
+        _liveScoreLabel.text = $"Score: {total}";
     }
 
     private AudioClip GetHeartLossClip()
