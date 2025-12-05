@@ -301,6 +301,7 @@ public class GameManager : MonoBehaviour
     private bool _levelReady;
     private bool _gameActive;
     private bool _gameFinished;
+    public bool GameFinished => _gameFinished;
     private Coroutine _loadNextSceneRoutine;
     private GameObject _instructionPanel;
     private bool _waitingForInstructionAck;
