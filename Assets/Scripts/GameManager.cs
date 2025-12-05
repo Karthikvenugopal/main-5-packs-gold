@@ -2794,6 +2794,15 @@ public class GameManager : MonoBehaviour
             return true;
         }
 
+        // Explicit Level4 -> Level5 handoff so the Next Level button appears even without build index wiring.
+        if (!string.IsNullOrEmpty(level4InstructionSceneName) &&
+            !string.IsNullOrEmpty(level5InstructionSceneName) &&
+            activeScene.name == level4InstructionSceneName)
+        {
+            sceneName = level5InstructionSceneName;
+            return true;
+        }
+
         if (activeIndex >= 0 && totalScenes > 0)
         {
             for (int index = activeIndex + 1; index < totalScenes; index++)
@@ -2895,8 +2904,18 @@ public class GameManager : MonoBehaviour
 
     private bool IsFinalLevelScene(string sceneName)
     {
-        return !string.IsNullOrEmpty(level4InstructionSceneName) &&
-               sceneName == level4InstructionSceneName;
+        // Treat the highest configured level as the final one (Level 5 if present, otherwise Level 4)
+        if (!string.IsNullOrEmpty(level5InstructionSceneName))
+        {
+            return sceneName == level5InstructionSceneName;
+        }
+
+        if (!string.IsNullOrEmpty(level4InstructionSceneName))
+        {
+            return sceneName == level4InstructionSceneName;
+        }
+
+        return false;
     }
 
     private bool IsScoredLevel()
