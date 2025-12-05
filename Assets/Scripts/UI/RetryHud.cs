@@ -304,6 +304,7 @@ public class RetryHud : MonoBehaviour
         {
             Time.timeScale = 1f;
             _paused = false;
+            if (_modalPanel != null) _modalPanel.SetActive(false);
         }
         var current = SceneManager.GetActiveScene();
         SceneManager.LoadScene(current.name);
