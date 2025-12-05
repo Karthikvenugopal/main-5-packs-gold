@@ -20,15 +20,15 @@ public class MazeBuilder_Level1 : MonoBehaviour
 
     private static readonly string[] Layout =
     {
-        "###################",
-        "#F........H.....E.#",
-        "###.######.########",
-        "###.######.########",
-        "###.##...#.########",
-        "###I##...#.########",
-        "###.##...#I########",
-        "#W.........########",
-        "###################"
+        "####################",
+        "#F....##..I..fw...E#",
+        "###.######w#####I###",
+        "###f.H.###...H.w.###",
+        "###.##...H.#####.###",
+        "###I##.f.#...f..H.##",
+        "###.##...#I#########",
+        "#W.i.......#########",
+        "####################"
     };
 
     private const float CameraVerticalPadding = 0.4f;
@@ -94,6 +94,16 @@ public class MazeBuilder_Level1 : MonoBehaviour
                         SpawnExit(cellCenter);
                         break;
 
+                    case 'w':
+                        SpawnFloor(cellCenter);
+                        CreateTokenAnchor(cellCenter, TokenSpriteConfigurator.TokenType.Water);
+                        break;
+
+                    case 'f':
+                        SpawnFloor(cellCenter);
+                        CreateTokenAnchor(cellCenter, TokenSpriteConfigurator.TokenType.Fire);
+                        break;
+
                     default:
                         SpawnFloor(cellCenter);
                         break;
@@ -143,7 +153,10 @@ public class MazeBuilder_Level1 : MonoBehaviour
 
     private void SpawnExit(Vector2 position)
     {
-        Vector3 worldCenter = new Vector3(position.x + 0.5f * cellSize, position.y, 0f);
+        // Position is already the cell center from GetCellCenterPosition
+        // Shift left by half a cell to better center the 2-cell wide portal on the path
+        Vector3 worldCenter = new Vector3(position.x - 0.5f * cellSize, position.y, 0f);
+        
         ExitPortalFactory.CreateExitPortal(
             transform,
             worldCenter,
@@ -157,6 +170,22 @@ public class MazeBuilder_Level1 : MonoBehaviour
         GameObject marker = new GameObject(name);
         marker.transform.position = position;
         marker.transform.SetParent(transform);
+    }
+
+    private void CreateTokenAnchor(Vector2 position, TokenSpriteConfigurator.TokenType tokenType)
+    {
+        if (tokenPlacementManager == null)
+        {
+            Debug.LogWarning("TokenPlacementManager is not assigned. Cannot create token anchor.");
+            return;
+        }
+
+        GameObject anchorObject = new GameObject($"TokenAnchor_{tokenType}_{position.x}_{position.y}");
+        anchorObject.transform.position = position;
+        anchorObject.transform.SetParent(tokenPlacementManager.transform);
+
+        TokenAnchor anchor = anchorObject.AddComponent<TokenAnchor>();
+        anchor.SetTokenType(tokenType);
     }
 
     private IEnumerator SpawnDialogueTriggerDelayed()
@@ -198,7 +227,7 @@ public class MazeBuilder_Level1 : MonoBehaviour
         dialogueTrigger.SetFontSize(3.0f);
 
         // Set fixed dialogue position near the maze center (approximate coordinates)
-        Vector2 fixedDialoguePosition = new Vector2(6.75f * cellSize, -3.0f * cellSize);
+        Vector2 fixedDialoguePosition = new Vector2(6.8f * cellSize, -2.5f * cellSize);
         dialogueTrigger.SetFixedPosition(fixedDialoguePosition);
         // Immediately trigger the dialogue so it appears even if players moved away from the trigger zone
         dialogueTrigger.TriggerFixedDialogue();
@@ -221,7 +250,7 @@ public class MazeBuilder_Level1 : MonoBehaviour
 
         // Calculate fixed position (slightly right and higher near the top-left corner)
         // Adjusted for centered player: moved slightly right to avoid overlap, and lowered to match player shift
-        Vector2 fixedDialoguePosition = new Vector2(2.0f * cellSize, -0.8f * cellSize);
+        Vector2 fixedDialoguePosition = new Vector2(2.2f * cellSize, -0.6f * cellSize);
 
         // Create trigger zone GameObject
         GameObject triggerZone = new GameObject("EmberControlsDialogueTrigger");
@@ -240,6 +269,8 @@ public class MazeBuilder_Level1 : MonoBehaviour
         dialogueTrigger.SetFontSize(3f);
         // Set fixed position mode - dialogue will appear at fixed position when player enters trigger
         dialogueTrigger.SetFixedPosition(fixedDialoguePosition);
+        // Immediately trigger the dialogue so it appears right away
+        dialogueTrigger.TriggerFixedDialogue();
     }
 
     private void SpawnAquaControlsDialogue()
@@ -278,6 +309,8 @@ public class MazeBuilder_Level1 : MonoBehaviour
         dialogueTrigger.SetFontSize(3f);
         // Set fixed position mode - dialogue will appear at fixed position when player enters trigger
         dialogueTrigger.SetFixedPosition(fixedDialoguePosition);
+        // Immediately trigger the dialogue so it appears right away
+        dialogueTrigger.TriggerFixedDialogue();
     }
 
     private Vector2 GetCellCenterPosition(int x, int y)

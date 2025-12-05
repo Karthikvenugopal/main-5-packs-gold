@@ -10,6 +10,14 @@ public class TokenAnchor : MonoBehaviour
 
     public TokenSpriteConfigurator.TokenType TokenType => tokenType;
 
+    /// <summary>
+    /// Sets the token type for runtime-created anchors.
+    /// </summary>
+    public void SetTokenType(TokenSpriteConfigurator.TokenType type)
+    {
+        tokenType = type;
+    }
+
     private static readonly Color FireColor = new Color(1f, 0.55f, 0.15f, 0.9f);
     private static readonly Color WaterColor = new Color(0.3f, 0.6f, 1f, 0.9f);
 
