@@ -343,6 +343,8 @@ public class GameManager : MonoBehaviour
     
     private bool _scoringTimerStarted;
     private float _scoringStartTime;
+    private bool _scoringTimerFrozen;
+    private float _scoringFrozenElapsed;
     
     
     private AudioClip _generatedHeartLossClip;
@@ -397,9 +399,10 @@ public class GameManager : MonoBehaviour
         EnsureLevelTimer();
         CreateInstructionPanelIfNeeded();
         
-        
         _scoringTimerStarted = false;
         _scoringStartTime = 0f;
+        _scoringTimerFrozen = false;
+        _scoringFrozenElapsed = 0f;
     }
 
     
@@ -527,7 +530,8 @@ public class GameManager : MonoBehaviour
         _gameFinished = false;
         _playersAtExit.Clear();
 
-        
+        _scoringTimerFrozen = false;
+        _scoringFrozenElapsed = 0f;
         _scoringStartTime = Time.realtimeSinceStartup;
         _scoringTimerStarted = true;
 
@@ -2951,6 +2955,7 @@ public class GameManager : MonoBehaviour
         {
             if (_gameFinished) return;
 
+            FreezeScoringTimer();
             _gameFinished = true;
             _gameActive = false;
             EnsureLevelTimer();
@@ -3039,6 +3044,7 @@ public class GameManager : MonoBehaviour
         {
             if (_gameFinished) return;
 
+            FreezeScoringTimer();
             _gameFinished = true;
             _gameActive = false;
             
@@ -3380,7 +3386,7 @@ public class GameManager : MonoBehaviour
         }
 
         float elapsedSecondsRaw = _scoringTimerStarted
-            ? Mathf.Max(0f, Time.realtimeSinceStartup - _scoringStartTime)
+            ? Mathf.Max(0f, GetFrozenOrLiveElapsedSeconds())
             : 0f;
         float elapsedSeconds = Mathf.Floor(elapsedSecondsRaw);
         float levelTargetTime = GetTargetTimeForCurrentLevel();
@@ -3402,6 +3408,32 @@ public class GameManager : MonoBehaviour
             TimeBonus = timeBonusInt,
             TotalScore = totalScore
         };
+    }
+
+    private float GetFrozenOrLiveElapsedSeconds()
+    {
+        if (!_scoringTimerStarted)
+        {
+            return 0f;
+        }
+
+        if (_scoringTimerFrozen)
+        {
+            return _scoringFrozenElapsed;
+        }
+
+        return Mathf.Max(0f, Time.realtimeSinceStartup - _scoringStartTime);
+    }
+
+    private void FreezeScoringTimer()
+    {
+        if (!_scoringTimerStarted || _scoringTimerFrozen)
+        {
+            return;
+        }
+
+        _scoringFrozenElapsed = Mathf.Max(0f, Time.realtimeSinceStartup - _scoringStartTime);
+        _scoringTimerFrozen = true;
     }
 
     private string BuildScoreDisplayText()
