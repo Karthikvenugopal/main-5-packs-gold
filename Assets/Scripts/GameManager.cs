@@ -845,7 +845,7 @@ public class GameManager : MonoBehaviour
         bgRect.anchorMin = new Vector2(0.5f, 1f); // Top-Center
         bgRect.anchorMax = new Vector2(0.5f, 1f); // Top-Center
         bgRect.pivot = new Vector2(0.5f, 1f);
-        bgRect.sizeDelta = new Vector2(680f, 120f);
+        bgRect.sizeDelta = new Vector2(1000f, 120f);
         // Position it further down from the top-center of the bar for clarity
         bgRect.anchoredPosition = new Vector2(0f, -100f); 
 
@@ -2794,6 +2794,12 @@ public class GameManager : MonoBehaviour
             return true;
         }
 
+        if (string.Equals(activeScene.name, "Level4Scene", StringComparison.OrdinalIgnoreCase))
+        {
+            sceneName = !string.IsNullOrEmpty(level5InstructionSceneName) ? level5InstructionSceneName : "Level5Scene";
+            return true;
+        }
+
         if (activeIndex >= 0 && totalScenes > 0)
         {
             for (int index = activeIndex + 1; index < totalScenes; index++)
@@ -2895,8 +2901,8 @@ public class GameManager : MonoBehaviour
 
     private bool IsFinalLevelScene(string sceneName)
     {
-        return !string.IsNullOrEmpty(level4InstructionSceneName) &&
-               sceneName == level4InstructionSceneName;
+        return !string.IsNullOrEmpty(level5InstructionSceneName) &&
+               sceneName == level5InstructionSceneName;
     }
 
     private bool IsScoredLevel()

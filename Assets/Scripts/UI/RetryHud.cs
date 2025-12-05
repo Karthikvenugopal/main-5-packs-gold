@@ -82,8 +82,8 @@ public class RetryHud : MonoBehaviour
         rect.anchorMin = new Vector2(1f, 0f);
         rect.anchorMax = new Vector2(1f, 0f);
         rect.pivot = new Vector2(1f, 0f);
-        rect.anchoredPosition = new Vector2(-30f, 30f);
-        rect.sizeDelta = new Vector2(180f, 60f); // Significantly increased size
+        rect.anchoredPosition = new Vector2(-15f, 15f);
+        rect.sizeDelta = new Vector2(220f, 75f); // Midway size
 
         var img = btnGO.AddComponent<Image>();
         img.color = ButtonColor;
@@ -100,10 +100,10 @@ public class RetryHud : MonoBehaviour
 
         var tmp = labelGO.AddComponent<TextMeshProUGUI>();
         tmp.alignment = TextAlignmentOptions.Center;
-        tmp.fontSize = 24f;
+        tmp.fontSize = 30f;
         tmp.enableAutoSizing = false;
-        tmp.fontSizeMin = 20f;
-        tmp.fontSizeMax = 28f;
+        tmp.fontSizeMin = 24f;
+        tmp.fontSizeMax = 34f;
         tmp.fontStyle = FontStyles.Bold;
         
         // Theme Application
