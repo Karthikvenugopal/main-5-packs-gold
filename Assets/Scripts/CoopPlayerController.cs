@@ -70,7 +70,6 @@ public class CoopPlayerController : MonoBehaviour
     [SerializeField, Range(0.5f, 5f)] private float hazardInputLockDuration = 1.5f;
 
     private Rigidbody2D _rigidbody;
-    private Collider2D _collider;
     private SpriteRenderer _spriteRenderer;
     private GameManager _gameManager;
     private GameManagerTutorial _gameManagerTutorial;
@@ -91,12 +90,16 @@ public class CoopPlayerController : MonoBehaviour
     private Vector2 _defaultColliderOffset;
     private bool _isUsingSteamAnimator;
     private CircleCollider2D _circleCollider;
+    private Collider2D _collider;
+    private Collider2D[] _allColliders;
+    private static readonly List<CoopPlayerController> s_Players = new();
 
     private readonly Dictionary<int, float> _lastHazardDamageTimes = new();
 
     // 蒸汽状态引用
     private PlayerSteamState _steamState;
     public bool IsInSteamMode => _steamState != null && _steamState.IsInSteamMode;
+    private bool _wasInSteamMode;
 
     public PlayerRole Role => _role;
 
@@ -105,6 +108,7 @@ public class CoopPlayerController : MonoBehaviour
         _rigidbody = GetComponent<Rigidbody2D>();
         _circleCollider = GetComponent<CircleCollider2D>();
         _collider = _circleCollider ?? GetComponent<Collider2D>();
+        _allColliders = GetComponents<Collider2D>();
         _spriteRenderer = GetComponent<SpriteRenderer>();
         _animator = GetComponent<Animator>();
         _boxCollider = GetComponent<BoxCollider2D>();
@@ -135,6 +139,23 @@ public class CoopPlayerController : MonoBehaviour
         {
             Debug.LogWarning($"[CoopPlayerController] {name} has NO PlayerSteamState component. Steam mode will never be on.");
         }
+        if (!s_Players.Contains(this))
+        {
+            s_Players.Add(this);
+        }
+    }
+
+    private void OnEnable()
+    {
+        if (!s_Players.Contains(this))
+        {
+            s_Players.Add(this);
+        }
+    }
+
+    private void OnDisable()
+    {
+        s_Players.Remove(this);
     }
 
     public void Initialize(PlayerRole role, GameManager manager)
@@ -214,6 +235,30 @@ public class CoopPlayerController : MonoBehaviour
         {
             _animator.runtimeAnimatorController = controller;
         }
+
+        UpdateSteamCollision();
+    }
+
+    private void UpdateSteamCollision()
+    {
+        if (_allColliders == null || _allColliders.Length == 0) return;
+
+        foreach (CoopPlayerController other in s_Players)
+        {
+            if (other == null || other == this) continue;
+            if (other._allColliders == null || other._allColliders.Length == 0) continue;
+
+            bool ignore = IsInSteamMode || other.IsInSteamMode;
+            foreach (Collider2D ownCollider in _allColliders)
+            {
+                if (ownCollider == null) continue;
+                foreach (Collider2D otherCollider in other._allColliders)
+                {
+                    if (otherCollider == null) continue;
+                    Physics2D.IgnoreCollision(ownCollider, otherCollider, ignore);
+                }
+            }
+        }
     }
 
     private void ConfigureRoleCollider(PlayerRole role)
@@ -234,7 +279,16 @@ public class CoopPlayerController : MonoBehaviour
 
     private void Update()
     {
-        RefreshSteamAnimator();
+        bool currentlyInSteam = IsInSteamMode;
+        if (currentlyInSteam && !_wasInSteamMode)
+        {
+            StopBounce();
+        }
+        if (currentlyInSteam != _wasInSteamMode)
+        {
+            _wasInSteamMode = currentlyInSteam;
+            RefreshSteamAnimator();
+        }
 
         if (!_movementEnabled)
         {
@@ -751,5 +805,10 @@ public class CoopPlayerController : MonoBehaviour
     private static float EaseInQuad(float t)
     {
         return t * t;
+    }
+
+    private void OnDestroy()
+    {
+        s_Players.Remove(this);
     }
 }
