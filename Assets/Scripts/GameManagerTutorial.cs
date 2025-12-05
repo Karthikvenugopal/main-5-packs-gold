@@ -71,11 +71,11 @@ public class GameManagerTutorial : MonoBehaviour
             themeButtonSprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Images/button.png");
         }
     }
+#endif
     [Tooltip("Sprite for the trophy icon shown on victory (between title and score)")]
     [SerializeField] private Sprite trophySprite;
     [Tooltip("Size of the trophy icon (Width, Height)")]
     [SerializeField] private Vector2 trophyIconSize = new Vector2(100f, 100f);
-#endif
     [Header("Progression")]
     [SerializeField] private string nextSceneName = "Level1Scene";
     [SerializeField] private float nextSceneDelaySeconds = 2f;
