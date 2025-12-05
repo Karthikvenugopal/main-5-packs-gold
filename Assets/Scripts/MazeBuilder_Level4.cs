@@ -153,7 +153,11 @@ public class MazeBuilder_Level4 : MonoBehaviour, IPairedHazardManager
 
         DialogueTriggerZone dialogueTrigger = triggerZone.AddComponent<DialogueTriggerZone>();
         dialogueTrigger.SetDialogueText("Stay close together in the mist to activate Steam Mode and pass through the Steam Walls!");
-        dialogueTrigger.SetOffsetFromPlayer(new Vector2(0f, 1.5f)); // Show above player
+        
+        // Use fixed position for the text so it appears at the specific location
+        // Text position at (23, -3, -9)
+        dialogueTrigger.SetFixedPosition(new Vector3(23 * cellSize, -3 * cellSize, -9f));
+        
         dialogueTrigger.SetFontSize(3.5f);
     }
 

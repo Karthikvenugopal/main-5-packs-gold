@@ -29,7 +29,7 @@ public class DialogueTriggerZone : MonoBehaviour
     
     [Header("Fixed Position Mode")]
     [SerializeField] private bool useFixedPosition = false;
-    [SerializeField] private Vector2 fixedPosition = Vector2.zero;
+    [SerializeField] private Vector3 fixedPosition = Vector3.zero;
     
     private BoxCollider2D _trigger;
     private bool _hasTriggered = false;
@@ -85,7 +85,7 @@ public class DialogueTriggerZone : MonoBehaviour
 
         SpriteRenderer bgRenderer = background.AddComponent<SpriteRenderer>();
         bgRenderer.color = backgroundColor;
-        bgRenderer.sortingOrder = 10;
+        bgRenderer.sortingOrder = 100;
 
         // Create a simple white sprite for the background
         Texture2D texture = new Texture2D(1, 1);
@@ -108,10 +108,10 @@ public class DialogueTriggerZone : MonoBehaviour
         textMesh.enableWordWrapping = true;
         textMesh.rectTransform.sizeDelta = new Vector2(8f, 0f); // Auto-height
         
-        // Ensure text is drawn above background (Order 10) and walls (Order 1)
+        // Ensure text is drawn above background (Order 100) and walls (Order 1)
         if (textMesh.TryGetComponent(out MeshRenderer meshRenderer))
         {
-            meshRenderer.sortingOrder = 11;
+            meshRenderer.sortingOrder = 101;
         }
 
         // Force text to update bounds
@@ -261,7 +261,7 @@ public class DialogueTriggerZone : MonoBehaviour
     /// Enable fixed position mode and set the fixed position
     /// This allows Level 1 to use fixed positions without affecting Level 2
     /// </summary>
-    public void SetFixedPosition(Vector2 position)
+    public void SetFixedPosition(Vector3 position)
     {
         useFixedPosition = true;
         fixedPosition = position;
@@ -287,7 +287,7 @@ public class DialogueTriggerZone : MonoBehaviour
     /// Show dialogue at a fixed world position (not relative to player)
     /// This allows Level 1 to use fixed positions without affecting Level 2's player-relative dialogues
     /// </summary>
-    public void ShowDialogueAtFixedPosition(Vector2 worldPosition)
+    public void ShowDialogueAtFixedPosition(Vector3 worldPosition)
     {
         // Don't create multiple dialogue boxes
         if (_currentDialogueBox != null)
@@ -309,7 +309,7 @@ public class DialogueTriggerZone : MonoBehaviour
 
         SpriteRenderer bgRenderer = background.AddComponent<SpriteRenderer>();
         bgRenderer.color = backgroundColor;
-        bgRenderer.sortingOrder = 10;
+        bgRenderer.sortingOrder = 100;
 
         // Create a simple white sprite for the background
         Texture2D texture = new Texture2D(1, 1);
@@ -331,6 +331,12 @@ public class DialogueTriggerZone : MonoBehaviour
         textMesh.fontStyle = FontStyles.Bold;
         textMesh.enableWordWrapping = true;
         textMesh.rectTransform.sizeDelta = new Vector2(8f, 0f); // Auto-height
+        
+        // Ensure text is drawn above background (Order 100) and walls (Order 1)
+        if (textMesh.TryGetComponent(out MeshRenderer meshRenderer))
+        {
+            meshRenderer.sortingOrder = 101;
+        }
 
         // Force text to update bounds
         textMesh.ForceMeshUpdate();
